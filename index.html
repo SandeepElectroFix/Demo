@@ -1,70 +1,1137 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#050816"><title>Sandeep ElectroFix — Estimate List</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="loadingScreen"><div class="loader"><span>⚡</span></div><b>Estimate List</b><small>Sandeep ElectroFix • Powering Your Trust</small></div>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050816">
+<meta name="color-scheme" content="dark">
+<title>Sandeep ElectroFix — Estimate List</title>
 
+<link rel="stylesheet" href="style.css">
+
+<!-- =========================================================
+     EMERGENCY LOADER CSS
+     Loader kabhi permanently screen par nahi rahega
+========================================================= -->
+<style>
+#loadingScreen{
+    position:fixed;
+    inset:0;
+    z-index:999999;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    background:#050816;
+    color:#fff;
+    text-align:center;
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition:
+        opacity .35s ease,
+        visibility .35s ease;
+}
+
+#loadingScreen.loader-hidden{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+}
+
+#loadingScreen .loader{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:18px;
+    position:relative;
+    animation:loaderPulse 1.2s ease-in-out infinite;
+}
+
+#loadingScreen .loader::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:3px solid rgba(14,165,233,.18);
+    border-top-color:#0ea5e9;
+    border-right-color:#facc15;
+    animation:loaderSpin .8s linear infinite;
+}
+
+#loadingScreen .loader span{
+    font-size:32px;
+    line-height:1;
+    filter:drop-shadow(0 0 10px rgba(14,165,233,.8));
+}
+
+#loadingScreen b{
+    font-size:20px;
+    letter-spacing:.5px;
+}
+
+#loadingScreen small{
+    margin-top:7px;
+    color:#94a3b8;
+    font-size:12px;
+}
+
+@keyframes loaderSpin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+@keyframes loaderPulse{
+    0%,100%{
+        transform:scale(1);
+    }
+    50%{
+        transform:scale(1.06);
+    }
+}
+
+/*
+   App hidden only while loader is active.
+   Agar JS fail ho jaye tab bhi emergency
+   loader script app ko visible kar dega.
+*/
+body.app-loading #app,
+body.app-loading .topbar,
+body.app-loading .bottom-nav{
+    visibility:hidden;
+}
+
+body.app-ready #app,
+body.app-ready .topbar,
+body.app-ready .bottom-nav{
+    visibility:visible;
+}
+
+/* Prevent horizontal overflow during startup */
+html,
+body{
+    overflow-x:hidden;
+}
+</style>
+
+<!-- =========================================================
+     EARLY BOOT SCRIPT
+     Ye external JS se pehle chalega
+========================================================= -->
+<script>
+(function(){
+
+    document.documentElement.classList.add("booting");
+
+    /*
+       Loader ko maximum 2500ms se zyada kabhi
+       visible nahi rehne denge.
+    */
+    window.__hideEstimateLoader = function(){
+
+        if(window.__estimateLoaderHidden){
+            return;
+        }
+
+        window.__estimateLoaderHidden = true;
+
+        try{
+            document.body.classList.remove("app-loading");
+            document.body.classList.add("app-ready");
+        }catch(e){}
+
+        var loader = document.getElementById("loadingScreen");
+
+        if(loader){
+
+            loader.classList.add("loader-hidden");
+
+            /*
+               Transition ke baad completely remove.
+            */
+            setTimeout(function(){
+
+                try{
+                    loader.style.display = "none";
+                }catch(e){}
+
+            },420);
+        }
+
+        document.documentElement.classList.remove("booting");
+    };
+
+    /*
+       DOM ready
+    */
+    if(document.readyState === "loading"){
+
+        document.addEventListener("DOMContentLoaded",function(){
+
+            document.body.classList.add("app-loading");
+
+            /*
+               Normal startup ko thoda time.
+            */
+            setTimeout(function(){
+
+                if(window.__appInitialized !== false){
+                    window.__hideEstimateLoader();
+                }
+
+            },500);
+
+        });
+
+    }else{
+
+        document.body.classList.add("app-loading");
+
+    }
+
+    /*
+       Window load fallback
+    */
+    window.addEventListener("load",function(){
+
+        setTimeout(function(){
+            window.__hideEstimateLoader();
+        },350);
+
+    });
+
+    /*
+       HARD FAILSAFE
+       Kisi bhi JS error ki wajah se loader
+       permanently stuck nahi hoga.
+    */
+    setTimeout(function(){
+
+        window.__hideEstimateLoader();
+
+    },2500);
+
+})();
+</script>
+
+</head>
+
+<body class="app-loading">
+
+<!-- =========================================================
+     FLASH / LOADING SCREEN
+========================================================= -->
+<div id="loadingScreen" aria-label="Loading Estimate List">
+
+    <div class="loader">
+        <span>⚡</span>
+    </div>
+
+    <b>Estimate List</b>
+
+    <small>
+        Sandeep ElectroFix • Powering Your Trust
+    </small>
+
+</div>
+
+
+<!-- =========================================================
+     TOP BAR
+========================================================= -->
 <header class="topbar" data-ui="header">
-  <button id="menuBtn" class="top-icon" data-ui="menu">☰</button>
-  <div class="brand"><span class="logo">⚡</span><div><b>Sandeep <em>ElectroFix</em></b><small>Estimate List</small></div></div>
-  <button id="langBtn" class="top-icon" data-ui="language">EN</button>
+
+    <button
+        id="menuBtn"
+        class="top-icon"
+        data-ui="menu"
+        type="button"
+        aria-label="Open menu">
+        ☰
+    </button>
+
+    <div class="brand">
+
+        <span class="logo">⚡</span>
+
+        <div>
+            <b>
+                Sandeep <em>ElectroFix</em>
+            </b>
+
+            <small>
+                Estimate List
+            </small>
+        </div>
+
+    </div>
+
+    <button
+        id="langBtn"
+        class="top-icon"
+        data-ui="language"
+        type="button">
+        EN
+    </button>
+
 </header>
 
+
+<!-- =========================================================
+     MAIN APP
+========================================================= -->
 <main id="app">
+
+<!-- =========================================================
+     HOME
+========================================================= -->
 <section id="homePage" class="page active">
-  <div class="hero-card">
-    <div class="hero-brand"><div class="hero-logo">⚡</div><div><strong>Sandeep ElectroFix</strong><small>Powering Your Trust</small></div></div>
-    <div class="hero-title"><span>ESTIMATE LIST</span><h1>Start Estimating</h1><p>Select a stage and start adding material</p></div>
-    <div id="globalSearchBox" class="search" data-ui="homeSearch">⌕<input id="globalSearch" placeholder="Search material..."></div>
-  </div>
-  <section data-ui="homeStages">
-    <div class="section-head"><div><span class="eyebrow">MASTER LIST</span><h2>Stages</h2></div><span id="materialCount" class="pill"></span></div>
-    <div id="stageGrid" class="stage-grid"></div>
-  </section>
+
+    <div class="hero-card">
+
+        <div class="hero-brand">
+
+            <div class="hero-logo">
+                ⚡
+            </div>
+
+            <div>
+                <strong>
+                    Sandeep ElectroFix
+                </strong>
+
+                <small>
+                    Powering Your Trust
+                </small>
+            </div>
+
+        </div>
+
+        <div class="hero-title">
+
+            <span>
+                ESTIMATE LIST
+            </span>
+
+            <h1>
+                Start Estimating
+            </h1>
+
+            <p>
+                Select a stage and start adding material
+            </p>
+
+        </div>
+
+        <div
+            id="globalSearchBox"
+            class="search"
+            data-ui="homeSearch">
+
+            ⌕
+
+            <input
+                id="globalSearch"
+                placeholder="Search material..."
+                autocomplete="off">
+
+        </div>
+
+    </div>
+
+
+    <section data-ui="homeStages">
+
+        <div class="section-head">
+
+            <div>
+
+                <span class="eyebrow">
+                    MASTER LIST
+                </span>
+
+                <h2>
+                    Stages
+                </h2>
+
+            </div>
+
+            <span
+                id="materialCount"
+                class="pill">
+            </span>
+
+        </div>
+
+        <div
+            id="stageGrid"
+            class="stage-grid">
+        </div>
+
+    </section>
+
 </section>
 
+
+<!-- =========================================================
+     MATERIALS
+========================================================= -->
 <section id="materialsPage" class="page">
-  <div class="page-head"><button id="backToStages" class="back">‹</button><div><span id="stageLabel" class="eyebrow"></span><h2 id="stageTitle">Materials</h2></div><button id="stageSearchBtn" class="top-icon">⌕</button></div>
-  <div class="toolbar"><div id="materialSearchBox" class="search" data-ui="materialSearch">⌕<input id="materialSearch" placeholder="Search material..."></div><div id="viewSwitcher" class="view-switcher" data-ui="materialView"><button data-view="grid">▦</button><button data-view="list">☷</button><button data-view="compact">▪</button><button data-view="image">▤</button></div></div>
-  <div id="materialGrid" class="material-grid"></div>
+
+    <div class="page-head">
+
+        <button
+            id="backToStages"
+            class="back"
+            type="button">
+            ‹
+        </button>
+
+        <div>
+
+            <span
+                id="stageLabel"
+                class="eyebrow">
+            </span>
+
+            <h2 id="stageTitle">
+                Materials
+            </h2>
+
+        </div>
+
+        <button
+            id="stageSearchBtn"
+            class="top-icon"
+            type="button">
+            ⌕
+        </button>
+
+    </div>
+
+
+    <div class="toolbar">
+
+        <div
+            id="materialSearchBox"
+            class="search"
+            data-ui="materialSearch">
+
+            ⌕
+
+            <input
+                id="materialSearch"
+                placeholder="Search material..."
+                autocomplete="off">
+
+        </div>
+
+
+        <div
+            id="viewSwitcher"
+            class="view-switcher"
+            data-ui="materialView">
+
+            <button
+                type="button"
+                data-view="grid">
+                ▦
+            </button>
+
+            <button
+                type="button"
+                data-view="list">
+                ☷
+            </button>
+
+            <button
+                type="button"
+                data-view="compact">
+                ▪
+            </button>
+
+            <button
+                type="button"
+                data-view="image">
+                ▤
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div
+        id="materialGrid"
+        class="material-grid">
+    </div>
+
 </section>
 
+
+<!-- =========================================================
+     ESTIMATE
+========================================================= -->
 <section id="estimatePage" class="page">
-  <div class="page-head"><div><span class="eyebrow">PROJECT ESTIMATE</span><h2>Estimate List</h2></div><button id="clearEstimateTop" class="mini-danger">Clear</button></div>
-  <div id="estimateList"></div><div id="emptyEstimate" class="empty"><div class="empty-icon">▤</div><b>No material added yet</b><small>Select material from any stage</small></div>
-  <div class="estimate-footer"><div class="total"><span>Total Estimated Cost</span><b id="grandTotal">₹0.00</b></div><div class="actions"><button id="copyEstimate" class="cyber" data-ui="copyEstimate">Copy</button><button id="printEstimate" class="cyber gold" data-ui="printEstimate">PDF / Print</button><button id="shareEstimate" class="cyber" data-ui="shareEstimate">Share</button></div></div>
+
+    <div class="page-head">
+
+        <div>
+
+            <span class="eyebrow">
+                PROJECT ESTIMATE
+            </span>
+
+            <h2>
+                Estimate List
+            </h2>
+
+        </div>
+
+        <button
+            id="clearEstimateTop"
+            class="mini-danger"
+            type="button">
+            Clear
+        </button>
+
+    </div>
+
+
+    <div id="estimateList"></div>
+
+
+    <div
+        id="emptyEstimate"
+        class="empty">
+
+        <div class="empty-icon">
+            ▤
+        </div>
+
+        <b>
+            No material added yet
+        </b>
+
+        <small>
+            Select material from any stage
+        </small>
+
+    </div>
+
+
+    <div class="estimate-footer">
+
+        <div class="total">
+
+            <span>
+                Total Estimated Cost
+            </span>
+
+            <b id="grandTotal">
+                ₹0.00
+            </b>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                id="copyEstimate"
+                class="cyber"
+                data-ui="copyEstimate"
+                type="button">
+                Copy
+            </button>
+
+            <button
+                id="printEstimate"
+                class="cyber gold"
+                data-ui="printEstimate"
+                type="button">
+                PDF / Print
+            </button>
+
+            <button
+                id="shareEstimate"
+                class="cyber"
+                data-ui="shareEstimate"
+                type="button">
+                Share
+            </button>
+
+        </div>
+
+    </div>
+
 </section>
 
+
+<!-- =========================================================
+     CALCULATOR
+========================================================= -->
 <section id="calculatorPage" class="page">
-  <div class="page-head"><div><span class="eyebrow">ELECTRICAL TOOLS</span><h2>Electrical Calculator</h2></div></div>
-  <div class="calc-tabs"><button class="active" data-calc="power">Power</button><button data-calc="current">Current</button><button data-calc="voltage">Voltage</button><button data-calc="other">Other</button></div>
-  <div id="calcBox" class="calc-card"></div>
-  <div class="section-head calc-section-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>Other Calculators</h2></div></div>
-  <div class="quick-calc-grid"><button data-tool="ohm"><span>Ω</span><b>Ohm's Law</b><small>V • I • R</small></button><button data-tool="cable"><span>⌁</span><b>Cable Size</b><small>Calculator</small></button><button data-tool="load"><span>◉</span><b>Load</b><small>Calculator</small></button><button data-tool="energy"><span>₹</span><b>Energy Cost</b><small>Units • ₹</small></button></div>
+
+    <div class="page-head">
+
+        <div>
+
+            <span class="eyebrow">
+                ELECTRICAL TOOLS
+            </span>
+
+            <h2>
+                Electrical Calculator
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="calc-tabs">
+
+        <button
+            class="active"
+            data-calc="power"
+            type="button">
+            Power
+        </button>
+
+        <button
+            data-calc="current"
+            type="button">
+            Current
+        </button>
+
+        <button
+            data-calc="voltage"
+            type="button">
+            Voltage
+        </button>
+
+        <button
+            data-calc="other"
+            type="button">
+            Other
+        </button>
+
+    </div>
+
+
+    <div
+        id="calcBox"
+        class="calc-card">
+    </div>
+
+
+    <div class="section-head calc-section-head">
+
+        <div>
+
+            <span class="eyebrow">
+                QUICK TOOLS
+            </span>
+
+            <h2>
+                Other Calculators
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="quick-calc-grid">
+
+        <button
+            data-tool="ohm"
+            type="button">
+
+            <span>Ω</span>
+
+            <b>
+                Ohm's Law
+            </b>
+
+            <small>
+                V • I • R
+            </small>
+
+        </button>
+
+
+        <button
+            data-tool="cable"
+            type="button">
+
+            <span>⌁</span>
+
+            <b>
+                Cable Size
+            </b>
+
+            <small>
+                Calculator
+            </small>
+
+        </button>
+
+
+        <button
+            data-tool="load"
+            type="button">
+
+            <span>◉</span>
+
+            <b>
+                Load
+            </b>
+
+            <small>
+                Calculator
+            </small>
+
+        </button>
+
+
+        <button
+            data-tool="energy"
+            type="button">
+
+            <span>₹</span>
+
+            <b>
+                Energy Cost
+            </b>
+
+            <small>
+                Units • ₹
+            </small>
+
+        </button>
+
+    </div>
+
 </section>
 
+
+<!-- =========================================================
+     SETTINGS
+========================================================= -->
 <section id="settingsPage" class="page">
-  <div class="page-head"><div><span class="eyebrow">APP CONTROL</span><h2>Settings</h2></div></div>
-  <div class="profile-card"><div class="profile-logo">⚡</div><div><b>Sandeep Verma</b><small>Electrician • Sandeep ElectroFix</small><small>+91 9026036445</small><small>SandeepElectroFix@gmail.com</small></div></div>
-  <div id="settingsList"></div>
+
+    <div class="page-head">
+
+        <div>
+
+            <span class="eyebrow">
+                APP CONTROL
+            </span>
+
+            <h2>
+                Settings
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="profile-card">
+
+        <div class="profile-logo">
+            ⚡
+        </div>
+
+        <div>
+
+            <b>
+                Sandeep Verma
+            </b>
+
+            <small>
+                Electrician • Sandeep ElectroFix
+            </small>
+
+            <small>
+                +91 9026036445
+            </small>
+
+            <small>
+                SandeepElectroFix@gmail.com
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <div id="settingsList"></div>
+
 </section>
+
 </main>
 
-<nav id="bottomNav" class="bottom-nav">
- <button data-page="homePage" data-ui="navHome">⌂<span>Home</span></button>
- <button data-page="estimatePage" data-ui="navEstimate">▤<span>Estimate</span></button>
- <button data-page="calculatorPage" data-ui="navCalculator">⌘<span>Calculator</span></button>
- <button data-page="settingsPage" data-ui="navSettings">⚙<span>Settings</span></button>
+
+<!-- =========================================================
+     BOTTOM NAVIGATION
+========================================================= -->
+<nav
+    id="bottomNav"
+    class="bottom-nav">
+
+    <button
+        data-page="homePage"
+        data-ui="navHome"
+        type="button">
+
+        ⌂
+        <span>Home</span>
+
+    </button>
+
+
+    <button
+        data-page="estimatePage"
+        data-ui="navEstimate"
+        type="button">
+
+        ▤
+        <span>Estimate</span>
+
+    </button>
+
+
+    <button
+        data-page="calculatorPage"
+        data-ui="navCalculator"
+        type="button">
+
+        ⌘
+        <span>Calculator</span>
+
+    </button>
+
+
+    <button
+        data-page="settingsPage"
+        data-ui="navSettings"
+        type="button">
+
+        ⚙
+        <span>Settings</span>
+
+    </button>
+
 </nav>
 
-<div id="drawerBackdrop" class="drawer-backdrop"><aside id="drawer" class="drawer"><button id="closeDrawer" class="drawer-close">×</button><div class="drawer-brand"><div class="hero-logo">⚡</div><b>Sandeep ElectroFix</b><small>Powering Your Trust</small></div><div class="drawer-links"><button data-page="homePage">⌂ <span>Home</span></button><button data-page="estimatePage">▤ <span>Estimate List</span></button><button data-page="calculatorPage">⌘ <span>Calculator</span></button><button data-page="settingsPage">⚙ <span>Settings</span></button></div><div class="drawer-footer"><button id="drawerLang">EN / HI</button><small>Estimate List • v2.0</small></div></aside></div>
 
-<div id="sheetBackdrop" class="sheet-backdrop"><div class="sheet"><div class="handle"></div><div class="sheet-head"><div><span id="sheetStage" class="eyebrow"></span><h2 id="sheetTitle"></h2><small id="sheetSub"></small></div><button id="closeSheet" class="icon-btn">×</button></div><div id="optionArea"></div><div class="selection-actions"><button id="nextMaterial" class="cyber" data-ui="nextMaterial">Next →</button><button id="addEstimate" class="cyber gold" data-ui="addEstimate">Add to Estimate</button></div></div></div>
+<!-- =========================================================
+     DRAWER
+========================================================= -->
+<div
+    id="drawerBackdrop"
+    class="drawer-backdrop">
 
-<div id="modalBackdrop" class="modal-backdrop"><div class="modal-card"><div class="sheet-head"><div><span class="eyebrow">APP CONTROL</span><h2 id="modalTitle">Select</h2></div><button id="closeModal" class="icon-btn">×</button></div><div id="modalBody"></div></div></div>
-<script src="material.js"></script><script src="config.js"></script><script src="script.js"></script>
-</body></html>
+    <aside
+        id="drawer"
+        class="drawer">
+
+        <button
+            id="closeDrawer"
+            class="drawer-close"
+            type="button">
+            ×
+        </button>
+
+
+        <div class="drawer-brand">
+
+            <div class="hero-logo">
+                ⚡
+            </div>
+
+            <b>
+                Sandeep ElectroFix
+            </b>
+
+            <small>
+                Powering Your Trust
+            </small>
+
+        </div>
+
+
+        <div class="drawer-links">
+
+            <button
+                data-page="homePage"
+                type="button">
+                ⌂ <span>Home</span>
+            </button>
+
+            <button
+                data-page="estimatePage"
+                type="button">
+                ▤ <span>Estimate List</span>
+            </button>
+
+            <button
+                data-page="calculatorPage"
+                type="button">
+                ⌘ <span>Calculator</span>
+            </button>
+
+            <button
+                data-page="settingsPage"
+                type="button">
+                ⚙ <span>Settings</span>
+            </button>
+
+        </div>
+
+
+        <div class="drawer-footer">
+
+            <button
+                id="drawerLang"
+                type="button">
+                EN / HI
+            </button>
+
+            <small>
+                Estimate List • v2.0
+            </small>
+
+        </div>
+
+    </aside>
+
+</div>
+
+
+<!-- =========================================================
+     MATERIAL SELECTION SHEET
+========================================================= -->
+<div
+    id="sheetBackdrop"
+    class="sheet-backdrop">
+
+    <div class="sheet">
+
+        <div class="handle"></div>
+
+
+        <div class="sheet-head">
+
+            <div>
+
+                <span
+                    id="sheetStage"
+                    class="eyebrow">
+                </span>
+
+                <h2 id="sheetTitle"></h2>
+
+                <small id="sheetSub"></small>
+
+            </div>
+
+
+            <button
+                id="closeSheet"
+                class="icon-btn"
+                type="button">
+                ×
+            </button>
+
+        </div>
+
+
+        <div id="optionArea"></div>
+
+
+        <div class="selection-actions">
+
+            <button
+                id="nextMaterial"
+                class="cyber"
+                data-ui="nextMaterial"
+                type="button">
+                Next →
+            </button>
+
+            <button
+                id="addEstimate"
+                class="cyber gold"
+                data-ui="addEstimate"
+                type="button">
+                Add to Estimate
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     GENERAL MODAL
+========================================================= -->
+<div
+    id="modalBackdrop"
+    class="modal-backdrop">
+
+    <div class="modal-card">
+
+        <div class="sheet-head">
+
+            <div>
+
+                <span class="eyebrow">
+                    APP CONTROL
+                </span>
+
+                <h2 id="modalTitle">
+                    Select
+                </h2>
+
+            </div>
+
+
+            <button
+                id="closeModal"
+                class="icon-btn"
+                type="button">
+                ×
+            </button>
+
+        </div>
+
+
+        <div id="modalBody"></div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     YOUR APPLICATION FILES
+========================================================= -->
+<script src="material.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+
+
+<!-- =========================================================
+     FINAL LOADER RELEASE
+     Ye sabse last me chalega.
+     Agar kisi external JS me error ho tab bhi loader release.
+========================================================= -->
+<script>
+(function(){
+
+    function releaseLoader(){
+
+        if(typeof window.__hideEstimateLoader === "function"){
+
+            window.__hideEstimateLoader();
+
+        }else{
+
+            var loader =
+                document.getElementById("loadingScreen");
+
+            if(loader){
+
+                loader.classList.add("loader-hidden");
+
+                setTimeout(function(){
+
+                    loader.style.display = "none";
+
+                },420);
+
+            }
+
+            document.body.classList.remove("app-loading");
+            document.body.classList.add("app-ready");
+
+        }
+
+    }
+
+
+    /*
+       External scripts ke baad normal release.
+    */
+    if(document.readyState === "complete"){
+
+        setTimeout(releaseLoader,250);
+
+    }else{
+
+        window.addEventListener(
+            "load",
+            function(){
+                setTimeout(releaseLoader,250);
+            },
+            {once:true}
+        );
+
+    }
+
+
+    /*
+       FINAL FAILSAFE
+    */
+    setTimeout(releaseLoader,1800);
+
+})();
+</script>
+
+
+<!-- =========================================================
+     JAVASCRIPT ERROR SAFETY
+     Error aaye to bhi LOADER STUCK nahi hoga.
+========================================================= -->
+<script>
+window.addEventListener("error",function(){
+
+    setTimeout(function(){
+
+        if(typeof window.__hideEstimateLoader === "function"){
+            window.__hideEstimateLoader();
+        }
+
+    },50);
+
+});
+
+
+window.addEventListener(
+    "unhandledrejection",
+    function(){
+
+        setTimeout(function(){
+
+            if(typeof window.__hideEstimateLoader === "function"){
+                window.__hideEstimateLoader();
+            }
+
+        },50);
+
+    }
+);
+</script>
+
+</body>
+</html>

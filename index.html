@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050816"><title>Sandeep ElectroFix — Estimate List</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loadingScreen"><div class="loader"><span>⚡</span></div><b>Estimate List</b><small>Sandeep ElectroFix • Powering Your Trust</small></div>
+
+<header class="topbar" data-ui="header">
+  <button id="menuBtn" class="top-icon" data-ui="menu">☰</button>
+  <div class="brand"><span class="logo">⚡</span><div><b>Sandeep <em>ElectroFix</em></b><small>Estimate List</small></div></div>
+  <button id="langBtn" class="top-icon" data-ui="language">EN</button>
+</header>
+
+<main id="app">
+<section id="homePage" class="page active">
+  <div class="hero-card">
+    <div class="hero-brand"><div class="hero-logo">⚡</div><div><strong>Sandeep ElectroFix</strong><small>Powering Your Trust</small></div></div>
+    <div class="hero-title"><span>ESTIMATE LIST</span><h1>Start Estimating</h1><p>Select a stage and start adding material</p></div>
+    <div id="globalSearchBox" class="search" data-ui="homeSearch">⌕<input id="globalSearch" placeholder="Search material..."></div>
+  </div>
+  <section data-ui="homeStages">
+    <div class="section-head"><div><span class="eyebrow">MASTER LIST</span><h2>Stages</h2></div><span id="materialCount" class="pill"></span></div>
+    <div id="stageGrid" class="stage-grid"></div>
+  </section>
+</section>
+
+<section id="materialsPage" class="page">
+  <div class="page-head"><button id="backToStages" class="back">‹</button><div><span id="stageLabel" class="eyebrow"></span><h2 id="stageTitle">Materials</h2></div><button id="stageSearchBtn" class="top-icon">⌕</button></div>
+  <div class="toolbar"><div id="materialSearchBox" class="search" data-ui="materialSearch">⌕<input id="materialSearch" placeholder="Search material..."></div><div id="viewSwitcher" class="view-switcher" data-ui="materialView"><button data-view="grid">▦</button><button data-view="list">☷</button><button data-view="compact">▪</button><button data-view="image">▤</button></div></div>
+  <div id="materialGrid" class="material-grid"></div>
+</section>
+
+<section id="estimatePage" class="page">
+  <div class="page-head"><div><span class="eyebrow">PROJECT ESTIMATE</span><h2>Estimate List</h2></div><button id="clearEstimateTop" class="mini-danger">Clear</button></div>
+  <div id="estimateList"></div><div id="emptyEstimate" class="empty"><div class="empty-icon">▤</div><b>No material added yet</b><small>Select material from any stage</small></div>
+  <div class="estimate-footer"><div class="total"><span>Total Estimated Cost</span><b id="grandTotal">₹0.00</b></div><div class="actions"><button id="copyEstimate" class="cyber" data-ui="copyEstimate">Copy</button><button id="printEstimate" class="cyber gold" data-ui="printEstimate">PDF / Print</button><button id="shareEstimate" class="cyber" data-ui="shareEstimate">Share</button></div></div>
+</section>
+
+<section id="calculatorPage" class="page">
+  <div class="page-head"><div><span class="eyebrow">ELECTRICAL TOOLS</span><h2>Electrical Calculator</h2></div></div>
+  <div class="calc-tabs"><button class="active" data-calc="power">Power</button><button data-calc="current">Current</button><button data-calc="voltage">Voltage</button><button data-calc="other">Other</button></div>
+  <div id="calcBox" class="calc-card"></div>
+  <div class="section-head calc-section-head"><div><span class="eyebrow">QUICK TOOLS</span><h2>Other Calculators</h2></div></div>
+  <div class="quick-calc-grid"><button data-tool="ohm"><span>Ω</span><b>Ohm's Law</b><small>V • I • R</small></button><button data-tool="cable"><span>⌁</span><b>Cable Size</b><small>Calculator</small></button><button data-tool="load"><span>◉</span><b>Load</b><small>Calculator</small></button><button data-tool="energy"><span>₹</span><b>Energy Cost</b><small>Units • ₹</small></button></div>
+</section>
+
+<section id="settingsPage" class="page">
+  <div class="page-head"><div><span class="eyebrow">APP CONTROL</span><h2>Settings</h2></div></div>
+  <div class="profile-card"><div class="profile-logo">⚡</div><div><b>Sandeep Verma</b><small>Electrician • Sandeep ElectroFix</small><small>+91 9026036445</small><small>SandeepElectroFix@gmail.com</small></div></div>
+  <div id="settingsList"></div>
+</section>
+</main>
+
+<nav id="bottomNav" class="bottom-nav">
+ <button data-page="homePage" data-ui="navHome">⌂<span>Home</span></button>
+ <button data-page="estimatePage" data-ui="navEstimate">▤<span>Estimate</span></button>
+ <button data-page="calculatorPage" data-ui="navCalculator">⌘<span>Calculator</span></button>
+ <button data-page="settingsPage" data-ui="navSettings">⚙<span>Settings</span></button>
+</nav>
+
+<div id="drawerBackdrop" class="drawer-backdrop"><aside id="drawer" class="drawer"><button id="closeDrawer" class="drawer-close">×</button><div class="drawer-brand"><div class="hero-logo">⚡</div><b>Sandeep ElectroFix</b><small>Powering Your Trust</small></div><div class="drawer-links"><button data-page="homePage">⌂ <span>Home</span></button><button data-page="estimatePage">▤ <span>Estimate List</span></button><button data-page="calculatorPage">⌘ <span>Calculator</span></button><button data-page="settingsPage">⚙ <span>Settings</span></button></div><div class="drawer-footer"><button id="drawerLang">EN / HI</button><small>Estimate List • v2.0</small></div></aside></div>
+
+<div id="sheetBackdrop" class="sheet-backdrop"><div class="sheet"><div class="handle"></div><div class="sheet-head"><div><span id="sheetStage" class="eyebrow"></span><h2 id="sheetTitle"></h2><small id="sheetSub"></small></div><button id="closeSheet" class="icon-btn">×</button></div><div id="optionArea"></div><div class="selection-actions"><button id="nextMaterial" class="cyber" data-ui="nextMaterial">Next →</button><button id="addEstimate" class="cyber gold" data-ui="addEstimate">Add to Estimate</button></div></div></div>
+
+<div id="modalBackdrop" class="modal-backdrop"><div class="modal-card"><div class="sheet-head"><div><span class="eyebrow">APP CONTROL</span><h2 id="modalTitle">Select</h2></div><button id="closeModal" class="icon-btn">×</button></div><div id="modalBody"></div></div></div>
+<script src="material.js"></script><script src="config.js"></script><script src="script.js"></script>
+</body></html>

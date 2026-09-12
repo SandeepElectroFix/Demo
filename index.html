@@ -1,113 +1,1897 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#050816">
-  <title>Sandeep ElectroFix — Project Estimator</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>Estimate List — Sandeep ElectroFix</title>
+
+<style>
+:root{
+  --bg:#050816;
+  --panel:#0b1224;
+  --panel2:#101a31;
+  --blue:#0ea5e9;
+  --blue2:#38bdf8;
+  --gold:#facc15;
+  --gold2:#f59e0b;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --danger:#ef4444;
+  --success:#22c55e;
+  --border:rgba(56,189,248,.35);
+  --shadow:0 12px 35px rgba(0,0,0,.45);
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  overflow-x:hidden;
+}
+
+button,input,select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.hidden{
+  display:none!important;
+}
+
+/* LOADER */
+#loading-screen{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  background:#050816;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:16px;
+}
+
+.loader-ring{
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  border:3px solid rgba(14,165,233,.18);
+  border-top-color:var(--blue);
+  border-right-color:var(--gold);
+  animation:spin 1s linear infinite;
+}
+
+.loader-text{
+  color:var(--blue2);
+  font-size:13px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+/* HEADER */
+header{
+  position:sticky;
+  top:0;
+  z-index:500;
+  background:rgba(5,8,22,.96);
+  border-bottom:1px solid rgba(14,165,233,.25);
+  box-shadow:0 5px 25px rgba(0,0,0,.35);
+}
+
+.header-inner{
+  min-height:66px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.brand-logo{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  object-fit:contain;
+  border:1px solid rgba(250,204,21,.55);
+  box-shadow:0 0 15px rgba(14,165,233,.35);
+  background:#000;
+}
+
+.brand-text{
+  min-width:0;
+}
+
+.brand-name{
+  font-size:16px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.brand-sub{
+  font-size:10px;
+  color:var(--gold);
+  margin-top:2px;
+  white-space:nowrap;
+}
+
+.header-actions{
+  display:flex;
+  gap:7px;
+}
+
+.icon-btn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:#0b1224;
+  color:white;
+  border:1px solid rgba(56,189,248,.35);
+  display:grid;
+  place-items:center;
+  position:relative;
+  overflow:hidden;
+}
+
+/* ROTATING LAST-TOUCHED BORDER */
+.active-touch{
+  border-color:transparent!important;
+}
+
+.active-touch::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius:inherit;
+  background:conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 55deg,
+    var(--blue2) 90deg,
+    var(--gold) 145deg,
+    transparent 205deg,
+    transparent 360deg
+  );
+  animation:rotateBorder 1.4s linear infinite;
+  z-index:0;
+}
+
+.active-touch::after{
+  content:"";
+  position:absolute;
+  inset:2px;
+  border-radius:10px;
+  background:#0b1224;
+  z-index:1;
+}
+
+.active-touch>*{
+  position:relative;
+  z-index:2;
+}
+
+@keyframes rotateBorder{
+  to{transform:rotate(360deg)}
+}
+
+/* APP */
+#app{
+  max-width:1000px;
+  margin:auto;
+  padding-bottom:100px;
+}
+
+.page{
+  padding:16px;
+}
+
+.page-title{
+  font-size:24px;
+  font-weight:900;
+  margin:5px 0 5px;
+}
+
+.page-subtitle{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:18px;
+}
+
+/* SEARCH */
+.search-box{
+  position:relative;
+  margin-bottom:18px;
+}
+
+.search-box input{
+  width:100%;
+  height:46px;
+  padding:0 15px 0 42px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  outline:none;
+  background:#091126;
+  color:white;
+}
+
+.search-icon{
+  position:absolute;
+  left:15px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--blue2);
+}
+
+/* STAGES */
+.stage-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.stage-card{
+  position:relative;
+  min-height:115px;
+  padding:16px;
+  border-radius:18px;
+  overflow:hidden;
+  background:linear-gradient(145deg,#0c162d,#070c1d);
+  border:1px solid rgba(56,189,248,.3);
+  box-shadow:var(--shadow);
+  transition:.22s ease;
+}
+
+.stage-card:active{
+  transform:scale(.97);
+}
+
+.stage-card::after{
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  right:-35px;
+  bottom:-35px;
+  border-radius:50%;
+  border:1px solid rgba(250,204,21,.2);
+  box-shadow:0 0 30px rgba(14,165,233,.12);
+}
+
+.stage-number{
+  font-size:10px;
+  color:var(--gold);
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.stage-name{
+  font-size:15px;
+  font-weight:800;
+  margin-top:8px;
+  line-height:1.25;
+}
+
+.stage-count{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:7px;
+}
+
+/* MATERIALS */
+.material-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+.material-card{
+  min-height:100px;
+  padding:8px;
+  border-radius:15px;
+  background:#091126;
+  border:1px solid rgba(56,189,248,.28);
+  position:relative;
+  overflow:hidden;
+  transition:.2s;
+}
+
+.material-card:active{
+  transform:scale(.97);
+}
+
+.material-image{
+  width:100%;
+  height:68px;
+  object-fit:contain;
+  display:block;
+  border-radius:10px;
+  background:#050816;
+}
+
+.material-name{
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+  margin-top:7px;
+}
+
+/* SELECTION */
+.flow-box{
+  background:#091126;
+  border:1px solid rgba(56,189,248,.25);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:14px;
+}
+
+.flow-title{
+  color:var(--blue2);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.flow-current{
+  font-size:18px;
+  font-weight:900;
+  margin-top:5px;
+}
+
+.option-title{
+  color:var(--muted);
+  font-size:11px;
+  margin:15px 0 8px;
+  text-transform:uppercase;
+}
+
+.options{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+
+.option{
+  min-height:43px;
+  padding:8px 10px;
+  border-radius:11px;
+  color:white;
+  background:#0b1730;
+  border:1px solid rgba(56,189,248,.3);
+  position:relative;
+  overflow:hidden;
+}
+
+.option.selected{
+  border-color:var(--gold);
+  box-shadow:0 0 13px rgba(250,204,21,.18);
+}
+
+.option small{
+  display:block;
+  color:var(--muted);
+  font-size:9px;
+}
+
+/* INPUT */
+.qty-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.field label{
+  font-size:10px;
+  color:var(--muted);
+}
+
+.field input,
+.field select{
+  width:100%;
+  height:44px;
+  border-radius:11px;
+  border:1px solid rgba(56,189,248,.3);
+  background:#070e21;
+  color:white;
+  outline:none;
+  padding:0 11px;
+}
+
+/* ACTIONS */
+.action-row{
+  display:flex;
+  gap:9px;
+  margin-top:16px;
+}
+
+.action-btn{
+  flex:1;
+  min-height:46px;
+  border-radius:13px;
+  border:1px solid rgba(56,189,248,.4);
+  background:#0b1730;
+  color:white;
+  font-weight:800;
+  position:relative;
+  overflow:hidden;
+}
+
+.action-btn.primary{
+  background:linear-gradient(135deg,#0284c7,#0ea5e9);
+  border-color:#38bdf8;
+}
+
+.action-btn.gold{
+  background:linear-gradient(135deg,#d97706,#f59e0b);
+  color:#080b15;
+  border-color:#facc15;
+}
+
+/* ESTIMATE */
+.estimate-list{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+
+.estimate-item{
+  background:#091126;
+  border:1px solid rgba(56,189,248,.25);
+  border-radius:14px;
+  padding:11px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.estimate-info{
+  min-width:0;
+}
+
+.estimate-name{
+  font-size:13px;
+  font-weight:800;
+}
+
+.estimate-meta{
+  color:var(--muted);
+  font-size:10px;
+  margin-top:5px;
+  line-height:1.5;
+}
+
+.delete-btn{
+  width:34px;
+  height:34px;
+  flex:none;
+  border-radius:10px;
+  background:#29101a;
+  border:1px solid rgba(239,68,68,.35);
+  color:#f87171;
+}
+
+/* MASTER CONTROL */
+.control-group{
+  margin-bottom:14px;
+  padding:14px;
+  border-radius:15px;
+  background:#091126;
+  border:1px solid rgba(56,189,248,.22);
+}
+
+.control-heading{
+  font-size:13px;
+  font-weight:900;
+  color:var(--gold);
+  margin-bottom:10px;
+}
+
+.control-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(148,163,184,.08);
+}
+
+.control-row:last-child{
+  border-bottom:0;
+}
+
+.control-name{
+  font-size:12px;
+}
+
+.switch{
+  position:relative;
+  width:42px;
+  height:23px;
+  flex:none;
+}
+
+.switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.slider{
+  position:absolute;
+  inset:0;
+  border-radius:30px;
+  background:#1e293b;
+  border:1px solid #334155;
+}
+
+.slider::before{
+  content:"";
+  position:absolute;
+  width:17px;
+  height:17px;
+  left:2px;
+  top:2px;
+  border-radius:50%;
+  background:#94a3b8;
+  transition:.2s;
+}
+
+.switch input:checked + .slider{
+  background:#075985;
+  border-color:#0ea5e9;
+}
+
+.switch input:checked + .slider::before{
+  transform:translateX(18px);
+  background:#38bdf8;
+}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  position:fixed;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  width:min(94%,500px);
+  z-index:900;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:7px;
+  padding:7px;
+  border-radius:17px;
+  background:rgba(8,14,31,.96);
+  border:1px solid rgba(56,189,248,.3);
+  box-shadow:0 10px 35px rgba(0,0,0,.55);
+}
+
+.nav-btn{
+  min-height:43px;
+  border-radius:12px;
+  border:1px solid transparent;
+  color:#94a3b8;
+  background:transparent;
+  font-size:11px;
+  font-weight:800;
+}
+
+.nav-btn.active{
+  color:white;
+  background:#0b1730;
+  border-color:rgba(14,165,233,.35);
+}
+
+/* TOAST */
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:78px;
+  transform:translate(-50%,20px);
+  opacity:0;
+  pointer-events:none;
+  z-index:9999;
+  padding:11px 15px;
+  border-radius:12px;
+  background:#0f172a;
+  border:1px solid rgba(56,189,248,.4);
+  color:white;
+  font-size:12px;
+  transition:.25s;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translate(-50%,0);
+}
+
+/* RESPONSIVE */
+@media(max-width:520px){
+  .stage-grid,
+  .material-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(min-width:800px){
+  .stage-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .material-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+}
+</style>
 </head>
+
 <body>
-  <div id="app">
-    <header class="topbar">
-      <button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button>
-      <div class="brand">
-        <div class="brand-mark">SE<span>⚡</span></div>
-        <div><strong>Sandeep ElectroFix</strong><small>Project Estimator</small></div>
+
+<div id="loading-screen">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Sandeep ElectroFix</div>
+</div>
+
+<div id="app" class="hidden">
+
+<header id="mainHeader">
+  <div class="header-inner">
+
+    <div class="brand">
+      <img
+        class="brand-logo"
+        src="logo.png"
+        alt="Sandeep ElectroFix"
+        onerror="this.style.display='none'"
+      >
+
+      <div class="brand-text">
+        <div class="brand-name">Estimate List</div>
+        <div class="brand-sub">Sandeep ElectroFix</div>
       </div>
-      <div class="top-actions">
-        <button class="icon-btn" id="langBtn">EN</button>
-        <button class="icon-btn" id="estimateBtn">📋 <b id="estimateCount">0</b></button>
-      </div>
-    </header>
+    </div>
 
-    <main>
-      <section class="hero">
-        <div>
-          <span class="eyebrow">ELECTRICAL WORK</span>
-          <h1>Project <span>Material List</span></h1>
-          <p>Fast material selection, quantity & estimate — built for site work.</p>
-        </div>
-        <div class="stat"><b id="materialCount">69</b><span>Materials</span></div>
-      </section>
+    <div class="header-actions">
+      <button
+        id="searchBtn"
+        class="icon-btn touch-target"
+        onclick="showPage('home')"
+        aria-label="Search">
+        🔎
+      </button>
 
-      <section class="search-wrap">
-        <span>⌕</span>
-        <input id="searchInput" autocomplete="off" placeholder="Search material, type, size, colour, brand...">
-        <button id="clearSearch">×</button>
-      </section>
+      <button
+        id="settingsBtn"
+        class="icon-btn touch-target"
+        onclick="showPage('settings')"
+        aria-label="Settings">
+        ⚙️
+      </button>
+    </div>
 
-      <section>
-        <div class="section-head">
-          <div><span class="eyebrow">STEP 01</span><h2>Project Stages</h2></div>
-          <span class="hint">Tap a stage to begin</span>
-        </div>
-        <div id="stageGrid" class="stage-grid"></div>
-      </section>
+  </div>
+</header>
 
-      <section id="materialsSection" class="hidden">
-        <div class="section-head">
-          <div><span class="eyebrow">STEP 02</span><h2 id="stageTitle">Materials</h2></div>
-          <button class="ghost-btn" id="allMaterialsBtn">All</button>
-        </div>
-        <div id="materialGrid" class="material-grid"></div>
-      </section>
+<main>
 
-      <section id="selectionPanel" class="selection-panel hidden">
-        <div class="panel-glow"></div>
-        <div class="selection-head">
-          <div>
-            <span class="eyebrow">STEP 03</span>
-            <h2 id="selectedMaterial">Select Material</h2>
-            <p id="selectedMeta">Choose options below</p>
-          </div>
-          <button class="icon-btn" id="closeSelection">×</button>
-        </div>
+<!-- HOME -->
+<section id="page-home" class="page">
 
-        <div id="dynamicOptions" class="options"></div>
-
-        <div class="form-grid">
-          <label>Quantity<input id="qtyInput" type="number" min="0" step="any" value="1"></label>
-          <label>Unit<select id="unitInput"><option value="pcs">PCS</option><option value="meter">Meter</option><option value="box">Box</option><option value="roll">Roll</option><option value="bundle">Bundle</option></select></label>
-          <label>Rate (₹)<input id="rateInput" type="number" min="0" step="0.01" value="0"></label>
-          <div class="amount-box"><small>AMOUNT</small><strong id="amountOutput">₹0.00</strong></div>
-        </div>
-
-        <button class="primary-btn" id="addBtn">＋ ADD TO ESTIMATE</button>
-      </section>
-
-      <section id="estimateSection" class="estimate-section">
-        <div class="section-head">
-          <div><span class="eyebrow">STEP 04</span><h2>Estimate</h2></div>
-          <button class="ghost-btn danger" id="clearEstimate">Clear</button>
-        </div>
-        <div id="estimateEmpty" class="empty">📋<h3>Estimate Empty</h3><p>Materials add करने के बाद आपका estimate यहाँ दिखाई देगा।</p></div>
-        <div id="estimateList"></div>
-        <div id="estimateTotal" class="total-card hidden">
-          <span>Grand Total</span><strong id="grandTotal">₹0.00</strong>
-        </div>
-        <div id="estimateActions" class="action-row hidden">
-          <button class="secondary-btn" id="copyBtn">📋 Copy</button>
-          <button class="secondary-btn" id="printBtn">🖨 Print / PDF</button>
-        </div>
-      </section>
-    </main>
-
-    <div id="toast"></div>
-    <div id="menuOverlay" class="overlay hidden">
-      <div class="drawer">
-        <button class="icon-btn close-drawer" id="closeMenu">×</button>
-        <div class="brand-mark big">SE<span>⚡</span></div>
-        <h2>Sandeep ElectroFix</h2>
-        <p>Project Estimator</p>
-        <button class="drawer-item" id="scrollEstimate">📋 Estimate</button>
-        <button class="drawer-item" id="resetApp">↻ Reset App</button>
-      </div>
+  <div id="titleControl">
+    <div class="page-title">Material Estimate</div>
+    <div class="page-subtitle">
+      Select stage → material → options → quantity → add
     </div>
   </div>
 
-  <!-- Keep your existing database script BEFORE app.js.
-       Example: <script src="database.js"></script> -->
-  <script src="app.js"></script>
+  <div id="searchControl" class="search-box">
+    <span class="search-icon">⌕</span>
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="Search material..."
+      oninput="searchMaterials(this.value)"
+    >
+  </div>
+
+  <div id="stageContainer" class="stage-grid"></div>
+
+</section>
+
+<!-- MATERIAL PAGE -->
+<section id="page-materials" class="page hidden">
+
+  <button
+    id="backMaterials"
+    class="action-btn touch-target"
+    onclick="showPage('home')">
+    ← Back
+  </button>
+
+  <div class="page-title" id="materialStageTitle"></div>
+  <div class="page-subtitle">Material select करें</div>
+
+  <div id="materialContainer" class="material-grid"></div>
+
+</section>
+
+<!-- SELECT PAGE -->
+<section id="page-select" class="page hidden">
+
+  <button
+    class="action-btn touch-target"
+    onclick="showPage('materials')">
+    ← Back
+  </button>
+
+  <div class="flow-box">
+    <div class="flow-title">Selected Material</div>
+    <div id="selectedMaterialName" class="flow-current"></div>
+  </div>
+
+  <div id="selectionContainer"></div>
+
+</section>
+
+<!-- ESTIMATE PAGE -->
+<section id="page-estimate" class="page hidden">
+
+  <div class="page-title">My Estimate</div>
+
+  <div class="page-subtitle">
+    Added materials
+  </div>
+
+  <div id="estimateList" class="estimate-list"></div>
+
+  <div class="action-row">
+    <button
+      id="clearEstimate"
+      class="action-btn"
+      onclick="clearEstimate()">
+      Clear
+    </button>
+
+    <button
+      id="pdfBtn"
+      class="action-btn primary"
+      onclick="showToast('PDF module ready for next step')">
+      PDF
+    </button>
+  </div>
+
+</section>
+
+<!-- SETTINGS -->
+<section id="page-settings" class="page hidden">
+
+  <div class="page-title">Master Control</div>
+
+  <div class="page-subtitle">
+    हर UI element को अलग-अलग Show / Hide करें
+  </div>
+
+  <div id="masterControls"></div>
+
+</section>
+
+</main>
+
+<nav id="bottomNav" class="bottom-nav">
+
+  <button
+    id="navHome"
+    class="nav-btn touch-target active"
+    onclick="showPage('home')">
+    🏠<br>Home
+  </button>
+
+  <button
+    id="navEstimate"
+    class="nav-btn touch-target"
+    onclick="showPage('estimate')">
+    📋<br>Estimate
+  </button>
+
+  <button
+    id="navSettings"
+    class="nav-btn touch-target"
+    onclick="showPage('settings')">
+    ⚙️<br>Control
+  </button>
+
+</nav>
+
+<div id="toast" class="toast"></div>
+
+</div>
+
+<script src="config.js"></script>
+<script src="material.js"></script>
+
+<script>
+"use strict";
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+const UI_KEY = "sandeep_estimate_ui_config";
+const ESTIMATE_KEY = "sandeepEstimateItems";
+
+let uiConfig = {};
+let estimate = [];
+
+let currentStage = null;
+let currentMaterial = null;
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  loadSettings();
+  loadEstimate();
+
+  applyUIConfig();
+
+  renderStages();
+  renderEstimate();
+  renderMasterControls();
+
+  document.querySelectorAll(".touch-target").forEach(el => {
+    el.addEventListener("pointerdown", () => {
+      setLastTouched(el);
+    });
+  });
+
+  setTimeout(() => {
+    document.getElementById("loading-screen").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+  }, 500);
+
+});
+
+
+/* =========================================================
+   UI CONFIG
+========================================================= */
+
+function getDefaultUIConfig(){
+
+  return {
+    header:true,
+    logo:true,
+    search:true,
+    pageTitle:true,
+    stageCards:true,
+    materialImages:true,
+    materialNames:true,
+    quantity:true,
+    unit:true,
+    brand:true,
+    type:true,
+    subtype:true,
+    size:true,
+    colour:true,
+    rating:true,
+    wattage:true,
+    sensitivity:true,
+    curve:true,
+    cableSize:true,
+    estimate:true,
+    pdf:true,
+    bottomNav:true,
+    settings:true
+  };
+
+}
+
+
+function loadSettings(){
+
+  try{
+
+    const saved = localStorage.getItem(UI_KEY);
+
+    uiConfig = saved
+      ? {...getDefaultUIConfig(),...JSON.parse(saved)}
+      : getDefaultUIConfig();
+
+  }catch(e){
+
+    uiConfig = getDefaultUIConfig();
+
+  }
+
+}
+
+
+function saveSettings(){
+
+  localStorage.setItem(
+    UI_KEY,
+    JSON.stringify(uiConfig)
+  );
+
+}
+
+
+function applyUIConfig(){
+
+  toggle("mainHeader",uiConfig.header);
+  toggle(".brand-logo",uiConfig.logo);
+  toggle("#searchControl",uiConfig.search);
+  toggle("#titleControl",uiConfig.pageTitle);
+  toggle("#bottomNav",uiConfig.bottomNav);
+  toggle("#pdfBtn",uiConfig.pdf);
+  toggle("#clearEstimate",uiConfig.estimate);
+
+}
+
+
+/* =========================================================
+   MASTER CONTROL
+========================================================= */
+
+const CONTROL_GROUPS = {
+
+  "Main UI":{
+    header:"Header",
+    logo:"Logo",
+    pageTitle:"Page Title",
+    search:"Search",
+    bottomNav:"Bottom Navigation"
+  },
+
+  "Material Display":{
+    materialImages:"Material Image",
+    materialNames:"Material Name"
+  },
+
+  "Material Options":{
+    type:"Type",
+    subtype:"Subtype",
+    size:"Size",
+    colour:"Colour",
+    rating:"Rating",
+    wattage:"Wattage",
+    sensitivity:"Sensitivity",
+    curve:"Curve",
+    cableSize:"Cable Size"
+  },
+
+  "Estimate":{
+    quantity:"Quantity",
+    unit:"Unit",
+    brand:"Brand",
+    estimate:"Estimate",
+    pdf:"PDF"
+  }
+
+};
+
+
+function renderMasterControls(){
+
+  const root =
+    document.getElementById("masterControls");
+
+  root.innerHTML="";
+
+  Object.entries(CONTROL_GROUPS).forEach(
+    ([group,items])=>{
+
+      const box=document.createElement("div");
+      box.className="control-group";
+
+      const title=document.createElement("div");
+      title.className="control-heading";
+      title.textContent=group;
+
+      box.appendChild(title);
+
+      Object.entries(items).forEach(
+        ([key,label])=>{
+
+          const row=document.createElement("div");
+          row.className="control-row";
+
+          row.innerHTML=`
+
+            <span class="control-name">
+              ${escapeHTML(label)}
+            </span>
+
+            <label class="switch">
+
+              <input
+                type="checkbox"
+                ${uiConfig[key] ? "checked":""}
+                onchange="changeUI('${key}',this.checked)"
+              >
+
+              <span class="slider"></span>
+
+            </label>
+          `;
+
+          box.appendChild(row);
+
+        }
+      );
+
+      root.appendChild(box);
+
+    }
+  );
+
+}
+
+
+function changeUI(key,value){
+
+  uiConfig[key]=Boolean(value);
+
+  saveSettings();
+  applyUIConfig();
+
+  renderStages();
+
+  if(currentStage){
+    renderMaterials();
+  }
+
+  if(currentMaterial){
+    renderSelection();
+  }
+
+  showToast(
+    `${key} ${value ? "ON":"OFF"}`
+  );
+
+}
+
+
+/* =========================================================
+   STAGES
+========================================================= */
+
+function renderStages(){
+
+  const root =
+    document.getElementById("stageContainer");
+
+  root.innerHTML="";
+
+  if(!uiConfig.stageCards){
+
+    root.innerHTML=`
+      <div class="flow-box">
+        Stage cards are hidden from Master Control.
+      </div>
+    `;
+
+    return;
+  }
+
+  const stages =
+    Array.isArray(MATERIAL_LIST)
+      ? MATERIAL_LIST
+      : [];
+
+  stages.forEach((stage,index)=>{
+
+    const card=document.createElement("button");
+
+    card.className="stage-card touch-target";
+
+    card.onclick=()=>{
+
+      setLastTouched(card);
+
+      currentStage=stage;
+      showPage("materials");
+      renderMaterials();
+
+    };
+
+    card.innerHTML=`
+
+      <div class="stage-number">
+        Stage ${index+1}
+      </div>
+
+      <div class="stage-name">
+        ${escapeHTML(
+          stage.name?.en ||
+          stage.name ||
+          `Stage ${index+1}`
+        )}
+      </div>
+
+      <div class="stage-count">
+        ${(stage.materials||[]).length} materials
+      </div>
+
+    `;
+
+    root.appendChild(card);
+
+  });
+
+}
+
+
+/* =========================================================
+   MATERIALS
+========================================================= */
+
+function renderMaterials(){
+
+  const title =
+    document.getElementById("materialStageTitle");
+
+  title.textContent =
+    currentStage?.name?.en ||
+    currentStage?.name ||
+    "Materials";
+
+  const root =
+    document.getElementById("materialContainer");
+
+  root.innerHTML="";
+
+  const list =
+    currentStage?.materials || [];
+
+  list.forEach(material=>{
+
+    const card=document.createElement("button");
+
+    card.className="material-card touch-target";
+
+    card.onclick=()=>{
+
+      setLastTouched(card);
+
+      currentMaterial=material;
+
+      showPage("select");
+      renderSelection();
+
+    };
+
+
+    let imageHTML="";
+
+    if(uiConfig.materialImages){
+
+      const image =
+        material.image ||
+        "assets/material-placeholder.png";
+
+      imageHTML=`
+        <img
+          class="material-image"
+          src="${escapeAttr(image)}"
+          alt=""
+          onerror="this.style.display='none'"
+        >
+      `;
+
+    }
+
+
+    const nameHTML =
+      uiConfig.materialNames
+      ? `
+        <div class="material-name">
+          ${escapeHTML(
+            material.name?.en ||
+            material.name ||
+            "Material"
+          )}
+        </div>
+      `
+      : "";
+
+
+    card.innerHTML =
+      imageHTML +
+      nameHTML;
+
+    root.appendChild(card);
+
+  });
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function searchMaterials(value){
+
+  value =
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  document
+    .querySelectorAll(".material-card")
+    .forEach(card=>{
+
+      card.classList.toggle(
+        "hidden",
+        value &&
+        !card.innerText
+          .toLowerCase()
+          .includes(value)
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+function renderSelection(){
+
+  const root =
+    document.getElementById("selectionContainer");
+
+  root.innerHTML="";
+
+  if(!currentMaterial) return;
+
+
+  document.getElementById(
+    "selectedMaterialName"
+  ).textContent =
+    currentMaterial.name?.en ||
+    currentMaterial.name ||
+    "Material";
+
+
+  const options =
+    currentMaterial.options || {};
+
+
+  Object.entries(options).forEach(
+    ([key,value])=>{
+
+      if(!uiConfig[key]) return;
+
+      if(!Array.isArray(value)) return;
+
+      if(!value.length) return;
+
+      const section =
+        document.createElement("div");
+
+      section.innerHTML=`
+        <div class="option-title">
+          ${optionLabel(key)}
+        </div>
+      `;
+
+      const grid =
+        document.createElement("div");
+
+      grid.className="options";
+
+
+      value.forEach((option,index)=>{
+
+        const btn =
+          document.createElement("button");
+
+        btn.className="option touch-target";
+
+        btn.dataset.key=key;
+        btn.dataset.value=
+          typeof option === "object"
+            ? option.en
+            : option;
+
+
+        btn.innerHTML=
+          formatOption(option);
+
+
+        btn.onclick=()=>{
+
+          setLastTouched(btn);
+
+          section
+            .querySelectorAll(".option")
+            .forEach(x=>
+              x.classList.remove("selected")
+            );
+
+          btn.classList.add("selected");
+
+          selectionState[key]=
+            typeof option === "object"
+              ? option
+              : {
+                  en:String(option),
+                  hi:String(option)
+                };
+
+          /*
+            Important:
+            Selecting Next option does NOT
+            automatically add material.
+          */
+
+        };
+
+        grid.appendChild(btn);
+
+      });
+
+      section.appendChild(grid);
+      root.appendChild(section);
+
+    }
+  );
+
+
+  /* QTY / UNIT / BRAND */
+
+  if(uiConfig.quantity ||
+     uiConfig.unit ||
+     uiConfig.brand){
+
+    const qtyBox =
+      document.createElement("div");
+
+    qtyBox.className="flow-box";
+
+    qtyBox.innerHTML=`
+      <div class="qty-row">
+
+        ${
+          uiConfig.quantity
+          ? `
+            <div class="field">
+              <label>Quantity</label>
+              <input
+                id="qtyInput"
+                type="number"
+                min="0"
+                value="1"
+              >
+            </div>
+          `
+          : ""
+        }
+
+        ${
+          uiConfig.unit
+          ? `
+            <div class="field">
+              <label>Unit</label>
+              <select id="unitInput">
+                <option value="pcs">pcs</option>
+                <option value="mtr">mtr</option>
+                <option value="bndl">bndl</option>
+                <option value="doz">doz</option>
+                <option value="point">point</option>
+              </select>
+            </div>
+          `
+          : ""
+        }
+
+      </div>
+
+      ${
+        uiConfig.brand
+        ? `
+          <div
+            class="field"
+            style="margin-top:10px"
+          >
+            <label>Brand</label>
+
+            <select id="brandInput">
+              <option>Polycab</option>
+              <option>Finolex</option>
+              <option>Havells</option>
+              <option>AKG</option>
+              <option>Precision</option>
+              <option>Other</option>
+              <option>Non Brand Local</option>
+              <option>Skip</option>
+            </select>
+          </div>
+        `
+        : ""
+      }
+    `;
+
+    root.appendChild(qtyBox);
+
+  }
+
+
+  /* FINAL ACTION */
+
+  const actions =
+    document.createElement("div");
+
+  actions.className="action-row";
+
+  actions.innerHTML=`
+
+    <button
+      class="action-btn"
+      onclick="showPage('materials')">
+      ← Previous
+    </button>
+
+    <button
+      id="selectAddButton"
+      class="action-btn gold touch-target"
+      onclick="addCurrentMaterial()">
+      ✓ Select & Add
+    </button>
+
+  `;
+
+  root.appendChild(actions);
+
+}
+
+
+/* =========================================================
+   SELECTION STATE
+========================================================= */
+
+let selectionState={};
+
+
+function resetSelection(){
+
+  selectionState={};
+
+}
+
+
+function addCurrentMaterial(){
+
+  if(!currentMaterial) return;
+
+
+  const item={
+    id:Date.now(),
+    material:
+      currentMaterial.name?.en ||
+      currentMaterial.name ||
+      "Material",
+
+    selections:{...selectionState},
+
+    qty:
+      Number(
+        document.getElementById("qtyInput")?.value || 1
+      ),
+
+    unit:
+      document.getElementById("unitInput")?.value || "",
+
+    brand:
+      document.getElementById("brandInput")?.value || ""
+
+  };
+
+
+  estimate.push(item);
+
+  saveEstimate();
+  renderEstimate();
+
+  resetSelection();
+
+  showToast("Material added to estimate");
+
+  showPage("estimate");
+
+}
+
+
+/* =========================================================
+   ESTIMATE
+========================================================= */
+
+function loadEstimate(){
+
+  try{
+
+    estimate =
+      JSON.parse(
+        localStorage.getItem(ESTIMATE_KEY) || "[]"
+      );
+
+    if(!Array.isArray(estimate)){
+      estimate=[];
+    }
+
+  }catch(e){
+
+    estimate=[];
+
+  }
+
+}
+
+
+function saveEstimate(){
+
+  localStorage.setItem(
+    ESTIMATE_KEY,
+    JSON.stringify(estimate)
+  );
+
+}
+
+
+function renderEstimate(){
+
+  const root =
+    document.getElementById("estimateList");
+
+  if(!root) return;
+
+  root.innerHTML="";
+
+
+  if(!estimate.length){
+
+    root.innerHTML=`
+      <div class="flow-box">
+        <div class="flow-title">
+          Estimate Empty
+        </div>
+
+        <div style="margin-top:7px;color:#94a3b8;font-size:12px">
+          Material select करके यहाँ add करें।
+        </div>
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  estimate.forEach((item,index)=>{
+
+    const row =
+      document.createElement("div");
+
+    row.className="estimate-item";
+
+
+    let meta=[];
+
+    if(item.qty)
+      meta.push(`${item.qty} ${item.unit}`);
+
+    if(item.brand)
+      meta.push(item.brand);
+
+
+    if(item.selections){
+
+      Object.entries(item.selections)
+        .forEach(([key,val])=>{
+
+          const text =
+            typeof val === "object"
+              ? val.en
+              : val;
+
+          if(text)
+            meta.push(text);
+
+        });
+
+    }
+
+
+    row.innerHTML=`
+
+      <div class="estimate-info">
+
+        <div class="estimate-name">
+          ${index+1}. ${escapeHTML(item.material)}
+        </div>
+
+        <div class="estimate-meta">
+          ${escapeHTML(meta.join(" • "))}
+        </div>
+
+      </div>
+
+      <button
+        class="delete-btn"
+        onclick="deleteEstimate(${item.id})">
+        ×
+      </button>
+
+    `;
+
+    root.appendChild(row);
+
+  });
+
+}
+
+
+function deleteEstimate(id){
+
+  estimate =
+    estimate.filter(x=>x.id!==id);
+
+  saveEstimate();
+  renderEstimate();
+
+  showToast("Item deleted");
+
+}
+
+
+function clearEstimate(){
+
+  if(!estimate.length) return;
+
+  if(
+    !confirm(
+      "पूरी estimate list clear करनी है?"
+    )
+  ) return;
+
+  estimate=[];
+
+  saveEstimate();
+  renderEstimate();
+
+  showToast("Estimate cleared");
+
+}
+
+
+/* =========================================================
+   PAGE NAVIGATION
+========================================================= */
+
+function showPage(page){
+
+  const pages=[
+    "home",
+    "materials",
+    "select",
+    "estimate",
+    "settings"
+  ];
+
+  pages.forEach(name=>{
+
+    const el =
+      document.getElementById(
+        "page-"+name
+      );
+
+    if(el){
+      el.classList.toggle(
+        "hidden",
+        name!==page
+      );
+    }
+
+  });
+
+
+  document
+    .querySelectorAll(".nav-btn")
+    .forEach(x=>x.classList.remove("active"));
+
+
+  if(page==="home")
+    document
+      .getElementById("navHome")
+      ?.classList.add("active");
+
+  if(page==="estimate")
+    document
+      .getElementById("navEstimate")
+      ?.classList.add("active");
+
+  if(page==="settings")
+    document
+      .getElementById("navSettings")
+      ?.classList.add("active");
+
+}
+
+
+/* =========================================================
+   LAST TOUCHED ROTATING BORDER
+========================================================= */
+
+let lastTouched=null;
+
+function setLastTouched(element){
+
+  if(lastTouched &&
+     lastTouched!==element){
+
+    lastTouched.classList.remove(
+      "active-touch"
+    );
+
+  }
+
+  lastTouched=element;
+
+  element.classList.add(
+    "active-touch"
+  );
+
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function toggle(selector,show){
+
+  document
+    .querySelectorAll(selector)
+    .forEach(el=>{
+      el.classList.toggle(
+        "hidden",
+        !show
+      );
+    });
+
+}
+
+
+function optionLabel(key){
+
+  const labels={
+    type:"Type",
+    subtype:"Subtype",
+    size:"Size",
+    colour:"Colour",
+    rating:"Rating",
+    wattage:"Wattage",
+    sensitivity:"Sensitivity",
+    curve:"Curve",
+    cableSize:"Cable Size"
+  };
+
+  return labels[key] || key;
+
+}
+
+
+function formatOption(option){
+
+  if(
+    option &&
+    typeof option==="object"
+  ){
+
+    return `
+      ${escapeHTML(option.en || "")}
+      ${
+        option.hi
+        ? `<small>${escapeHTML(option.hi)}</small>`
+        : ""
+      }
+    `;
+
+  }
+
+  return escapeHTML(String(option));
+
+}
+
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+
+function escapeAttr(value){
+
+  return escapeHTML(value);
+
+}
+
+
+let toastTimer=null;
+
+function showToast(message){
+
+  const toast =
+    document.getElementById("toast");
+
+  toast.textContent=message;
+
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+
+  toastTimer=setTimeout(
+    ()=>toast.classList.remove("show"),
+    1800
+  );
+
+}
+
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+window.addEventListener("popstate",()=>{
+  showPage("home");
+});
+
+</script>
+
 </body>
 </html>

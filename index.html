@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050816">
+  <title>Sandeep ElectroFix — Project Estimator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Menu">☰</button>
+      <div class="brand">
+        <div class="brand-mark">SE<span>⚡</span></div>
+        <div><strong>Sandeep ElectroFix</strong><small>Project Estimator</small></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="langBtn">EN</button>
+        <button class="icon-btn" id="estimateBtn">📋 <b id="estimateCount">0</b></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <span class="eyebrow">ELECTRICAL WORK</span>
+          <h1>Project <span>Material List</span></h1>
+          <p>Fast material selection, quantity & estimate — built for site work.</p>
+        </div>
+        <div class="stat"><b id="materialCount">69</b><span>Materials</span></div>
+      </section>
+
+      <section class="search-wrap">
+        <span>⌕</span>
+        <input id="searchInput" autocomplete="off" placeholder="Search material, type, size, colour, brand...">
+        <button id="clearSearch">×</button>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <div><span class="eyebrow">STEP 01</span><h2>Project Stages</h2></div>
+          <span class="hint">Tap a stage to begin</span>
+        </div>
+        <div id="stageGrid" class="stage-grid"></div>
+      </section>
+
+      <section id="materialsSection" class="hidden">
+        <div class="section-head">
+          <div><span class="eyebrow">STEP 02</span><h2 id="stageTitle">Materials</h2></div>
+          <button class="ghost-btn" id="allMaterialsBtn">All</button>
+        </div>
+        <div id="materialGrid" class="material-grid"></div>
+      </section>
+
+      <section id="selectionPanel" class="selection-panel hidden">
+        <div class="panel-glow"></div>
+        <div class="selection-head">
+          <div>
+            <span class="eyebrow">STEP 03</span>
+            <h2 id="selectedMaterial">Select Material</h2>
+            <p id="selectedMeta">Choose options below</p>
+          </div>
+          <button class="icon-btn" id="closeSelection">×</button>
+        </div>
+
+        <div id="dynamicOptions" class="options"></div>
+
+        <div class="form-grid">
+          <label>Quantity<input id="qtyInput" type="number" min="0" step="any" value="1"></label>
+          <label>Unit<select id="unitInput"><option value="pcs">PCS</option><option value="meter">Meter</option><option value="box">Box</option><option value="roll">Roll</option><option value="bundle">Bundle</option></select></label>
+          <label>Rate (₹)<input id="rateInput" type="number" min="0" step="0.01" value="0"></label>
+          <div class="amount-box"><small>AMOUNT</small><strong id="amountOutput">₹0.00</strong></div>
+        </div>
+
+        <button class="primary-btn" id="addBtn">＋ ADD TO ESTIMATE</button>
+      </section>
+
+      <section id="estimateSection" class="estimate-section">
+        <div class="section-head">
+          <div><span class="eyebrow">STEP 04</span><h2>Estimate</h2></div>
+          <button class="ghost-btn danger" id="clearEstimate">Clear</button>
+        </div>
+        <div id="estimateEmpty" class="empty">📋<h3>Estimate Empty</h3><p>Materials add करने के बाद आपका estimate यहाँ दिखाई देगा।</p></div>
+        <div id="estimateList"></div>
+        <div id="estimateTotal" class="total-card hidden">
+          <span>Grand Total</span><strong id="grandTotal">₹0.00</strong>
+        </div>
+        <div id="estimateActions" class="action-row hidden">
+          <button class="secondary-btn" id="copyBtn">📋 Copy</button>
+          <button class="secondary-btn" id="printBtn">🖨 Print / PDF</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast"></div>
+    <div id="menuOverlay" class="overlay hidden">
+      <div class="drawer">
+        <button class="icon-btn close-drawer" id="closeMenu">×</button>
+        <div class="brand-mark big">SE<span>⚡</span></div>
+        <h2>Sandeep ElectroFix</h2>
+        <p>Project Estimator</p>
+        <button class="drawer-item" id="scrollEstimate">📋 Estimate</button>
+        <button class="drawer-item" id="resetApp">↻ Reset App</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keep your existing database script BEFORE app.js.
+       Example: <script src="database.js"></script> -->
+  <script src="app.js"></script>
+</body>
+</html>

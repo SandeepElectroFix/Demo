@@ -1,197 +1,456 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#050816">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#050816"
+  >
+
+  <meta
+    name="mobile-web-app-capable"
+    content="yes"
+  >
 
   <title>Estimate List - Sandeep ElectroFix</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
-  <!-- LOADING -->
-  <div id="loadingScreen" class="loading-screen">
-    <div class="loading-logo">SE</div>
-    <div class="loading-title">Estimate List</div>
-    <div class="loading-subtitle">Sandeep ElectroFix</div>
+  <!-- ======================================================
+       LOADING SCREEN
+       ====================================================== -->
+
+  <div
+    id="loadingScreen"
+    class="loading-screen"
+  >
+
+    <div class="loading-logo">
+      SE
+    </div>
+
+    <div class="loading-title">
+      Estimate List
+    </div>
+
+    <div class="loading-subtitle">
+      Sandeep ElectroFix
+    </div>
+
     <div class="loading-line"></div>
+
   </div>
 
-  <!-- APP -->
-  <div id="app" class="app hidden">
 
-    <!-- TOP BAR -->
-    <header id="topbar" class="topbar">
+  <!-- ======================================================
+       APP
+       ====================================================== -->
 
-      <button id="menuBtn" class="top-icon-btn" type="button">
+  <div
+    id="app"
+    class="app hidden"
+  >
+
+
+    <!-- ====================================================
+         TOP BAR
+         ==================================================== -->
+
+    <header
+      id="topbar"
+      class="topbar"
+    >
+
+      <button
+        id="menuBtn"
+        class="top-icon-btn"
+        type="button"
+        aria-label="Menu"
+      >
         ☰
       </button>
 
+
       <div class="top-title-area">
-        <div id="pageTitle" class="page-title">Estimate List</div>
-        <div class="page-subtitle">Sandeep ElectroFix</div>
+
+        <div
+          id="pageTitle"
+          class="page-title"
+        >
+          Estimate List
+        </div>
+
+        <div class="page-subtitle">
+          Sandeep ElectroFix
+        </div>
+
       </div>
 
-      <button id="languageBtn" class="language-btn" type="button">
+
+      <button
+        id="languageBtn"
+        class="language-btn"
+        type="button"
+      >
         हिंदी
       </button>
 
     </header>
 
 
-    <!-- SIDE MENU -->
-    <aside id="sideMenu" class="side-menu">
+    <!-- ====================================================
+         SIDE MENU
+         ==================================================== -->
+
+    <aside
+      id="sideMenu"
+      class="side-menu"
+    >
 
       <div class="side-menu-head">
-        <div class="side-logo">SE</div>
 
-        <div>
-          <strong>Sandeep ElectroFix</strong>
-          <small>Powering Your Trust</small>
+        <div class="side-logo">
+          SE
         </div>
 
-        <button id="closeMenuBtn" class="close-menu-btn" type="button">
+
+        <div class="side-brand-text">
+
+          <strong>
+            Sandeep ElectroFix
+          </strong>
+
+          <small>
+            Powering Your Trust
+          </small>
+
+        </div>
+
+
+        <button
+          id="closeMenuBtn"
+          class="close-menu-btn"
+          type="button"
+        >
           ×
         </button>
+
       </div>
+
 
       <div class="side-menu-body">
 
-        <button class="menu-item" data-page="home">
+        <button
+          class="menu-item"
+          data-page="home"
+          type="button"
+        >
           <span>⌂</span>
           <span data-i18n="home">Home</span>
         </button>
 
-        <button class="menu-item" data-page="estimate">
+
+        <button
+          class="menu-item"
+          data-page="estimate"
+          type="button"
+        >
           <span>▤</span>
           <span data-i18n="estimate">Estimate</span>
         </button>
 
-        <button class="menu-item" data-page="calculator">
+
+        <button
+          class="menu-item"
+          data-page="calculator"
+          type="button"
+        >
           <span>∑</span>
           <span data-i18n="calculator">Calculator</span>
         </button>
 
-        <button class="menu-item" data-page="settings">
+
+        <button
+          class="menu-item"
+          data-page="settings"
+          type="button"
+        >
           <span>⚙</span>
           <span data-i18n="settings">Settings</span>
         </button>
 
       </div>
+
     </aside>
 
-    <div id="menuOverlay" class="menu-overlay"></div>
+
+    <div
+      id="menuOverlay"
+      class="menu-overlay"
+    ></div>
 
 
-    <!-- MAIN -->
-    <main id="mainContent" class="main-content">
+    <!-- ====================================================
+         MAIN
+         ==================================================== -->
 
-      <!-- HOME -->
-      <section id="homePage" class="page">
+    <main
+      id="mainContent"
+      class="main-content"
+    >
 
-        <div class="hero">
-          <div class="hero-kicker" data-i18n="welcome">WELCOME</div>
+
+      <!-- ==================================================
+           HOME
+           ================================================== -->
+
+      <section
+        id="homePage"
+        class="page"
+      >
+
+        <div
+          id="hero"
+          class="hero"
+        >
+
+          <div class="hero-kicker">
+            <span data-i18n="welcome">
+              WELCOME
+            </span>
+          </div>
+
 
           <h1>
-            <span data-i18n="estimateList">Estimate List</span>
+            <span data-i18n="estimateList">
+              Estimate List
+            </span>
           </h1>
 
+
           <p data-i18n="heroText">
-            Select your electrical material stage and prepare your estimate quickly.
+            Select your electrical material stage and prepare
+            your estimate quickly.
           </p>
+
         </div>
 
-        <div id="stageGrid" class="stage-grid"></div>
+
+        <div
+          id="stageGrid"
+          class="stage-grid"
+        ></div>
 
       </section>
 
 
-      <!-- ESTIMATE -->
-      <section id="estimatePage" class="page hidden">
+      <!-- ==================================================
+           ESTIMATE
+           ================================================== -->
+
+      <section
+        id="estimatePage"
+        class="page hidden"
+      >
 
         <div class="page-heading-row">
 
           <div>
-            <div class="section-kicker" data-i18n="currentEstimate">
-              CURRENT ESTIMATE
+
+            <div class="section-kicker">
+              <span data-i18n="currentEstimate">
+                CURRENT ESTIMATE
+              </span>
             </div>
 
             <h2 data-i18n="estimate">
               Estimate
             </h2>
+
           </div>
 
-          <div id="estimateCount" class="count-badge">
+
+          <div
+            id="estimateCount"
+            class="count-badge"
+          >
             0
           </div>
 
         </div>
 
-        <div id="estimateList" class="estimate-list"></div>
 
-        <div id="estimateEmpty" class="empty-state">
-          <div class="empty-icon">▤</div>
-          <h3 data-i18n="noItems">No items added</h3>
+        <div
+          id="estimateList"
+          class="estimate-list"
+        ></div>
+
+
+        <div
+          id="estimateEmpty"
+          class="empty-state"
+        >
+
+          <div class="empty-icon">
+            ▤
+          </div>
+
+
+          <h3 data-i18n="noItems">
+            No items added
+          </h3>
+
+
           <p data-i18n="noItemsText">
             Add materials from a stage to create your estimate.
           </p>
 
-          <button id="goHomeBtn" class="primary-btn" type="button">
-            <span data-i18n="goHome">Go to Home</span>
+
+          <button
+            id="goHomeBtn"
+            class="primary-btn"
+            type="button"
+          >
+            <span data-i18n="goHome">
+              Go to Home
+            </span>
           </button>
+
         </div>
 
       </section>
 
 
-      <!-- CALCULATOR -->
-      <section id="calculatorPage" class="page hidden">
+      <!-- ==================================================
+           CALCULATOR
+           ================================================== -->
+
+      <section
+        id="calculatorPage"
+        class="page hidden"
+      >
 
         <div class="page-heading-row">
+
           <div>
-            <div class="section-kicker">ELECTRICAL</div>
-            <h2 data-i18n="calculator">Calculator</h2>
+
+            <div class="section-kicker">
+              ELECTRICAL
+            </div>
+
+            <h2 data-i18n="calculator">
+              Calculator
+            </h2>
+
           </div>
+
         </div>
+
 
         <div class="calculator-card">
 
-          <div class="calculator-title" data-i18n="ohmsLaw">
+          <div
+            class="calculator-title"
+            data-i18n="ohmsLaw"
+          >
             Ohm's Law
           </div>
+
 
           <div class="calc-grid">
 
             <label>
-              <span data-i18n="voltage">Voltage</span>
-              <input id="calcVoltage" type="number" inputmode="decimal" placeholder="V">
+
+              <span data-i18n="voltage">
+                Voltage
+              </span>
+
+              <input
+                id="calcVoltage"
+                type="number"
+                inputmode="decimal"
+                placeholder="V"
+              >
+
             </label>
 
-            <label>
-              <span data-i18n="current">Current</span>
-              <input id="calcCurrent" type="number" inputmode="decimal" placeholder="A">
-            </label>
 
             <label>
-              <span data-i18n="power">Power</span>
-              <input id="calcPower" type="number" inputmode="decimal" placeholder="W">
+
+              <span data-i18n="current">
+                Current
+              </span>
+
+              <input
+                id="calcCurrent"
+                type="number"
+                inputmode="decimal"
+                placeholder="A"
+              >
+
             </label>
 
+
             <label>
-              <span data-i18n="resistance">Resistance</span>
-              <input id="calcResistance" type="number" inputmode="decimal" placeholder="Ω">
+
+              <span data-i18n="power">
+                Power
+              </span>
+
+              <input
+                id="calcPower"
+                type="number"
+                inputmode="decimal"
+                placeholder="W"
+              >
+
+            </label>
+
+
+            <label>
+
+              <span data-i18n="resistance">
+                Resistance
+              </span>
+
+              <input
+                id="calcResistance"
+                type="number"
+                inputmode="decimal"
+                placeholder="Ω"
+              >
+
             </label>
 
           </div>
 
-          <button id="calculateBtn" class="primary-btn" type="button">
-            <span data-i18n="calculate">Calculate</span>
+
+          <button
+            id="calculateBtn"
+            class="primary-btn"
+            type="button"
+          >
+            <span data-i18n="calculate">
+              Calculate
+            </span>
           </button>
 
-          <div id="calcResult" class="calc-result">
+
+          <div
+            id="calcResult"
+            class="calc-result"
+          >
             —
           </div>
 
@@ -200,29 +459,55 @@
       </section>
 
 
-      <!-- SETTINGS -->
-      <section id="settingsPage" class="page hidden">
+      <!-- ==================================================
+           SETTINGS
+           ================================================== -->
+
+      <section
+        id="settingsPage"
+        class="page hidden"
+      >
 
         <div class="page-heading-row">
+
           <div>
-            <div class="section-kicker">APP</div>
-            <h2 data-i18n="settings">Settings</h2>
+
+            <div class="section-kicker">
+              APP
+            </div>
+
+            <h2 data-i18n="settings">
+              Settings
+            </h2>
+
           </div>
+
         </div>
 
 
         <div class="settings-card">
 
+
           <div class="setting-row">
 
             <div>
-              <strong data-i18n="language">Language</strong>
+
+              <strong data-i18n="language">
+                Language
+              </strong>
+
               <small data-i18n="languageText">
                 Choose Hindi or English
               </small>
+
             </div>
 
-            <button id="settingsLanguageBtn" class="small-action-btn" type="button">
+
+            <button
+              id="settingsLanguageBtn"
+              class="small-action-btn"
+              type="button"
+            >
               हिंदी
             </button>
 
@@ -232,13 +517,23 @@
           <div class="setting-row">
 
             <div>
-              <strong data-i18n="theme">Theme</strong>
+
+              <strong data-i18n="theme">
+                Theme
+              </strong>
+
               <small data-i18n="themeText">
                 Dark / Light appearance
               </small>
+
             </div>
 
-            <button id="themeBtn" class="small-action-btn" type="button">
+
+            <button
+              id="themeBtn"
+              class="small-action-btn"
+              type="button"
+            >
               Dark
             </button>
 
@@ -248,13 +543,23 @@
           <div class="setting-row">
 
             <div>
-              <strong data-i18n="clearEstimate">Clear Estimate</strong>
+
+              <strong data-i18n="clearEstimate">
+                Clear Estimate
+              </strong>
+
               <small data-i18n="clearEstimateText">
                 Remove all saved estimate items
               </small>
+
             </div>
 
-            <button id="clearEstimateBtn" class="danger-btn" type="button">
+
+            <button
+              id="clearEstimateBtn"
+              class="danger-btn"
+              type="button"
+            >
               Clear
             </button>
 
@@ -262,8 +567,15 @@
 
 
           <div class="about-box">
-            <strong>Sandeep ElectroFix</strong>
-            <span>Powering Your Trust</span>
+
+            <strong>
+              Sandeep ElectroFix
+            </strong>
+
+            <span>
+              Powering Your Trust
+            </span>
+
           </div>
 
         </div>
@@ -273,92 +585,198 @@
     </main>
 
 
-    <!-- BOTTOM NAV -->
-    <nav id="bottomNavigation" class="bottom-nav">
+    <!-- ====================================================
+         BOTTOM NAVIGATION
+         ==================================================== -->
 
-      <button class="bottom-nav-item active" data-page="home">
-        <span class="nav-icon">⌂</span>
-        <span data-i18n="home">Home</span>
+    <nav
+      id="bottomNavigation"
+      class="bottom-nav"
+    >
+
+      <button
+        class="bottom-nav-item active"
+        data-page="home"
+        type="button"
+      >
+
+        <span class="nav-icon">
+          ⌂
+        </span>
+
+        <span data-i18n="home">
+          Home
+        </span>
+
       </button>
 
-      <button class="bottom-nav-item" data-page="estimate">
-        <span class="nav-icon">▤</span>
-        <span data-i18n="estimate">Estimate</span>
+
+      <button
+        class="bottom-nav-item"
+        data-page="estimate"
+        type="button"
+      >
+
+        <span class="nav-icon">
+          ▤
+        </span>
+
+        <span data-i18n="estimate">
+          Estimate
+        </span>
+
       </button>
 
-      <button class="bottom-nav-item" data-page="calculator">
-        <span class="nav-icon">∑</span>
-        <span data-i18n="calculator">Calculator</span>
+
+      <button
+        class="bottom-nav-item"
+        data-page="calculator"
+        type="button"
+      >
+
+        <span class="nav-icon">
+          ∑
+        </span>
+
+        <span data-i18n="calculator">
+          Calculator
+        </span>
+
       </button>
 
-      <button class="bottom-nav-item" data-page="settings">
-        <span class="nav-icon">⚙</span>
-        <span data-i18n="settings">Settings</span>
+
+      <button
+        class="bottom-nav-item"
+        data-page="settings"
+        type="button"
+      >
+
+        <span class="nav-icon">
+          ⚙
+        </span>
+
+        <span data-i18n="settings">
+          Settings
+        </span>
+
       </button>
 
     </nav>
 
 
-    <!-- MATERIAL SHEET -->
-    <div id="materialSheetLayer" class="sheet-layer">
+    <!-- ====================================================
+         MATERIAL BOTTOM SHEET
+         ==================================================== -->
 
-      <div id="materialSheet" class="material-sheet">
+    <div
+      id="materialSheetLayer"
+      class="sheet-layer"
+    >
+
+      <div
+        id="materialSheet"
+        class="material-sheet"
+      >
 
         <div class="sheet-handle"></div>
+
 
         <div class="sheet-head">
 
           <div>
-            <div id="sheetStageName" class="sheet-kicker">
+
+            <div
+              id="sheetStageName"
+              class="sheet-kicker"
+            >
               STAGE 01
             </div>
+
 
             <h2 id="sheetMaterialName">
               Pipe
             </h2>
+
           </div>
 
-          <button id="closeSheetBtn" class="sheet-close-btn" type="button">
+
+          <button
+            id="closeSheetBtn"
+            class="sheet-close-btn"
+            type="button"
+          >
             ×
           </button>
 
         </div>
 
 
-        <!-- PROGRESS -->
         <div class="sheet-progress-wrap">
 
           <div class="sheet-progress-info">
-            <span id="sheetProgressText">1 / 3</span>
+
+            <span id="sheetProgressText">
+              1 / 3
+            </span>
+
           </div>
+
 
           <div class="sheet-progress">
-            <div id="sheetProgressBar"></div>
+
+            <div
+              id="sheetProgressBar"
+            ></div>
+
           </div>
 
         </div>
 
 
-        <div id="materialForm" class="material-form">
+        <div
+          id="materialForm"
+          class="material-form"
+        ></div>
 
-          <!-- Dynamic form injected here -->
 
-        </div>
+        <div
+          id="sheetActions"
+          class="sheet-actions"
+        >
 
-
-        <!-- SHEET ACTIONS -->
-        <div id="sheetActions" class="sheet-actions">
-
-          <button id="backMaterialBtn" class="secondary-btn" type="button">
-            ← <span data-i18n="back">Back</span>
+          <button
+            id="backMaterialBtn"
+            class="secondary-btn"
+            type="button"
+          >
+            ←
+            <span data-i18n="back">
+              Back
+            </span>
           </button>
 
-          <button id="nextMaterialBtn" class="secondary-btn" type="button">
-            <span data-i18n="next">Next</span> →
+
+          <button
+            id="nextMaterialBtn"
+            class="secondary-btn"
+            type="button"
+          >
+            <span data-i18n="next">
+              Next
+            </span>
+            →
           </button>
 
-          <button id="addMaterialBtn" class="primary-btn add-btn" type="button">
-            + <span data-i18n="addToEstimate">Add to Estimate</span>
+
+          <button
+            id="addMaterialBtn"
+            class="primary-btn add-btn"
+            type="button"
+          >
+            +
+            <span data-i18n="addToEstimate">
+              Add to Estimate
+            </span>
           </button>
 
         </div>
@@ -368,17 +786,113 @@
     </div>
 
 
-    <!-- TOAST -->
-    <div id="toast" class="toast">
-      <span id="toastText">✓ Added to Estimate</span>
+    <!-- ====================================================
+         TOAST
+         ==================================================== -->
+
+    <div
+      id="toast"
+      class="toast"
+    >
+      <span id="toastText">
+        ✓ Added to Estimate
+      </span>
     </div>
 
   </div>
 
 
+  <!-- ======================================================
+       IMPORTANT:
+       Scripts are loaded in dependency order.
+       ====================================================== -->
+
   <script src="config.js"></script>
   <script src="material.js"></script>
   <script src="app.js"></script>
 
+
+  <!-- ======================================================
+       HARD LOADING FALLBACK
+
+       Even if JS has an error, the loading screen cannot
+       remain permanently stuck.
+       ====================================================== -->
+
+  <script>
+
+    window.addEventListener("load", function () {
+
+      setTimeout(function () {
+
+        try {
+
+          var loader =
+            document.getElementById(
+              "loadingScreen"
+            );
+
+          var app =
+            document.getElementById(
+              "app"
+            );
+
+          if (loader) {
+            loader.classList.add("hidden");
+          }
+
+          if (app) {
+            app.classList.remove("hidden");
+          }
+
+          document.body.style.overflow = "";
+
+        } catch (error) {
+
+          console.error(
+            "Loading fallback error:",
+            error
+          );
+
+        }
+
+      }, 1200);
+
+    });
+
+  </script>
+
+
+  <!-- ======================================================
+       LAST RESORT FALLBACK
+       ====================================================== -->
+
+  <script>
+
+    setTimeout(function () {
+
+      var loader =
+        document.getElementById(
+          "loadingScreen"
+        );
+
+      var app =
+        document.getElementById(
+          "app"
+        );
+
+      if (loader) {
+        loader.classList.add("hidden");
+      }
+
+      if (app) {
+        app.classList.remove("hidden");
+      }
+
+    }, 4000);
+
+  </script>
+
 </body>
+
 </html>

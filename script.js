@@ -1,3229 +1,2923 @@
-(()=>{
 'use strict';
 
-/* =========================================================
-   Sandeep ElectroFix — Estimate List
-   CORRECTED APP CONTROLLER
-   ========================================================= */
-
-const STORE='sandeepEstimateItems';
-const LANG='sandeepMaterialLang';
-const VIEW='sandeepMaterialView';
-const THEME='sandeepTheme';
+/*
+  ============================================================
+  ESTIMATE LIST APP
+  Sandeep ElectroFix
+  ============================================================
+*/
 
 
-/* =========================================================
-   STAGES
-   ========================================================= */
+/* ============================================================
+   STORAGE
+   ============================================================ */
 
-const STAGES=[
-    {
-        id:1,
-        no:'STAGE 01',
-        en:'Slab Conduit Installation',
-        hi:'स्लैब कन्ड्यूट इंस्टॉलेशन'
-    },
-    {
-        id:2,
-        no:'STAGE 02',
-        en:'Wall Conduit Installation',
-        hi:'वॉल कन्ड्यूट इंस्टॉलेशन'
-    },
-    {
-        id:3,
-        no:'STAGE 03',
-        en:'Wiring Installation',
-        hi:'वायरिंग इंस्टॉलेशन'
-    },
-    {
-        id:4,
-        no:'STAGE 04',
-        en:'Final Electrical Fittings',
-        hi:'फाइनल इलेक्ट्रिकल फिटिंग्स'
-    },
-    {
-        id:5,
-        no:'STAGE 05',
-        en:'False Ceiling Wiring',
-        hi:'फॉल्स सीलिंग वायरिंग'
-    }
-];
+const STORE = APP_CONFIG.app.storage;
 
 
-/* =========================================================
-   LABELS
-   ========================================================= */
+/* ============================================================
+   STATE
+   ============================================================ */
 
-const LABELS={
-    type:['Type','प्रकार'],
-    subType:['Sub Type','उप प्रकार'],
-    size:['Size','साइज'],
-    shape:['Shape','आकार'],
-    material:['Material','मटेरियल'],
-    conduitSize:['Conduit Size','कन्ड्यूट साइज'],
-    ways:['Ways','वे'],
-    depth:['Depth','गहराई'],
-    hookRod:['Hook Rod','हुक रॉड'],
-    module:['Module','मॉड्यूल'],
-    door:['Door','डोर'],
-    phase:['Phase','फेज'],
-    amp:['Amp','एम्पियर'],
-    colour:['Colour','कलर'],
-    voltage:['Voltage','वोल्टेज'],
-    sensitivity:['Sensitivity','सेंसिटिविटी'],
-    base:['Base','बेस'],
-    wattage:['Wattage','वाटेज'],
-    length:['Length','लंबाई'],
-    mounting:['Mounting','माउंटिंग'],
-    ledDensity:['LED Density','एलईडी डेंसिटी'],
-    supply:['Supply','सप्लाई'],
-    ipRating:['IP Rating','आईपी रेटिंग'],
-    structure:['Structure','स्ट्रक्चर'],
-    diameter:['Diameter','डायमीटर'],
-    cableSize:['Cable Size','केबल साइज'],
-    studSize:['Stud Size','स्टड साइज'],
-    quantity:['Quantity','मात्रा'],
-    unit:['Unit','यूनिट'],
-    brand:['Brand','ब्रांड'],
-    rate:['Rate','रेट']
+let state = {
+
+  language:
+    localStorage.getItem(STORE.language) ||
+    APP_CONFIG.app.defaultLanguage,
+
+  theme:
+    localStorage.getItem(STORE.theme) ||
+    APP_CONFIG.theme.default,
+
+  view:
+    localStorage.getItem(STORE.view) ||
+    APP_CONFIG.materialView.default,
+
+  estimate: loadEstimate(),
+
+  currentPage: "home",
+
+  currentStage: null,
+
+  currentMaterialIndex: 0,
+
+  currentMaterial: null,
+
+  editingIndex: -1,
+
+  formData: {},
+
+  previousData: {},
+
+  menuOpen: false
+
 };
 
 
-/* =========================================================
-   SAFE STORAGE
-   ========================================================= */
+/* ============================================================
+   TRANSLATIONS
+   ============================================================ */
 
-function safeGet(key, fallback=''){
+const I18N = {
 
-    try{
+  en: {
 
-        const value=localStorage.getItem(key);
+    welcome: "WELCOME",
 
-        return value===null ? fallback : value;
+    estimateList: "Estimate List",
 
-    }catch(error){
+    heroText:
+      "Select your electrical material stage and prepare your estimate quickly.",
 
-        console.warn('localStorage read error:',key,error);
+    home: "Home",
 
-        return fallback;
+    estimate: "Estimate",
 
+    calculator: "Calculator",
+
+    settings: "Settings",
+
+    currentEstimate: "CURRENT ESTIMATE",
+
+    noItems: "No items added",
+
+    noItemsText:
+      "Add materials from a stage to create your estimate.",
+
+    goHome: "Go to Home",
+
+    language: "Language",
+
+    languageText:
+      "Choose Hindi or English",
+
+    theme: "Theme",
+
+    themeText:
+      "Dark / Light appearance",
+
+    clearEstimate: "Clear Estimate",
+
+    clearEstimateText:
+      "Remove all saved estimate items",
+
+    clear: "Clear",
+
+    dark: "Dark",
+
+    light: "Light",
+
+    addToEstimate: "Add to Estimate",
+
+    next: "Next",
+
+    back: "Back",
+
+    updateEstimate: "Update Estimate",
+
+    edit: "Edit",
+
+    delete: "Delete",
+
+    added: "✓ Added to Estimate",
+
+    updated: "✓ Estimate Updated",
+
+    deleted: "✓ Item Deleted",
+
+    noQuantity: "Please enter quantity.",
+
+    selectRequired: "Please select the required options.",
+
+    confirmDelete:
+      "Delete this estimate item?",
+
+    confirmClear:
+      "Clear the complete estimate?",
+
+    voltage: "Voltage",
+
+    current: "Current",
+
+    power: "Power",
+
+    resistance: "Resistance",
+
+    calculate: "Calculate",
+
+    ohmsLaw: "Ohm's Law",
+
+    invalidCalculation:
+      "Enter at least two valid electrical values.",
+
+    calculationResult:
+      "Calculated values"
+
+  },
+
+
+  hi: {
+
+    welcome: "स्वागत है",
+
+    estimateList: "अनुमान सूची",
+
+    heroText:
+      "इलेक्ट्रिकल मटेरियल चुनें और अपना अनुमान जल्दी तैयार करें।",
+
+    home: "होम",
+
+    estimate: "अनुमान",
+
+    calculator: "कैलकुलेटर",
+
+    settings: "सेटिंग्स",
+
+    currentEstimate: "वर्तमान अनुमान",
+
+    noItems: "अभी कोई आइटम नहीं",
+
+    noItemsText:
+      "अनुमान बनाने के लिए किसी स्टेज से मटेरियल जोड़ें।",
+
+    goHome: "होम पर जाएँ",
+
+    language: "भाषा",
+
+    languageText:
+      "हिंदी या English चुनें",
+
+    theme: "थीम",
+
+    themeText:
+      "डार्क / लाइट रूप",
+
+    clearEstimate: "अनुमान साफ़ करें",
+
+    clearEstimateText:
+      "सभी सेव किए गए अनुमान आइटम हटाएँ",
+
+    clear: "साफ़ करें",
+
+    dark: "डार्क",
+
+    light: "लाइट",
+
+    addToEstimate: "अनुमान में जोड़ें",
+
+    next: "अगला",
+
+    back: "पीछे",
+
+    updateEstimate: "अनुमान अपडेट करें",
+
+    edit: "संपादित करें",
+
+    delete: "हटाएँ",
+
+    added: "✓ अनुमान में जोड़ा गया",
+
+    updated: "✓ अनुमान अपडेट किया गया",
+
+    deleted: "✓ आइटम हटा दिया गया",
+
+    noQuantity: "कृपया मात्रा दर्ज करें।",
+
+    selectRequired:
+      "कृपया जरूरी विकल्प चुनें।",
+
+    confirmDelete:
+      "क्या यह अनुमान आइटम हटाना है?",
+
+    confirmClear:
+      "क्या पूरा अनुमान साफ़ करना है?",
+
+    voltage: "वोल्टेज",
+
+    current: "करंट",
+
+    power: "पावर",
+
+    resistance: "रेजिस्टेंस",
+
+    calculate: "गणना करें",
+
+    ohmsLaw: "ओम का नियम",
+
+    invalidCalculation:
+      "कम से कम दो सही इलेक्ट्रिकल मान दर्ज करें।",
+
+    calculationResult:
+      "गणना किए गए मान"
+
+  }
+
+};
+
+
+/* ============================================================
+   INIT
+   ============================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  applyTheme();
+
+  applyLanguage();
+
+  setupVisibility();
+
+  buildStageCards();
+
+  renderEstimate();
+
+  setupEvents();
+
+  setTimeout(() => {
+
+    const loading = document.getElementById("loadingScreen");
+    const app = document.getElementById("app");
+
+    if (loading) {
+      loading.classList.add("hidden");
     }
+
+    if (app) {
+      app.classList.remove("hidden");
+    }
+
+  }, 450);
+
+});
+
+
+/* ============================================================
+   LOAD / SAVE ESTIMATE
+   ============================================================ */
+
+function loadEstimate() {
+
+  try {
+
+    const raw =
+      localStorage.getItem(STORE.estimate);
+
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+
+    return Array.isArray(parsed)
+      ? parsed
+      : [];
+
+  } catch (error) {
+
+    console.error("Estimate load error:", error);
+
+    return [];
+
+  }
 
 }
 
 
-function safeSet(key,value){
+function saveEstimate() {
 
-    try{
-
-        localStorage.setItem(key,value);
-
-        return true;
-
-    }catch(error){
-
-        console.error('localStorage write error:',key,error);
-
-        return false;
-
-    }
+  localStorage.setItem(
+    STORE.estimate,
+    JSON.stringify(state.estimate)
+  );
 
 }
 
 
-function loadEstimate(){
-
-    try{
-
-        const raw=localStorage.getItem(STORE);
-
-        if(!raw) return [];
-
-        const parsed=JSON.parse(raw);
-
-        return Array.isArray(parsed) ? parsed : [];
-
-    }catch(error){
-
-        console.warn(
-            'Invalid saved estimate. Starting empty.',
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-/* =========================================================
-   APP STATE
-   ========================================================= */
-
-let lang=safeGet(LANG,'en');
-let view=safeGet(VIEW,'grid');
-
-let estimate=loadEstimate();
-
-let stage=1;
-let current=null;
-let currentIndex=-1;
-
-let state={};
-let carry={};
-
-
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-const $=selector=>document.querySelector(selector);
-
-const $$=selector=>[
-    ...document.querySelectorAll(selector)
-];
-
-
-function save(){
-
-    safeSet(
-        STORE,
-        JSON.stringify(estimate)
-    );
-
-}
-
-
-function txt(value){
-
-    if(
-        value &&
-        typeof value==='object'
-    ){
-
-        return (
-            value[lang] ??
-            value.en ??
-            value.hi ??
-            ''
-        );
-
-    }
-
-    return String(value ?? '');
-
-}
-
-
-function money(value){
-
-    return '₹'+Number(value||0).toFixed(2);
-
-}
-
-
-function esc(value){
-
-    return String(value??'').replace(
-        /[&<>"']/g,
-        character=>({
-
-            '&':'&amp;',
-            '<':'&lt;',
-            '>':'&gt;',
-            '"':'&quot;',
-            "'":'&#39;'
-
-        }[character])
-    );
-
-}
-
-
-function activate(element){
-
-    if(!element) return;
-
-    $$('.neon-active').forEach(item=>{
-        item.classList.remove('neon-active');
-    });
-
-    element.classList.add('neon-active');
-
-}
-
-
-function label(key){
-
-    return (
-        LABELS[key] ||
-        [key,key]
-    )[lang==='hi' ? 1 : 0];
-
-}
-
-
-function stageObj(){
-
-    return (
-        STAGES.find(item=>item.id===stage) ||
-        STAGES[0]
-    );
-
-}
-
-
-function fallback(name){
-
-    return 'data:image/svg+xml;charset=UTF-8,'+
-        encodeURIComponent(`
-
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 500 330"
-            >
-
-                <rect
-                    width="500"
-                    height="330"
-                    fill="#07111b"
-                />
-
-                <circle
-                    cx="250"
-                    cy="135"
-                    r="62"
-                    fill="none"
-                    stroke="#0ea5e9"
-                    stroke-width="7"
-                />
-
-                <path
-                    d="M250 73l-25 70h34l-22 73 61-94h-37z"
-                    fill="#facc15"
-                />
-
-                <text
-                    x="250"
-                    y="290"
-                    text-anchor="middle"
-                    fill="#7ea8bb"
-                    font-family="Arial"
-                    font-size="20"
-                >
-                    ${esc(name)}
-                </text>
-
-            </svg>
-
-        `);
-
-}
-
-
-/* =========================================================
-   CONFIG HELPERS
-   ========================================================= */
-
-function visible(key){
-
-    return (
-        typeof APP_CONFIG!=='undefined' &&
-        APP_CONFIG.selection &&
-        APP_CONFIG.selection[key]!==false
-    );
-
-}
-
-
-function show(element,on){
-
-    if(!element) return;
-
-    element.style.display=
-        on ? '' : 'none';
-
-}
-
-
-/* =========================================================
-   CONFIG
-   ========================================================= */
-
-function applyConfig(){
-
-    if(typeof APP_CONFIG==='undefined'){
-
-        throw new Error(
-            'APP_CONFIG is not loaded. Check config.js.'
-        );
-
-    }
-
-
-    show(
-        $('.topbar'),
-        APP_CONFIG.home?.header!==false
-    );
-
-
-    show(
-        $('#menuBtn'),
-        APP_CONFIG.home?.menu!==false
-    );
-
-
-    show(
-        $('#langBtn'),
-        APP_CONFIG.home?.language!==false
-    );
-
-
-    show(
-        $('#globalSearchBox'),
-        APP_CONFIG.home?.search!==false
-    );
-
-
-    show(
-        $('[data-ui="homeStages"]'),
-        APP_CONFIG.home?.stages!==false
-    );
-
-
-    show(
-        $('#materialSearchBox'),
-        APP_CONFIG.materials?.search!==false
-    );
-
-
-    show(
-        $('#viewSwitcher'),
-        APP_CONFIG.materials?.materialView!==false
-    );
-
-
-    [
-        ['navHome','home'],
-        ['navEstimate','estimate'],
-        ['navCalculator','calculator'],
-        ['navSettings','settings']
-    ].forEach(([ui,key])=>{
-
-        show(
-            $(`[data-ui="${ui}"]`),
-            APP_CONFIG.navigation?.[key]!==false
-        );
-
-    });
-
-
-    show(
-        $('#nextMaterial'),
-        APP_CONFIG.selection?.nextMaterial!==false
-    );
-
-
-    show(
-        $('#addEstimate'),
-        APP_CONFIG.selection?.addEstimate!==false
-    );
-
-
-    show(
-        $('#copyEstimate'),
-        APP_CONFIG.estimate?.copyEstimate!==false
-    );
-
-
-    show(
-        $('#printEstimate'),
-        APP_CONFIG.estimate?.printEstimate!==false
-    );
-
-
-    show(
-        $('#shareEstimate'),
-        APP_CONFIG.estimate?.shareEstimate!==false
-    );
-
-}
-
-
-/* =========================================================
-   STAGES
-   ========================================================= */
-
-function renderStages(){
-
-    const grid=$('#stageGrid');
-
-    if(!grid) return;
-
-
-    grid.innerHTML='';
-
-
-    if(typeof MATERIALS==='undefined'){
-
-        throw new Error(
-            'MATERIALS is not loaded. Check material.js.'
-        );
-
-    }
-
-
-    const count=MATERIALS.filter(
-        item=>item.enabled
-    ).length;
-
-
-    const counter=$('#materialCount');
-
-    if(counter){
-
-        counter.textContent=
-            count+
-            ' '+
-            (
-                lang==='hi'
-                ? 'मटेरियल'
-                : 'materials'
-            );
-
-    }
-
-
-    STAGES.forEach(s=>{
-
-        const materials=MATERIALS.filter(
-            item=>
-                item.enabled &&
-                item.stage===s.id
-        );
-
-
-        if(!materials.length) return;
-
-
-        const button=document.createElement('button');
-
-        button.type='button';
-
-        button.className='stage-card';
-
-
-        button.innerHTML=`
-
-            <span class="stage-no">
-                ${s.no}
-            </span>
-
-            <h3>
-                ${txt(s)}
-            </h3>
-
-            <p>
-                ${materials.length}
-                ${lang==='hi'?'मटेरियल':'materials'}
-                • Select to open
-            </p>
-
-        `;
-
-
-        button.addEventListener('click',()=>{
-
-            activate(button);
-
-            openStage(s.id);
-
-        });
-
-
-        grid.appendChild(button);
-
-    });
-
-}
-
-
-/* =========================================================
-   PAGE
-   ========================================================= */
-
-function page(id){
-
-    $$('.page').forEach(p=>{
-
-        p.classList.toggle(
-            'active',
-            p.id===id
-        );
-
-    });
-
-
-    $$('#bottomNav button').forEach(button=>{
-
-        button.classList.toggle(
-            'active',
-            button.dataset.page===id
-        );
-
-    });
-
-
-    if(id==='estimatePage'){
-
-        renderEstimate();
-
-    }
-
-
-    if(id==='settingsPage'){
-
-        renderSettings();
-
-    }
-
-
-    if(id==='calculatorPage'){
-
-        renderCalc('power');
-
-    }
-
-}
-
-
-/* =========================================================
-   OPEN STAGE
-   ========================================================= */
-
-function openStage(id){
-
-    stage=id;
-
-
-    const obj=stageObj();
-
-
-    const stageLabel=$('#stageLabel');
-
-    const stageTitle=$('#stageTitle');
-
-
-    if(stageLabel){
-
-        stageLabel.textContent=obj.no;
-
-    }
-
-
-    if(stageTitle){
-
-        stageTitle.textContent=txt(obj);
-
-    }
-
-
-    const search=$('#materialSearch');
-
-    if(search){
-
-        search.value='';
-
-    }
-
-
-    renderMaterials();
-
-    page('materialsPage');
-
-}
-
-
-/* =========================================================
-   MATERIALS
-   ========================================================= */
-
-function renderMaterials(){
-
-    const grid=$('#materialGrid');
-
-    if(!grid) return;
-
-
-    const search=$('#materialSearch');
-
-    const query=(
-        search?.value ||
-        ''
-    ).trim().toLowerCase();
-
-
-    grid.className=
-        'material-grid '+
-        view;
-
-
-    grid.innerHTML='';
-
-
-    MATERIALS
-        .filter(item=>{
-
-            if(!item.enabled) return false;
-
-            if(item.stage!==stage) return false;
-
-            if(!query) return true;
-
-            return txt(item.name)
-                .toLowerCase()
-                .includes(query);
-
-        })
-        .forEach(material=>{
-
-            const button=
-                document.createElement('button');
-
-            button.type='button';
-
-            button.className='material-card';
-
-
-            let html='';
-
-
-            if(
-                APP_CONFIG.materials?.materialImage!==false
-            ){
-
-                html+=`
-
-                    <div class="material-image">
-
-                        <img
-                            src="${fallback(
-                                txt(material.name)
-                            )}"
-                            alt=""
-                        >
-
-                    </div>
-
-                `;
-
-            }
-
-
-            if(
-                APP_CONFIG.materials?.materialName!==false
-            ){
-
-                html+=`
-
-                    <div class="material-name">
-
-                        ${esc(
-                            txt(material.name)
-                        )}
-
-                    </div>
-
-                `;
-
-            }
-
-
-            button.innerHTML=html;
-
-
-            button.addEventListener('click',()=>{
-
-                activate(button);
-
-                openMaterial(material);
-
-            });
-
-
-            grid.appendChild(button);
-
-        });
-
-}
-
-
-/* =========================================================
-   OPTION COMPATIBILITY
-   ========================================================= */
-
-function compatible(material,key,value){
-
-    if(
-        value===undefined ||
-        value===null ||
-        value===''
-    ){
-
-        return false;
-
-    }
-
-
-    const options=
-        material.options?.[key];
-
-
-    if(!Array.isArray(options)){
-
-        return false;
-
-    }
-
-
-    return options.some(option=>
-
-        String(txt(option))===
-        String(txt(value))
-
-    );
-
-}
-
-
-/* =========================================================
-   CARRY
-   ========================================================= */
-
-function carryInto(material){
-
-    const result={};
-
-
-    Object.entries(carry).forEach(
-        ([key,value])=>{
-
-            if(key==='quantity') return;
-
-            if(
-                compatible(
-                    material,
-                    key,
-                    value
-                )
-            ){
-
-                result[key]=value;
-
-            }
-
-        }
-    );
-
-
-    return result;
-
-}
-
-
-/* =========================================================
-   OPEN MATERIAL
-   ========================================================= */
-
-function openMaterial(material){
-
-    current=material;
-
-
-    const list=MATERIALS.filter(
-        item=>
-            item.enabled &&
-            item.stage===material.stage
-    );
-
-
-    currentIndex=list.findIndex(
-        item=>item.id===material.id
-    );
-
-
-    state=carryInto(material);
-
-
-    const stageText=$('#sheetStage');
-    const title=$('#sheetTitle');
-    const sub=$('#sheetSub');
-
-
-    if(stageText){
-
-        stageText.textContent=
-            stageObj().no;
-
-    }
-
-
-    if(title){
-
-        title.textContent=
-            txt(material.name);
-
-    }
-
-
-    if(sub){
-
-        sub.textContent=
-            lang==='hi'
-            ? 'सभी विकल्प एक ही जगह चुनें'
-            : 'Select all options in one place';
-
-    }
-
-
-    const sheet=$('#sheetBackdrop');
-
-    if(sheet){
-
-        sheet.classList.add('open');
-
-    }
-
-
-    renderOptions();
-
-}
-
-
-/* =========================================================
-   RENDER OPTIONS
-   ========================================================= */
-
-function renderOptions(){
-
-    const area=$('#optionArea');
-
-    if(!area || !current) return;
-
-
-    area.innerHTML='';
-
-
-    (current.flow||[]).forEach(key=>{
-
-        if(
-            current.flowConfig?.[key]?.show===false
-        ){
-
-            return;
-
-        }
-
-
-        if(!visible(key)){
-
-            return;
-
-        }
-
-
-        /* -----------------------------------------
-           QUANTITY / RATE
-           ----------------------------------------- */
-
-        if(
-            key==='quantity' ||
-            key==='rate'
-        ){
-
-            const field=
-                document.createElement('div');
-
-            field.className='field';
-
-
-            field.innerHTML=`
-
-                <div class="field-label">
-                    ${label(key)}
-                </div>
-
-                <input
-                    id="field-${key}"
-                    class="input-field"
-                    type="number"
-                    min="0"
-                    step="any"
-                    inputmode="decimal"
-                    placeholder="${
-                        key==='rate'
-                        ? 'Optional — leave blank for ₹0'
-                        : 'Enter quantity'
-                    }"
-                    value="${esc(
-                        state[key] ?? ''
-                    )}"
-                >
-
-            `;
-
-
-            area.appendChild(field);
-
-
-            const input=
-                field.querySelector('input');
-
-
-            if(input){
-
-                input.addEventListener(
-                    'input',
-                    event=>{
-
-                        state[key]=
-                            event.target.value;
-
-                    }
-                );
-
-
-                input.addEventListener(
-                    'change',
-                    event=>{
-
-                        state[key]=
-                            event.target.value;
-
-                    }
-                );
-
-            }
-
-
-            return;
-
-        }
-
-
-        /* -----------------------------------------
-           NORMAL OPTIONS
-           ----------------------------------------- */
-
-        const values=
-            (current.options?.[key]||[])
-            .filter(value=>
-                current.optionConfig?.[key]?.[value]
-                    ?.show!==false
-            );
-
-
-        if(!values.length) return;
-
-
-        const field=
-            document.createElement('div');
-
-        field.className='field';
-
-
-        field.innerHTML=`
-
-            <div class="field-label">
-                ${label(key)}
-            </div>
-
-        `;
-
-
-        const row=
-            document.createElement('div');
-
-        row.className='option-row';
-
-
-        values.forEach(value=>{
-
-            const button=
-                document.createElement('button');
-
-            button.type='button';
-
-
-            button.className=
-                'option-btn'+
-                (
-                    String(state[key])===
-                    String(value)
-                    ? ' selected'
-                    : ''
-                );
-
-
-            button.textContent=
-                txt(value);
-
-
-            button.addEventListener(
-                'click',
-                event=>{
-
-                    event.preventDefault();
-
-                    activate(button);
-
-                    state[key]=value;
-
-                    renderOptions();
-
-                }
-            );
-
-
-            row.appendChild(button);
-
-        });
-
-
-        field.appendChild(row);
-
-        area.appendChild(field);
-
-    });
-
-
-    /* -----------------------------------------
-       Keep quantity focused if needed
-       ----------------------------------------- */
-
-}
-
-
-/* =========================================================
-   READ CURRENT INPUTS
-   ========================================================= */
-
-function syncInputs(){
-
-    const quantity=
-        $('#field-quantity');
-
-    const rate=
-        $('#field-rate');
-
-
-    if(quantity){
-
-        state.quantity=
-            quantity.value;
-
-    }
-
-
-    if(rate){
-
-        state.rate=
-            rate.value;
-
-    }
-
-}
-
-
-/* =========================================================
-   ADD TO ESTIMATE
-   ========================================================= */
-
-function add(){
-
-    /* -----------------------------------------
-       Material check
-       ----------------------------------------- */
-
-    if(!current){
-
-        alert(
-            lang==='hi'
-            ? 'पहले Material चुनें।'
-            : 'Please select a material.'
-        );
-
-        return;
-
-    }
-
-
-    /* -----------------------------------------
-       IMPORTANT:
-       Read inputs directly before adding
-       ----------------------------------------- */
-
-    syncInputs();
-
-
-    /* -----------------------------------------
-       Quantity
-       ----------------------------------------- */
-
-    const quantityValue=
-        state.quantity;
-
-
-    const qty=
-        Number(quantityValue);
-
-
-    if(
-        quantityValue===undefined ||
-        quantityValue===null ||
-        String(quantityValue).trim()==='' ||
-        !Number.isFinite(qty) ||
-        qty<=0
-    ){
-
-        alert(
-            lang==='hi'
-            ? 'कृपया Quantity भरें।'
-            : 'Please enter Quantity.'
-        );
-
-
-        const quantityInput=
-            $('#field-quantity');
-
-
-        if(quantityInput){
-
-            quantityInput.focus();
-
-        }
-
-
-        return;
-
-    }
-
-
-    /* -----------------------------------------
-       Rate
-       ----------------------------------------- */
-
-    let rate=0;
-
-
-    if(
-        state.rate!==undefined &&
-        state.rate!==null &&
-        String(state.rate).trim()!==''
-    ){
-
-        rate=Number(state.rate);
-
-
-        if(!Number.isFinite(rate)){
-
-            rate=0;
-
-        }
-
-    }
-
-
-    /* -----------------------------------------
-       Clean selections
-       ----------------------------------------- */
-
-    const selections={};
-
-
-    Object.entries(state).forEach(
-        ([key,value])=>{
-
-            if(
-                value!==undefined &&
-                value!==null &&
-                String(value)!==''
-            ){
-
-                selections[key]=value;
-
-            }
-
-        }
-    );
-
-
-    selections.quantity=qty;
-    selections.rate=rate;
-
-
-    /* -----------------------------------------
-       CREATE ESTIMATE ITEM
-       ----------------------------------------- */
-
-    const item={
-
-        id:
-            Date.now()+
-            '-' +
-            Math.random()
-                .toString(36)
-                .slice(2),
-
-        materialId:
-            current.id,
-
-        name:
-            current.name,
-
-        selections:
-            selections,
-
-        qty:
-            qty,
-
-        unit:
-            state.unit || '',
-
-        rate:
-            rate,
-
-        amount:
-            qty*rate
-
-    };
-
-
-    /* -----------------------------------------
-       PUSH
-       ----------------------------------------- */
-
-    estimate.push(item);
-
-
-    /* -----------------------------------------
-       SAVE
-       ----------------------------------------- */
-
-    save();
-
-
-    /* -----------------------------------------
-       CARRY SELECTIONS
-       ----------------------------------------- */
-
-    carry={
-        ...state
-    };
-
-
-    carry.quantity='';
-    carry.rate='';
-
-
-    /* -----------------------------------------
-       CLOSE
-       ----------------------------------------- */
-
-    closeSheet();
-
-
-    /* -----------------------------------------
-       REFRESH ESTIMATE
-       ----------------------------------------- */
-
-    renderEstimate();
-
-
-    /* -----------------------------------------
-       SUCCESS
-       ----------------------------------------- */
-
-    alert(
-        lang==='hi'
-        ? '✓ Material Estimate में add हो गया।'
-        : '✓ Material added to Estimate.'
-    );
-
-}
-
-
-/* =========================================================
-   NEXT MATERIAL
-   IMPORTANT: DOES NOT ADD TO ESTIMATE
-   ========================================================= */
-
-function next(){
-
-    if(!current) return;
-
-
-    syncInputs();
-
-
-    const list=MATERIALS.filter(
-        item=>
-            item.enabled &&
-            item.stage===current.stage
-    );
-
-
-    carry={
-        ...state
-    };
-
-
-    carry.quantity='';
-    carry.rate='';
-
-
-    if(
-        currentIndex+1<
-        list.length
-    ){
-
-        openMaterial(
-            list[currentIndex+1]
-        );
-
-    }else{
-
-        closeSheet();
-
-    }
-
-}
-
-
-/* =========================================================
-   CLOSE SHEET
-   ========================================================= */
-
-function closeSheet(){
-
-    const sheet=$('#sheetBackdrop');
-
-    if(sheet){
-
-        sheet.classList.remove('open');
-
-    }
-
-}
-
-
-/* =========================================================
-   ESTIMATE
-   ========================================================= */
-
-function renderEstimate(){
-
-    const box=$('#estimateList');
-
-    if(!box) return;
-
-
-    box.innerHTML='';
-
-
-    const empty=$('#emptyEstimate');
-
-
-    if(empty){
-
-        empty.style.display=
-            estimate.length
-            ? 'none'
-            : 'block';
-
-    }
-
-
-    estimate.forEach(item=>{
-
-        const selections=
-            item.selections || {};
-
-
-        const tags=
-            Object.entries(selections)
-                .filter(([key,value])=>
-
-                    key!=='quantity' &&
-                    key!=='rate' &&
-                    value!==''
-                )
-                .map(
-                    ([key,value])=>`
-
-                        <span class="tag">
-
-                            ${esc(label(key))}:
-                            ${esc(txt(value))}
-
-                        </span>
-
-                    `
-                )
-                .join('');
-
-
-        const card=
-            document.createElement('div');
-
-
-        card.className=
-            'estimate-card';
-
-
-        const deleteButton=
-            APP_CONFIG.estimate?.delete!==false
-            ? `
-                <button
-                    type="button"
-                    class="delete-btn"
-                >
-                    Delete
-                </button>
-              `
-            : '';
-
-
-        const quantityTag=
-            APP_CONFIG.estimate?.quantity!==false
-            ? `
-                <span class="tag">
-                    ${lang==='hi'?'मात्रा':'Qty'}:
-                    ${esc(item.qty)}
-                </span>
-              `
-            : '';
-
-
-        const unitTag=
-            APP_CONFIG.estimate?.unit!==false &&
-            item.unit
-            ? `
-                <span class="tag">
-                    ${esc(txt(item.unit))}
-                </span>
-              `
-            : '';
-
-
-        const rateText=
-            APP_CONFIG.estimate?.rate!==false
-            ? `
-                <span>
-                    Rate: ${money(item.rate)}
-                </span>
-              `
-            : '';
-
-
-        const amountText=
-            APP_CONFIG.estimate?.amount!==false
-            ? `
-                <b class="amount">
-                    ${money(item.amount)}
-                </b>
-              `
-            : '';
-
-
-        card.innerHTML=`
-
-            <div class="estimate-top">
-
-                <b>
-                    ${esc(txt(item.name))}
-                </b>
-
-                ${deleteButton}
-
-            </div>
-
-
-            <div class="estimate-meta">
-
-                ${tags}
-
-                ${quantityTag}
-
-                ${unitTag}
-
-            </div>
-
-
-            <div class="estimate-bottom">
-
-                ${rateText}
-
-                ${amountText}
-
-            </div>
-
-        `;
-
-
-        const deleteBtn=
-            card.querySelector(
-                '.delete-btn'
-            );
-
-
-        if(deleteBtn){
-
-            deleteBtn.addEventListener(
-                'click',
-                ()=>{
-
-                    estimate=
-                        estimate.filter(
-                            savedItem=>
-                                savedItem.id!==item.id
-                        );
-
-
-                    save();
-
-                    renderEstimate();
-
-                }
-            );
-
-        }
-
-
-        box.appendChild(card);
-
-    });
-
-
-    const total=
-        estimate.reduce(
-            (sum,item)=>
-                sum+
-                Number(item.amount||0),
-            0
-        );
-
-
-    const grandTotal=
-        $('#grandTotal');
-
-
-    if(grandTotal){
-
-        grandTotal.textContent=
-            money(total);
-
-    }
-
-}
-
-
-/* =========================================================
-   ESTIMATE TEXT
-   ========================================================= */
-
-function estimateText(){
-
-    if(!estimate.length){
-
-        return lang==='hi'
-            ? 'Estimate खाली है।'
-            : 'Estimate is empty.';
-
-    }
-
-
-    const lines=
-        estimate.map(
-            (item,index)=>{
-
-                const details=
-                    Object.entries(
-                        item.selections||{}
-                    )
-                    .filter(
-                        ([key,value])=>
-                            value!==''
-                    )
-                    .map(
-                        ([key,value])=>
-                            `${label(key)}: ${txt(value)}`
-                    )
-                    .join(', ');
-
-
-                return `${
-                    index+1
-                }. ${
-                    txt(item.name)
-                } | ${
-                    details
-                } | Amount: ${
-                    money(item.amount)
-                }`;
-
-            }
-        );
-
-
-    const total=
-        estimate.reduce(
-            (sum,item)=>
-                sum+
-                Number(item.amount||0),
-            0
-        );
-
-
-    return (
-        lines.join('\n')+
-        `\n\nGrand Total: ${money(total)}`
-    );
-
-}
-
-
-/* =========================================================
-   SETTINGS
-   ========================================================= */
-
-function renderSettings(){
-
-    const box=$('#settingsList');
-
-    if(!box) return;
-
-
-    box.innerHTML='';
-
-
-    if(typeof SETTINGS_ITEMS==='undefined'){
-
-        console.warn(
-            'SETTINGS_ITEMS not found.'
-        );
-
-        return;
-
-    }
-
-
-    SETTINGS_ITEMS.forEach(settingItem=>{
-
-        if(
-            APP_CONFIG.settings?.[
-                settingItem.id
-            ]===false
-        ){
-
-            return;
-
-        }
-
-
-        const card=
-            document.createElement('div');
-
-
-        card.className=
-            'setting-card';
-
-
-        if(settingItem.kind==='toggle'){
-
-            let enabled=
-                safeGet(
-                    'setting_'+settingItem.id,
-                    'true'
-                )!=='false';
-
-
-            card.innerHTML=`
-
-                <div>
-
-                    <b>
-                        ${esc(settingItem.title)}
-                    </b>
-
-                    <small>
-                        ${esc(settingItem.desc)}
-                    </small>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="toggle ${
-                        enabled?'on':''
-                    }"
-                >
-
-                    <i></i>
-
-                </button>
-
-            `;
-
-
-            const toggle=
-                card.querySelector('.toggle');
-
-
-            toggle.addEventListener(
-                'click',
-                ()=>{
-
-                    enabled=!enabled;
-
-
-                    safeSet(
-                        'setting_'+
-                        settingItem.id,
-                        String(enabled)
-                    );
-
-
-                    toggle.classList.toggle(
-                        'on',
-                        enabled
-                    );
-
-
-                    if(
-                        settingItem.id===
-                        'darkMode'
-                    ){
-
-                        applyTheme(
-                            enabled
-                            ? 'dark'
-                            : 'light'
-                        );
-
-                    }
-
-
-                    activate(toggle);
-
-                }
-            );
-
-
-        }else{
-
-            let buttonText='View';
-
-
-            if(settingItem.id==='language'){
-
-                buttonText='Change';
-
-            }
-
-            if(settingItem.id==='backup'){
-
-                buttonText='Export';
-
-            }
-
-            if(settingItem.id==='reset'){
-
-                buttonText='Reset';
-
-            }
-
-
-            card.innerHTML=`
-
-                <div>
-
-                    <b>
-                        ${esc(settingItem.title)}
-                    </b>
-
-                    <small>
-                        ${esc(settingItem.desc)}
-                    </small>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="cyber small"
-                >
-                    ${buttonText}
-                </button>
-
-            `;
-
-
-            const button=
-                card.querySelector('button');
-
-
-            button.addEventListener(
-                'click',
-                ()=>setting(settingItem.id)
-            );
-
-        }
-
-
-        box.appendChild(card);
-
-    });
-
-}
-
-
-/* =========================================================
-   SETTINGS ACTION
-   ========================================================= */
-
-function setting(id){
-
-    if(id==='language'){
-
-        toggleLanguage();
-
-        return;
-
-    }
-
-
-    if(id==='reset'){
-
-        openResetModal();
-
-        return;
-
-    }
-
-
-    if(id==='backup'){
-
-        const blob=
-            new Blob(
-                [
-                    JSON.stringify(
-                        estimate,
-                        null,
-                        2
-                    )
-                ],
-                {
-                    type:
-                        'application/json'
-                }
-            );
-
-
-        const url=
-            URL.createObjectURL(blob);
-
-
-        const anchor=
-            document.createElement('a');
-
-
-        anchor.href=url;
-
-        anchor.download=
-            'electrofix-estimate.json';
-
-
-        document.body.appendChild(anchor);
-
-        anchor.click();
-
-        anchor.remove();
-
-        URL.revokeObjectURL(url);
-
-        return;
-
-    }
-
-
-    if(id==='about'){
-
-        openModal(
-            'About',
-            `
-
-                <div class="profile-card">
-
-                    <div class="profile-logo">
-                        ⚡
-                    </div>
-
-                    <div>
-
-                        <b>
-                            Sandeep ElectroFix
-                        </b>
-
-                        <small>
-                            Powering Your Trust
-                        </small>
-
-                        <small>
-                            Electrical Material
-                            Estimate System
-                        </small>
-
-                    </div>
-
-                </div>
-
-            `
-        );
-
-    }
-
-}
-
-
-/* =========================================================
+/* ============================================================
    LANGUAGE
-   ========================================================= */
+   ============================================================ */
 
-function toggleLanguage(){
+function t(key) {
 
-    lang=
-        lang==='en'
-        ? 'hi'
-        : 'en';
+  const lang =
+    I18N[state.language] ||
+    I18N.en;
 
-
-    safeSet(
-        LANG,
-        lang
-    );
-
-
-    const languageButton=
-        $('#langBtn');
-
-
-    if(languageButton){
-
-        languageButton.textContent=
-            lang.toUpperCase();
-
-    }
-
-
-    renderStages();
-
-
-    if(current){
-
-        renderOptions();
-
-    }
-
-
-    renderEstimate();
-
-    renderSettings();
-
-    renderCalc('power');
+  return (
+    lang[key] ??
+    I18N.en[key] ??
+    key
+  );
 
 }
 
 
-/* =========================================================
+function applyLanguage() {
+
+  document.documentElement.lang =
+    state.language === "hi"
+      ? "hi"
+      : "en";
+
+  document
+    .querySelectorAll("[data-i18n]")
+    .forEach(element => {
+
+      const key =
+        element.dataset.i18n;
+
+      element.textContent = t(key);
+
+    });
+
+
+  const languageText =
+    state.language === "en"
+      ? "हिंदी"
+      : "English";
+
+
+  const languageBtn =
+    document.getElementById("languageBtn");
+
+  const settingsLanguageBtn =
+    document.getElementById("settingsLanguageBtn");
+
+
+  if (languageBtn) {
+    languageBtn.textContent =
+      languageText;
+  }
+
+  if (settingsLanguageBtn) {
+    settingsLanguageBtn.textContent =
+      languageText;
+  }
+
+
+  const themeBtn =
+    document.getElementById("themeBtn");
+
+  if (themeBtn) {
+    themeBtn.textContent =
+      state.theme === "dark"
+        ? t("dark")
+        : t("light");
+  }
+
+
+  updatePageTitle();
+
+  renderStageCards();
+
+  renderEstimate();
+
+  if (
+    state.currentMaterial &&
+    document
+      .getElementById("materialSheetLayer")
+      .classList.contains("open")
+  ) {
+
+    renderMaterialForm();
+
+  }
+
+}
+
+
+/* ============================================================
+   LANGUAGE TOGGLE
+   ============================================================ */
+
+function toggleLanguage() {
+
+  state.language =
+    state.language === "en"
+      ? "hi"
+      : "en";
+
+  localStorage.setItem(
+    STORE.language,
+    state.language
+  );
+
+  applyLanguage();
+
+}
+
+
+/* ============================================================
    THEME
-   ========================================================= */
+   ============================================================ */
 
-function applyTheme(theme){
+function applyTheme() {
 
-    document.body.classList.toggle(
-        'light',
-        theme==='light'
-    );
-
-
-    safeSet(
-        THEME,
-        theme
-    );
+  document.body.classList.toggle(
+    "light",
+    state.theme === "light"
+  );
 
 }
 
 
-/* =========================================================
-   MODAL
-   ========================================================= */
+function toggleTheme() {
 
-function openModal(title,body){
+  state.theme =
+    state.theme === "dark"
+      ? "light"
+      : "dark";
 
-    const titleBox=$('#modalTitle');
+  localStorage.setItem(
+    STORE.theme,
+    state.theme
+  );
 
-    const bodyBox=$('#modalBody');
+  applyTheme();
 
-    const backdrop=$('#modalBackdrop');
-
-
-    if(titleBox){
-
-        titleBox.textContent=title;
-
-    }
-
-
-    if(bodyBox){
-
-        bodyBox.innerHTML=body;
-
-    }
-
-
-    if(backdrop){
-
-        backdrop.classList.add('open');
-
-    }
+  applyLanguage();
 
 }
 
 
-function closeModal(){
+/* ============================================================
+   CONFIG VISIBILITY
+   ============================================================ */
 
-    const backdrop=
-        $('#modalBackdrop');
+function setupVisibility() {
 
+  const hide = (id) => {
 
-    if(backdrop){
+    const el =
+      document.getElementById(id);
 
-        backdrop.classList.remove('open');
-
+    if (el) {
+      el.classList.add("hidden");
     }
+
+  };
+
+
+  if (!APP_CONFIG.ui.topbar) {
+    hide("topbar");
+  }
+
+  if (!APP_CONFIG.ui.menuButton) {
+    hide("menuBtn");
+  }
+
+  if (!APP_CONFIG.ui.languageButton) {
+    hide("languageBtn");
+  }
+
+  if (!APP_CONFIG.ui.sideMenu) {
+    hide("menuBtn");
+  }
+
+  if (!APP_CONFIG.ui.bottomNavigation) {
+    hide("bottomNavigation");
+  }
+
+  if (!APP_CONFIG.ui.calculator) {
+    hide("calculatorPage");
+  }
+
+  if (!APP_CONFIG.ui.settings) {
+    hide("settingsPage");
+  }
+
+  if (!APP_CONFIG.ui.darkMode) {
+    hide("themeBtn");
+  }
+
+  if (!APP_CONFIG.ui.languageSwitch) {
+    hide("languageBtn");
+    hide("settingsLanguageBtn");
+  }
+
+  if (!APP_CONFIG.ui.hero) {
+
+    const hero =
+      document.querySelector(".hero");
+
+    if (hero) {
+      hero.classList.add("hidden");
+    }
+
+  }
 
 }
 
 
-/* =========================================================
-   RESET
-   ========================================================= */
+/* ============================================================
+   EVENTS
+   ============================================================ */
 
-function openResetModal(){
+function setupEvents() {
 
-    openModal(
-        'Clear App Data',
-        `
-
-            <p
-                style="
-                    color:#7895a2;
-                    font-size:10px
-                "
-            >
-                This will remove the current
-                estimate and saved view preferences.
-            </p>
-
-
-            <div class="actions">
-
-                <button
-                    type="button"
-                    id="cancelReset"
-                    class="cyber"
-                >
-                    Cancel
-                </button>
-
-
-                <button
-                    type="button"
-                    id="confirmReset"
-                    class="cyber gold"
-                >
-                    Reset
-                </button>
-
-            </div>
-
-        `
+  document
+    .getElementById("menuBtn")
+    ?.addEventListener(
+      "click",
+      openMenu
     );
 
 
-    const cancel=
-        $('#cancelReset');
-
-
-    const confirm=
-        $('#confirmReset');
-
-
-    cancel?.addEventListener(
-        'click',
-        closeModal
+  document
+    .getElementById("closeMenuBtn")
+    ?.addEventListener(
+      "click",
+      closeMenu
     );
 
 
-    confirm?.addEventListener(
-        'click',
-        ()=>{
+  document
+    .getElementById("menuOverlay")
+    ?.addEventListener(
+      "click",
+      closeMenu
+    );
 
-            estimate=[];
 
-            save();
+  document
+    .getElementById("languageBtn")
+    ?.addEventListener(
+      "click",
+      toggleLanguage
+    );
 
-            localStorage.removeItem(VIEW);
 
-            closeModal();
+  document
+    .getElementById("settingsLanguageBtn")
+    ?.addEventListener(
+      "click",
+      toggleLanguage
+    );
 
-            renderEstimate();
 
-            alert(
-                lang==='hi'
-                ? 'Estimate reset हो गया।'
-                : 'Estimate reset.'
-            );
+  document
+    .getElementById("themeBtn")
+    ?.addEventListener(
+      "click",
+      toggleTheme
+    );
+
+
+  document
+    .getElementById("closeSheetBtn")
+    ?.addEventListener(
+      "click",
+      closeMaterialSheet
+    );
+
+
+  document
+    .getElementById("backMaterialBtn")
+    ?.addEventListener(
+      "click",
+      previousMaterial
+    );
+
+
+  document
+    .getElementById("nextMaterialBtn")
+    ?.addEventListener(
+      "click",
+      nextMaterial
+    );
+
+
+  document
+    .getElementById("addMaterialBtn")
+    ?.addEventListener(
+      "click",
+      addOrUpdateMaterial
+    );
+
+
+  document
+    .getElementById("goHomeBtn")
+    ?.addEventListener(
+      "click",
+      () => showPage("home")
+    );
+
+
+  document
+    .getElementById("clearEstimateBtn")
+    ?.addEventListener(
+      "click",
+      clearEstimate
+    );
+
+
+  document
+    .getElementById("calculateBtn")
+    ?.addEventListener(
+      "click",
+      calculateElectrical
+    );
+
+
+  document
+    .querySelectorAll(
+      ".bottom-nav-item"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            button.dataset.page;
+
+          showPage(page);
 
         }
-    );
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(
+      ".menu-item"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            button.dataset.page;
+
+          closeMenu();
+
+          showPage(page);
+
+        }
+      );
+
+    });
 
 }
 
 
-/* =========================================================
-   CALCULATOR
-   ========================================================= */
+/* ============================================================
+   PAGE NAVIGATION
+   ============================================================ */
 
-function calcInput(
-    id,
-    labelText,
-    value=''
-){
+function showPage(page) {
 
-    return `
+  const pages = [
+    "home",
+    "estimate",
+    "calculator",
+    "settings"
+  ];
 
-        <div class="calc-field">
 
-            <label>
-                ${labelText}
-            </label>
+  if (
+    !APP_CONFIG.navigation.pages[page]
+  ) {
+    return;
+  }
 
-            <input
-                id="${id}"
-                type="number"
-                value="${value}"
-                inputmode="decimal"
-            >
+
+  pages.forEach(name => {
+
+    const section =
+      document.getElementById(
+        `${name}Page`
+      );
+
+    if (!section) {
+      return;
+    }
+
+    section.classList.toggle(
+      "hidden",
+      name !== page
+    );
+
+  });
+
+
+  document
+    .querySelectorAll(
+      ".bottom-nav-item"
+    )
+    .forEach(button => {
+
+      button.classList.toggle(
+        "active",
+        button.dataset.page === page
+      );
+
+    });
+
+
+  state.currentPage = page;
+
+  updatePageTitle();
+
+}
+
+
+function updatePageTitle() {
+
+  const title =
+    document.getElementById("pageTitle");
+
+  if (!title) {
+    return;
+  }
+
+
+  const titles = {
+
+    home: t("estimateList"),
+
+    estimate: t("estimate"),
+
+    calculator: t("calculator"),
+
+    settings: t("settings")
+
+  };
+
+
+  title.textContent =
+    titles[state.currentPage] ||
+    t("estimateList");
+
+}
+
+
+/* ============================================================
+   MENU
+   ============================================================ */
+
+function openMenu() {
+
+  if (!APP_CONFIG.ui.sideMenu) {
+    return;
+  }
+
+  document
+    .getElementById("sideMenu")
+    ?.classList.add("open");
+
+  document
+    .getElementById("menuOverlay")
+    ?.classList.add("open");
+
+}
+
+
+function closeMenu() {
+
+  document
+    .getElementById("sideMenu")
+    ?.classList.remove("open");
+
+  document
+    .getElementById("menuOverlay")
+    ?.classList.remove("open");
+
+}
+
+
+/* ============================================================
+   STAGES
+   ============================================================ */
+
+function getVisibleStages() {
+
+  const stages = [];
+
+  if (
+    APP_CONFIG.stages.stage1 &&
+    MATERIAL_CONFIG.stage1
+  ) {
+    stages.push(MATERIAL_CONFIG.stage1);
+  }
+
+  return stages;
+
+}
+
+
+function buildStageCards() {
+
+  renderStageCards();
+
+}
+
+
+function renderStageCards() {
+
+  const container =
+    document.getElementById("stageGrid");
+
+  if (!container) {
+    return;
+  }
+
+
+  container.innerHTML = "";
+
+
+  getVisibleStages()
+    .forEach(stage => {
+
+      const card =
+        document.createElement("button");
+
+      card.type = "button";
+
+      card.className =
+        "stage-card";
+
+
+      card.innerHTML = `
+
+        <div class="stage-number">
+          ${escapeHTML(stage.no.replace("STAGE ", ""))}
+        </div>
+
+        <div class="stage-info">
+
+          <h3>
+            ${escapeHTML(
+              stage.name[state.language]
+            )}
+          </h3>
+
+          <p>
+            ${stage.materials.length}
+            ${state.language === "hi"
+              ? "मटेरियल"
+              : "Materials"}
+          </p>
 
         </div>
 
-    `;
+        <div class="stage-arrow">
+          →
+        </div>
+
+      `;
+
+
+      card.addEventListener(
+        "click",
+        () => openStage(stage)
+      );
+
+
+      container.appendChild(card);
+
+    });
 
 }
 
 
-function renderCalc(type='power'){
+/* ============================================================
+   OPEN STAGE
+   ============================================================ */
 
-    const box=$('#calcBox');
+function openStage(stage) {
 
-    if(!box) return;
+  state.currentStage = stage;
 
+  state.currentMaterialIndex = 0;
 
-    if(type==='power'){
+  state.editingIndex = -1;
 
-        box.innerHTML=`
+  state.previousData = {};
 
-            <h3>
-                Power (P) Calculation
-            </h3>
+  openMaterial(
+    stage,
+    0
+  );
 
-            <div class="formula">
-                P = V × I
-            </div>
-
-            <div class="calc-fields">
-
-                ${calcInput(
-                    'cv',
-                    'Voltage (V)',
-                    '230'
-                )}
-
-                ${calcInput(
-                    'ci',
-                    'Current (A)',
-                    '10'
-                )}
-
-            </div>
-
-            <div class="calc-result">
-
-                <span>
-                    Power (W)
-                </span>
-
-                <b id="cr">
-                    2300
-                </b>
-
-            </div>
-
-            <button
-                type="button"
-                class="cyber calc-btn"
-                id="calculateBtn"
-            >
-                Calculate
-            </button>
-
-        `;
-
-    }
+}
 
 
-    if(type==='current'){
+/* ============================================================
+   MATERIAL
+   ============================================================ */
 
-        box.innerHTML=`
+function openMaterial(
+  stage,
+  index,
+  options = {}
+) {
 
-            <h3>
-                Current (I) Calculation
-            </h3>
+  const material =
+    stage.materials[index];
 
-            <div class="formula">
-                I = P ÷ V
-            </div>
-
-            <div class="calc-fields">
-
-                ${calcInput(
-                    'cp',
-                    'Power (W)',
-                    '2300'
-                )}
-
-                ${calcInput(
-                    'cv',
-                    'Voltage (V)',
-                    '230'
-                )}
-
-            </div>
-
-            <div class="calc-result">
-
-                <span>
-                    Current (A)
-                </span>
-
-                <b id="cr">
-                    10
-                </b>
-
-            </div>
-
-            <button
-                type="button"
-                class="cyber calc-btn"
-                id="calculateBtn"
-            >
-                Calculate
-            </button>
-
-        `;
-
-    }
+  if (!material) {
+    return;
+  }
 
 
-    if(type==='voltage'){
+  state.currentStage = stage;
 
-        box.innerHTML=`
+  state.currentMaterialIndex = index;
 
-            <h3>
-                Voltage (V) Calculation
-            </h3>
+  state.currentMaterial = material;
 
-            <div class="formula">
-                V = P ÷ I
-            </div>
 
-            <div class="calc-fields">
+  const isEditing =
+    options.editing === true;
 
-                ${calcInput(
-                    'cp',
-                    'Power (W)',
-                    '2300'
-                )}
 
-                ${calcInput(
-                    'ci',
-                    'Current (A)',
-                    '10'
-                )}
+  state.editingIndex =
+    isEditing
+      ? options.estimateIndex
+      : -1;
 
-            </div>
 
-            <div class="calc-result">
+  if (isEditing) {
 
-                <span>
-                    Voltage (V)
-                </span>
+    const item =
+      state.estimate[
+        options.estimateIndex
+      ];
 
-                <b id="cr">
-                    230
-                </b>
 
-            </div>
+    state.formData =
+      clone(item.data);
 
-            <button
-                type="button"
-                class="cyber calc-btn"
-                id="calculateBtn"
-            >
-                Calculate
-            </button>
+  } else {
 
-        `;
+    state.formData =
+      createNewFormData(material);
+
+  }
+
+
+  updateSheetHeader();
+
+  renderMaterialForm();
+
+  updateSheetButtons();
+
+  openSheet();
+
+}
+
+
+/* ============================================================
+   NEW FORM
+   ============================================================ */
+
+function createNewFormData(material) {
+
+  const old =
+    state.previousData || {};
+
+
+  const data = {};
+
+
+  /*
+    Carry forward:
+    size
+    conduitSize
+    type
+    unit
+    brand
+
+    Quantity is intentionally NOT carried.
+  */
+
+  [
+    "size",
+    "conduitSize",
+    "type",
+    "unit",
+    "brand"
+  ]
+  .forEach(key => {
+
+    if (
+      old[key] !== undefined
+    ) {
+
+      data[key] =
+        old[key];
+
+    } else {
+
+      data[key] = "";
 
     }
 
-
-    if(type==='other'){
-
-        box.innerHTML=`
-
-            <h3>
-                Ohm's Law
-            </h3>
-
-            <div class="formula">
-                V = I × R
-            </div>
-
-            <div class="calc-fields">
-
-                ${calcInput(
-                    'oi',
-                    'Current (A)',
-                    '5'
-                )}
-
-                ${calcInput(
-                    'or',
-                    'Resistance (Ω)',
-                    '46'
-                )}
-
-            </div>
-
-            <div class="calc-result">
-
-                <span>
-                    Voltage (V)
-                </span>
-
-                <b id="cr">
-                    230
-                </b>
-
-            </div>
-
-            <button
-                type="button"
-                class="cyber calc-btn"
-                id="calculateBtn"
-            >
-                Calculate
-            </button>
-
-        `;
-
-    }
+  });
 
 
-    const calculate=
-        $('#calculateBtn');
+  data.quantity = "";
 
 
-    if(!calculate) return;
+  /*
+    These do not automatically carry forward.
+  */
+
+  data.subType = "";
+  data.shape = "";
+  data.material = "";
 
 
-    calculate.addEventListener(
-        'click',
-        ()=>{
+  return data;
 
-            let result=0;
+}
 
 
-            if(type==='power'){
+/* ============================================================
+   MATERIAL FORM
+   ============================================================ */
 
-                result=
-                    Number($('#cv')?.value||0)*
-                    Number($('#ci')?.value||0);
+function renderMaterialForm() {
 
-            }
+  const container =
+    document.getElementById(
+      "materialForm"
+    );
 
-
-            if(type==='current'){
-
-                result=
-                    Number($('#cp')?.value||0)/
-                    Number($('#cv')?.value||1);
-
-            }
+  if (!container) {
+    return;
+  }
 
 
-            if(type==='voltage'){
-
-                result=
-                    Number($('#cp')?.value||0)/
-                    Number($('#ci')?.value||1);
-
-            }
+  container.innerHTML = "";
 
 
-            if(type==='other'){
-
-                result=
-                    Number($('#oi')?.value||0)*
-                    Number($('#or')?.value||0);
-
-            }
+  if (!state.currentMaterial) {
+    return;
+  }
 
 
-            const resultBox=$('#cr');
+  container.classList.toggle(
+    "compact",
+    state.view === "compact"
+  );
 
 
-            if(resultBox){
+  /*
+    View switch is shown above material fields.
+  */
 
-                resultBox.textContent=
-                    Number.isFinite(result)
-                    ? result.toFixed(2)
-                    : '0';
+  if (
+    APP_CONFIG.ui.materialViewSwitch
+  ) {
 
-            }
+    const viewSection =
+      document.createElement("div");
+
+    viewSection.className =
+      "field-section";
+
+
+    const title =
+      document.createElement("div");
+
+    title.className =
+      "field-title";
+
+    title.textContent =
+      state.language === "hi"
+        ? "दृश्य"
+        : "View";
+
+
+    const grid =
+      document.createElement("div");
+
+    grid.className =
+      "option-grid";
+
+
+    [
+      ["grid", "▦", "Grid", "ग्रिड"],
+      ["list", "☰", "List", "लिस्ट"],
+      ["compact", "▤", "Compact", "कॉम्पैक्ट"]
+    ]
+    .forEach(item => {
+
+      const button =
+        document.createElement("button");
+
+      button.type = "button";
+
+      button.className =
+        "option-btn";
+
+      button.classList.toggle(
+        "selected",
+        state.view === item[0]
+      );
+
+      button.innerHTML = `
+        ${item[1]} 
+        ${state.language === "hi"
+          ? item[3]
+          : item[2]}
+      `;
+
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          state.view =
+            item[0];
+
+          localStorage.setItem(
+            STORE.view,
+            state.view
+          );
+
+          renderMaterialForm();
 
         }
-    );
+      );
+
+
+      grid.appendChild(button);
+
+    });
+
+
+    viewSection.appendChild(title);
+
+    viewSection.appendChild(grid);
+
+    container.appendChild(viewSection);
+
+  }
+
+
+  /*
+    Render each material field
+  */
+
+  state.currentMaterial.flow
+    .forEach(field => {
+
+      if (field === "quantity") {
+
+        renderQuantityField(
+          container
+        );
+
+        return;
+
+      }
+
+
+      renderOptionField(
+        container,
+        field
+      );
+
+    });
 
 }
 
 
-/* =========================================================
-   BOOT
-   ========================================================= */
+/* ============================================================
+   OPTION FIELD
+   ============================================================ */
 
-function boot(){
+function renderOptionField(
+  container,
+  field
+) {
 
-    applyConfig();
-
-
-    const languageButton=
-        $('#langBtn');
-
-
-    if(languageButton){
-
-        languageButton.textContent=
-            lang.toUpperCase();
-
-    }
+  const options =
+    state.currentMaterial
+      .options[field];
 
 
-    applyTheme(
-        safeGet(
-            THEME,
-            'dark'
-        )
+  if (!options) {
+    return;
+  }
+
+
+  const section =
+    document.createElement("div");
+
+  section.className =
+    "field-section";
+
+
+  const title =
+    document.createElement("div");
+
+  title.className =
+    "field-title";
+
+
+  const fieldLabel =
+    MATERIAL_FIELD_LABELS[field];
+
+
+  title.textContent =
+    fieldLabel
+      ? fieldLabel[state.language]
+      : field;
+
+
+  if (field === "brand") {
+
+    const optional =
+      document.createElement("span");
+
+    optional.className =
+      "optional-label";
+
+    optional.textContent =
+      state.language === "hi"
+        ? "(वैकल्पिक)"
+        : "(Optional)";
+
+    title.appendChild(optional);
+
+  }
+
+
+  const grid =
+    document.createElement("div");
+
+  grid.className =
+    "option-grid";
+
+
+  /*
+    View-specific sizing
+  */
+
+  if (state.view === "list") {
+
+    grid.style.gridTemplateColumns =
+      "1fr";
+
+  }
+
+
+  if (state.view === "compact") {
+
+    grid.style.gridTemplateColumns =
+      "repeat(3, 1fr)";
+
+  }
+
+
+  options.forEach(option => {
+
+    const button =
+      document.createElement("button");
+
+    button.type = "button";
+
+    button.className =
+      "option-btn";
+
+
+    button.classList.toggle(
+      "selected",
+      state.formData[field] ===
+      option.value
     );
 
 
-    renderStages();
+    button.textContent =
+      option.label[state.language];
+
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        state.formData[field] =
+          option.value;
+
+        renderMaterialForm();
+
+      }
+    );
+
+
+    grid.appendChild(button);
+
+  });
+
+
+  /*
+    Brand is optional.
+    Blank button allows user to leave it empty.
+  */
+
+  if (field === "brand") {
+
+    const blank =
+      document.createElement("button");
+
+    blank.type = "button";
+
+    blank.className =
+      "skip-brand-btn";
+
+    blank.textContent =
+      state.language === "hi"
+        ? "ब्रांड नहीं चुनना"
+        : "Leave Brand Blank";
+
+
+    blank.classList.toggle(
+      "selected",
+      !state.formData.brand
+    );
+
+
+    blank.addEventListener(
+      "click",
+      () => {
+
+        state.formData.brand = "";
+
+        renderMaterialForm();
+
+      }
+    );
+
+
+    section.appendChild(title);
+
+    section.appendChild(grid);
+
+    section.appendChild(blank);
+
+  } else {
+
+    section.appendChild(title);
+
+    section.appendChild(grid);
+
+  }
+
+
+  container.appendChild(section);
+
+}
+
+
+/* ============================================================
+   QUANTITY FIELD
+   ============================================================ */
+
+function renderQuantityField(
+  container
+) {
+
+  const section =
+    document.createElement("div");
+
+  section.className =
+    "field-section";
+
+
+  const title =
+    document.createElement("div");
+
+  title.className =
+    "field-title";
+
+  title.textContent =
+    MATERIAL_FIELD_LABELS.quantity[
+      state.language
+    ];
+
+
+  const quantityBox =
+    document.createElement("div");
+
+  quantityBox.className =
+    "quantity-box";
+
+
+  if (APP_CONFIG.ui.quantityStepper) {
+
+    const minus =
+      document.createElement("button");
+
+    minus.type = "button";
+
+    minus.className =
+      "quantity-step-btn";
+
+    minus.textContent = "−";
+
+
+    minus.addEventListener(
+      "click",
+      () => changeQuantity(-1)
+    );
+
+
+    quantityBox.appendChild(minus);
+
+  }
+
+
+  const input =
+    document.createElement("input");
+
+  input.type = "number";
+
+  input.inputMode = "numeric";
+
+  input.min =
+    APP_CONFIG.quantity.minimum;
+
+  input.step = "1";
+
+  input.className =
+    "quantity-input";
+
+  input.placeholder =
+    state.language === "hi"
+      ? "मात्रा"
+      : "Qty";
+
+  input.value =
+    state.formData.quantity || "";
+
+
+  input.addEventListener(
+    "input",
+    () => {
+
+      state.formData.quantity =
+        sanitizeQuantity(
+          input.value
+        );
+
+    }
+  );
+
+
+  quantityBox.appendChild(input);
+
+
+  if (APP_CONFIG.ui.quantityStepper) {
+
+    const plus =
+      document.createElement("button");
+
+    plus.type = "button";
+
+    plus.className =
+      "quantity-step-btn";
+
+    plus.textContent = "+";
+
+
+    plus.addEventListener(
+      "click",
+      () => changeQuantity(1)
+    );
+
+
+    quantityBox.appendChild(plus);
+
+  }
+
+
+  section.appendChild(title);
+
+  section.appendChild(quantityBox);
+
+
+  /*
+    Quick quantity
+  */
+
+  if (
+    APP_CONFIG.ui.quantityQuickButtons
+  ) {
+
+    const quick =
+      document.createElement("div");
+
+    quick.className =
+      "quick-quantity";
+
+
+    APP_CONFIG.quantity.quickValues
+      .forEach(value => {
+
+        const button =
+          document.createElement("button");
+
+        button.type = "button";
+
+        button.textContent =
+          value;
+
+
+        button.classList.toggle(
+          "selected",
+          Number(
+            state.formData.quantity
+          ) === value
+        );
+
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            state.formData.quantity =
+              value;
+
+            renderMaterialForm();
+
+          }
+        );
+
+
+        quick.appendChild(button);
+
+      });
+
+
+    section.appendChild(quick);
+
+  }
+
+
+  container.appendChild(section);
+
+}
+
+
+/* ============================================================
+   QUANTITY
+   ============================================================ */
+
+function sanitizeQuantity(value) {
+
+  const number =
+    parseInt(value, 10);
+
+
+  if (
+    Number.isNaN(number) ||
+    number < 1
+  ) {
+    return "";
+  }
+
+
+  return number;
+
+}
+
+
+function changeQuantity(amount) {
+
+  let quantity =
+    Number(
+      state.formData.quantity
+    );
+
+
+  if (!quantity) {
+    quantity =
+      APP_CONFIG.quantity.minimum;
+  } else {
+
+    quantity += amount;
+
+  }
+
+
+  if (
+    quantity <
+    APP_CONFIG.quantity.minimum
+  ) {
+
+    quantity =
+      APP_CONFIG.quantity.minimum;
+
+  }
+
+
+  state.formData.quantity =
+    quantity;
+
+
+  renderMaterialForm();
+
+}
+
+
+/* ============================================================
+   SHEET HEADER
+   ============================================================ */
+
+function updateSheetHeader() {
+
+  if (!state.currentStage ||
+      !state.currentMaterial) {
+    return;
+  }
+
+
+  document.getElementById(
+    "sheetStageName"
+  ).textContent =
+    state.currentStage.no;
+
+
+  document.getElementById(
+    "sheetMaterialName"
+  ).textContent =
+    state.currentMaterial
+      .name[state.language];
+
+
+  const total =
+    state.currentStage.materials.length;
+
+
+  const current =
+    state.currentMaterialIndex + 1;
+
+
+  document.getElementById(
+    "sheetProgressText"
+  ).textContent =
+    `${current} / ${total}`;
+
+
+  const percentage =
+    (current / total) * 100;
+
+
+  document.getElementById(
+    "sheetProgressBar"
+  ).style.width =
+    `${percentage}%`;
+
+}
+
+
+/* ============================================================
+   SHEET BUTTONS
+   ============================================================ */
+
+function updateSheetButtons() {
+
+  const back =
+    document.getElementById(
+      "backMaterialBtn"
+    );
+
+  const next =
+    document.getElementById(
+      "nextMaterialBtn"
+    );
+
+  const add =
+    document.getElementById(
+      "addMaterialBtn"
+    );
+
+
+  if (back) {
+
+    back.classList.toggle(
+      "hidden",
+      !APP_CONFIG.ui.backButton
+    );
+
+  }
+
+
+  if (next) {
+
+    next.classList.toggle(
+      "hidden",
+      !APP_CONFIG.ui.nextButton
+    );
+
+  }
+
+
+  if (add) {
+
+    add.classList.toggle(
+      "hidden",
+      !APP_CONFIG.ui.addButton
+    );
+
+
+    if (state.editingIndex >= 0) {
+
+      add.innerHTML =
+        `✓ <span>${t("updateEstimate")}</span>`;
+
+    } else {
+
+      add.innerHTML =
+        `+ <span>${t("addToEstimate")}</span>`;
+
+    }
+
+  }
+
+}
+
+
+/* ============================================================
+   OPEN / CLOSE SHEET
+   ============================================================ */
+
+function openSheet() {
+
+  document
+    .getElementById(
+      "materialSheetLayer"
+    )
+    .classList.add("open");
+
+
+  document.body.style.overflow =
+    "hidden";
+
+}
+
+
+function closeMaterialSheet() {
+
+  document
+    .getElementById(
+      "materialSheetLayer"
+    )
+    .classList.remove("open");
+
+
+  document.body.style.overflow =
+    "";
+
+
+  state.currentMaterial = null;
+
+  state.editingIndex = -1;
+
+}
+
+
+/* ============================================================
+   VALIDATE
+   ============================================================ */
+
+function validateForm() {
+
+  const material =
+    state.currentMaterial;
+
+
+  if (!material) {
+    return false;
+  }
+
+
+  /*
+    Quantity required
+  */
+
+  const quantity =
+    Number(
+      state.formData.quantity
+    );
+
+
+  if (
+    !quantity ||
+    quantity < 1
+  ) {
+
+    showToast(
+      t("noQuantity")
+    );
+
+    return false;
+
+  }
+
+
+  /*
+    Required fields
+    Brand intentionally optional.
+  */
+
+  const requiredFields =
+    material.flow.filter(
+      field =>
+        field !== "quantity" &&
+        field !== "brand"
+    );
+
+
+  for (const field of requiredFields) {
+
+    if (
+      !state.formData[field]
+    ) {
+
+      showToast(
+        t("selectRequired")
+      );
+
+      return false;
+
+    }
+
+  }
+
+
+  return true;
+
+}
+
+
+/* ============================================================
+   ADD / UPDATE
+   ============================================================ */
+
+function addOrUpdateMaterial() {
+
+  if (!validateForm()) {
+    return;
+  }
+
+
+  if (state.editingIndex >= 0) {
+
+    /*
+      UPDATE EXISTING
+      No duplicate created.
+    */
+
+    const existing =
+      state.estimate[
+        state.editingIndex
+      ];
+
+
+    state.estimate[
+      state.editingIndex
+    ] = {
+
+      ...existing,
+
+      data: clone(
+        state.formData
+      )
+
+    };
+
+
+    saveEstimate();
 
     renderEstimate();
 
-    renderSettings();
-
-    renderCalc('power');
-
-
-    /* -----------------------------------------
-       VIEW SWITCHER
-       ----------------------------------------- */
-
-    $$('#viewSwitcher button')
-        .forEach(button=>{
-
-            button.classList.toggle(
-                'active',
-                button.dataset.view===view
-            );
-
-
-            button.addEventListener(
-                'click',
-                ()=>{
-
-                    activate(button);
-
-                    view=
-                        button.dataset.view;
-
-
-                    if(
-                        safeGet(
-                            'setting_rememberView',
-                            'true'
-                        )!=='false'
-                    ){
-
-                        safeSet(
-                            VIEW,
-                            view
-                        );
-
-                    }
-
-
-                    renderMaterials();
-
-                }
-            );
-
-        });
-
-
-    /* -----------------------------------------
-       MATERIAL SEARCH
-       ----------------------------------------- */
-
-    $('#materialSearch')?.addEventListener(
-        'input',
-        renderMaterials
+    showToast(
+      t("updated")
     );
 
 
-    /* -----------------------------------------
-       GLOBAL SEARCH
-       ----------------------------------------- */
+    closeMaterialSheet();
 
-    $('#globalSearch')?.addEventListener(
-        'input',
-        event=>{
+    showPage("estimate");
 
-            const query=
-                event.target.value
-                    .trim()
-                    .toLowerCase();
+    return;
+
+  }
 
 
-            if(!query) return;
+  /*
+    ADD NEW
+  */
+
+  const newItem = {
+
+    id:
+      createId(),
+
+    stageId:
+      state.currentStage.id,
+
+    stageName:
+      clone(state.currentStage.name),
+
+    materialId:
+      state.currentMaterial.id,
+
+    materialName:
+      clone(state.currentMaterial.name),
+
+    data:
+      clone(state.formData),
+
+    createdAt:
+      Date.now()
+
+  };
 
 
-            const material=
-                MATERIALS.find(
-                    item=>
-                        item.enabled &&
-                        txt(item.name)
-                            .toLowerCase()
-                            .includes(query)
-                );
+  state.estimate.push(
+    newItem
+  );
 
 
-            if(material){
+  saveEstimate();
 
-                openStage(material.stage);
+  renderEstimate();
 
-            }
+  showToast(
+    t("added")
+  );
 
-        }
+
+  /*
+    Carry forward ONLY selected
+    fields. Quantity resets.
+  */
+
+  state.previousData =
+    createCarryData(
+      state.formData
     );
 
 
-    /* -----------------------------------------
-       LANGUAGE
-       ----------------------------------------- */
+  /*
+    After Add:
+    automatically open next material.
+  */
 
-    $('#langBtn')?.addEventListener(
-        'click',
-        event=>{
+  const nextIndex =
+    state.currentMaterialIndex + 1;
 
-            activate(event.currentTarget);
 
-            toggleLanguage();
+  if (
+    state.currentStage &&
+    nextIndex <
+    state.currentStage.materials.length
+  ) {
 
-        }
-    );
+    setTimeout(() => {
 
+      openMaterial(
+        state.currentStage,
+        nextIndex
+      );
 
-    /* -----------------------------------------
-       DRAWER
-       ----------------------------------------- */
+    }, 180);
 
-    $('#menuBtn')?.addEventListener(
-        'click',
-        event=>{
+  } else {
 
-            activate(event.currentTarget);
+    setTimeout(() => {
 
-            $('#drawerBackdrop')
-                ?.classList
-                .add('open');
+      closeMaterialSheet();
 
-        }
-    );
+    }, 180);
 
-
-    $('#closeDrawer')?.addEventListener(
-        'click',
-        ()=>{
-
-            $('#drawerBackdrop')
-                ?.classList
-                .remove('open');
-
-        }
-    );
-
-
-    $('#drawerBackdrop')?.addEventListener(
-        'click',
-        event=>{
-
-            if(
-                event.target.id===
-                'drawerBackdrop'
-            ){
-
-                $('#drawerBackdrop')
-                    ?.classList
-                    .remove('open');
-
-            }
-
-        }
-    );
-
-
-    $$('.drawer-links button')
-        .forEach(button=>{
-
-            button.addEventListener(
-                'click',
-                ()=>{
-
-                    $('#drawerBackdrop')
-                        ?.classList
-                        .remove('open');
-
-                    page(
-                        button.dataset.page
-                    );
-
-                }
-            );
-
-        });
-
-
-    $('#drawerLang')?.addEventListener(
-        'click',
-        toggleLanguage
-    );
-
-
-    /* -----------------------------------------
-       MATERIAL NAVIGATION
-       ----------------------------------------- */
-
-    $('#backToStages')?.addEventListener(
-        'click',
-        ()=>page('homePage')
-    );
-
-
-    $('#stageSearchBtn')?.addEventListener(
-        'click',
-        ()=>{
-
-            $('#materialSearch')?.focus();
-
-        }
-    );
-
-
-    /* -----------------------------------------
-       SHEET
-       ----------------------------------------- */
-
-    $('#closeSheet')?.addEventListener(
-        'click',
-        closeSheet
-    );
-
-
-    $('#sheetBackdrop')?.addEventListener(
-        'click',
-        event=>{
-
-            if(
-                event.target.id===
-                'sheetBackdrop'
-            ){
-
-                closeSheet();
-
-            }
-
-        }
-    );
-
-
-    /* -----------------------------------------
-       NEXT
-       ----------------------------------------- */
-
-    $('#nextMaterial')?.addEventListener(
-        'click',
-        event=>{
-
-            activate(event.currentTarget);
-
-            next();
-
-        }
-    );
-
-
-    /* -----------------------------------------
-       ADD TO ESTIMATE
-       ----------------------------------------- */
-
-    $('#addEstimate')?.addEventListener(
-        'click',
-        event=>{
-
-            event.preventDefault();
-
-            activate(event.currentTarget);
-
-            add();
-
-        }
-    );
-
-
-    /* -----------------------------------------
-       MODAL
-       ----------------------------------------- */
-
-    $('#modalBackdrop')?.addEventListener(
-        'click',
-        event=>{
-
-            if(
-                event.target.id===
-                'modalBackdrop'
-            ){
-
-                closeModal();
-
-            }
-
-        }
-    );
-
-
-    $('#closeModal')?.addEventListener(
-        'click',
-        closeModal
-    );
-
-
-    /* -----------------------------------------
-       BOTTOM NAV
-       ----------------------------------------- */
-
-    $$('#bottomNav button')
-        .forEach(button=>{
-
-            button.addEventListener(
-                'click',
-                ()=>{
-
-                    activate(button);
-
-                    page(
-                        button.dataset.page
-                    );
-
-                }
-            );
-
-        });
-
-
-    /* -----------------------------------------
-       CLEAR ESTIMATE
-       ----------------------------------------- */
-
-    $('#clearEstimateTop')
-        ?.addEventListener(
-            'click',
-            ()=>{
-
-                if(
-                    !estimate.length
-                ){
-
-                    return;
-
-                }
-
-
-                if(
-                    confirm(
-                        lang==='hi'
-                        ? 'क्या आप पूरा Estimate clear करना चाहते हैं?'
-                        : 'Clear current estimate?'
-                    )
-                ){
-
-                    estimate=[];
-
-                    save();
-
-                    renderEstimate();
-
-                }
-
-            }
-        );
-
-
-    /* -----------------------------------------
-       COPY
-       ----------------------------------------- */
-
-    $('#copyEstimate')
-        ?.addEventListener(
-            'click',
-            async event=>{
-
-                activate(
-                    event.currentTarget
-                );
-
-
-                const text=
-                    estimateText();
-
-
-                try{
-
-                    await navigator.clipboard.writeText(
-                        text
-                    );
-
-
-                    alert(
-                        lang==='hi'
-                        ? 'Estimate copy हो गया।'
-                        : 'Estimate copied.'
-                    );
-
-                }catch(error){
-
-                    alert(text);
-
-                }
-
-            }
-        );
-
-
-    /* -----------------------------------------
-       SHARE
-       ----------------------------------------- */
-
-    $('#shareEstimate')
-        ?.addEventListener(
-            'click',
-            async event=>{
-
-                activate(
-                    event.currentTarget
-                );
-
-
-                const text=
-                    estimateText();
-
-
-                try{
-
-                    if(
-                        navigator.share
-                    ){
-
-                        await navigator.share({
-
-                            title:
-                                'Sandeep ElectroFix Estimate',
-
-                            text:
-                                text
-
-                        });
-
-                    }else{
-
-                        await navigator.clipboard?.writeText(
-                            text
-                        );
-
-
-                        alert(
-                            lang==='hi'
-                            ? 'Estimate copy हो गया।'
-                            : 'Estimate copied.'
-                        );
-
-                    }
-
-                }catch(error){
-
-                    console.log(
-                        'Share cancelled:',
-                        error
-                    );
-
-                }
-
-            }
-        );
-
-
-    /* -----------------------------------------
-       PRINT
-       ----------------------------------------- */
-
-    $('#printEstimate')
-        ?.addEventListener(
-            'click',
-            event=>{
-
-                activate(
-                    event.currentTarget
-                );
-
-                window.print();
-
-            }
-        );
-
-
-    /* -----------------------------------------
-       CALCULATOR TABS
-       ----------------------------------------- */
-
-    $$('.calc-tabs button')
-        .forEach(button=>{
-
-            button.addEventListener(
-                'click',
-                ()=>{
-
-                    $$('.calc-tabs button')
-                        .forEach(item=>
-                            item.classList.remove(
-                                'active'
-                            )
-                        );
-
-
-                    button.classList.add(
-                        'active'
-                    );
-
-
-                    renderCalc(
-                        button.dataset.calc
-                    );
-
-                }
-            );
-
-        });
-
-
-    /* -----------------------------------------
-       QUICK CALCULATORS
-       ----------------------------------------- */
-
-    $$('.quick-calc-grid button')
-        .forEach(button=>{
-
-            button.addEventListener(
-                'click',
-                ()=>{
-
-                    const tool=
-                        button.dataset.tool;
-
-
-                    if(tool==='ohm'){
-
-                        $$('.calc-tabs button')
-                            .forEach(item=>
-                                item.classList.remove(
-                                    'active'
-                                )
-                            );
-
-
-                        const other=
-                            document.querySelector(
-                                '[data-calc="other"]'
-                            );
-
-
-                        other?.classList.add(
-                            'active'
-                        );
-
-
-                        renderCalc('other');
-
-                        return;
-
-                    }
-
-
-                    alert(
-                        (
-                            button.querySelector('b')
-                                ?.textContent ||
-                            'Calculator'
-                        )+
-                        ' module is ready for integration.'
-                    );
-
-                }
-            );
-
-        });
+  }
 
 }
 
 
-/* =========================================================
-   LOADER
-   ========================================================= */
+/* ============================================================
+   CARRY FORWARD
+   ============================================================ */
 
-function hideLoadingScreen(){
+function createCarryData(data) {
 
-    const loader=
-        document.getElementById(
-            'loadingScreen'
-        );
+  const carry = {};
 
+  [
+    "size",
+    "conduitSize",
+    "type",
+    "unit",
+    "brand"
+  ]
+  .forEach(key => {
 
-    if(!loader) return;
+    if (
+      data[key] !== undefined
+    ) {
 
-
-    loader.style.opacity='0';
-
-    loader.style.pointerEvents='none';
-
-
-    setTimeout(()=>{
-
-        loader.style.display='none';
-
-    },400);
-
-}
-
-
-/* =========================================================
-   SAFE BOOT
-   ========================================================= */
-
-function safeBoot(){
-
-    try{
-
-        boot();
-
-    }catch(error){
-
-        console.error(
-            'Sandeep ElectroFix boot error:',
-            error
-        );
-
-
-        /*
-         * App should not remain permanently
-         * behind the loading screen.
-         */
-
-    }finally{
-
-        hideLoadingScreen();
+      carry[key] =
+        data[key];
 
     }
 
+  });
+
+
+  /*
+    Quantity deliberately omitted.
+  */
+
+  return carry;
+
 }
 
 
-/* =========================================================
-   START APP
-   ========================================================= */
+/* ============================================================
+   NEXT
+   ============================================================ */
 
-if(
-    document.readyState===
-    'loading'
-){
+function nextMaterial() {
 
-    document.addEventListener(
-        'DOMContentLoaded',
-        safeBoot,
-        {
-            once:true
-        }
+  if (!state.currentStage) {
+    return;
+  }
+
+
+  /*
+    IMPORTANT:
+    Next does NOT add current item.
+  */
+
+  const nextIndex =
+    state.currentMaterialIndex + 1;
+
+
+  if (
+    nextIndex >=
+    state.currentStage.materials.length
+  ) {
+
+    /*
+      At last material, don't auto-add.
+      Just show a small message.
+    */
+
+    showToast(
+      state.language === "hi"
+        ? "यह अंतिम आइटम है"
+        : "This is the last item"
     );
 
-}else{
+    return;
 
-    safeBoot();
+  }
+
+
+  /*
+    Carry forward selected values,
+    but quantity resets.
+  */
+
+  state.previousData =
+    createCarryData(
+      state.formData
+    );
+
+
+  openMaterial(
+    state.currentStage,
+    nextIndex
+  );
+
+
+  scrollSheetTop();
 
 }
 
 
-/* =========================================================
-   EMERGENCY LOADER FAILSAFE
-   ========================================================= */
+/* ============================================================
+   BACK
+   ============================================================ */
 
-setTimeout(
-    hideLoadingScreen,
-    3000
-);
+function previousMaterial() {
+
+  if (!state.currentStage) {
+    return;
+  }
 
 
-})();
+  const previousIndex =
+    state.currentMaterialIndex - 1;
+
+
+  if (previousIndex < 0) {
+
+    closeMaterialSheet();
+
+    return;
+
+  }
+
+
+  state.previousData =
+    createCarryData(
+      state.formData
+    );
+
+
+  openMaterial(
+    state.currentStage,
+    previousIndex
+  );
+
+
+  scrollSheetTop();
+
+}
+
+
+/* ============================================================
+   SCROLL TOP
+   ============================================================ */
+
+function scrollSheetTop() {
+
+  requestAnimationFrame(() => {
+
+    const form =
+      document.getElementById(
+        "materialForm"
+      );
+
+    if (form) {
+      form.scrollTop = 0;
+    }
+
+  });
+
+}
+
+
+/* ============================================================
+   ESTIMATE RENDER
+   ============================================================ */
+
+function renderEstimate() {
+
+  const list =
+    document.getElementById(
+      "estimateList"
+    );
+
+  const empty =
+    document.getElementById(
+      "estimateEmpty"
+    );
+
+  const count =
+    document.getElementById(
+      "estimateCount"
+    );
+
+
+  if (!list) {
+    return;
+  }
+
+
+  list.innerHTML = "";
+
+
+  if (count) {
+    count.textContent =
+      state.estimate.length;
+  }
+
+
+  if (!state.estimate.length) {
+
+    empty?.classList.remove(
+      "hidden"
+    );
+
+    return;
+
+  }
+
+
+  empty?.classList.add(
+    "hidden"
+  );
+
+
+  state.estimate.forEach(
+    (item, index) => {
+
+      const card =
+        document.createElement(
+          "div"
+        );
+
+      card.className =
+        "estimate-card";
+
+
+      const details =
+        formatEstimateDetails(
+          item
+        );
+
+
+      const actions =
+        document.createElement(
+          "div"
+        );
+
+      actions.className =
+        "estimate-actions";
+
+
+      if (
+        APP_CONFIG.ui.estimateEdit
+      ) {
+
+        const edit =
+          document.createElement(
+            "button"
+          );
+
+        edit.type = "button";
+
+        edit.className =
+          "icon-action";
+
+        edit.textContent =
+          "✎";
+
+        edit.title =
+          t("edit");
+
+
+        edit.addEventListener(
+          "click",
+          () => editEstimate(index)
+        );
+
+
+        actions.appendChild(edit);
+
+      }
+
+
+      if (
+        APP_CONFIG.ui.estimateDelete
+      ) {
+
+        const del =
+          document.createElement(
+            "button"
+          );
+
+        del.type = "button";
+
+        del.className =
+          "icon-action delete";
+
+        del.textContent =
+          "×";
+
+        del.title =
+          t("delete");
+
+
+        del.addEventListener(
+          "click",
+          () => deleteEstimate(index)
+        );
+
+
+        actions.appendChild(del);
+
+      }
+
+
+      card.innerHTML = `
+
+        <div class="estimate-card-top">
+
+          <div class="estimate-number">
+            ${index + 1}
+          </div>
+
+          <div class="estimate-main">
+
+            <div class="estimate-name">
+              ${escapeHTML(
+                item.materialName[
+                  state.language
+                ]
+              )}
+            </div>
+
+            <div class="estimate-details">
+              ${details}
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+
+      const top =
+        card.querySelector(
+          ".estimate-card-top"
+        );
+
+
+      top.appendChild(actions);
+
+      list.appendChild(card);
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   ESTIMATE DETAILS
+   ============================================================ */
+
+function formatEstimateDetails(item) {
+
+  const material =
+    findMaterial(
+      item.stageId,
+      item.materialId
+    );
+
+
+  if (!material) {
+    return "";
+  }
+
+
+  const parts = [];
+
+
+  material.flow.forEach(
+    field => {
+
+      const value =
+        item.data[field];
+
+
+      if (
+        value === undefined ||
+        value === ""
+      ) {
+        return;
+      }
+
+
+      let display =
+        escapeHTML(
+          String(value)
+        );
+
+
+      const option =
+        material.options?.[field]
+          ?.find(
+            item =>
+              item.value === value
+          );
+
+
+      if (option) {
+
+        display =
+          escapeHTML(
+            option.label[
+              state.language
+            ]
+          );
+
+      }
+
+
+      const label =
+        MATERIAL_FIELD_LABELS[field];
+
+
+      const labelText =
+        label
+          ? label[state.language]
+          : field;
+
+
+      parts.push(
+        `<strong>${escapeHTML(labelText)}:</strong> ${display}`
+      );
+
+    }
+  );
+
+
+  return parts.join(" • ");
+
+}
+
+
+/* ============================================================
+   FIND MATERIAL
+   ============================================================ */
+
+function findMaterial(
+  stageId,
+  materialId
+) {
+
+  if (
+    stageId === 1 &&
+    MATERIAL_CONFIG.stage1
+  ) {
+
+    return MATERIAL_CONFIG.stage1
+      .materials
+      .find(
+        material =>
+          material.id === materialId
+      );
+
+  }
+
+
+  return null;
+
+}
+
+
+/* ============================================================
+   EDIT
+   ============================================================ */
+
+function editEstimate(index) {
+
+  const item =
+    state.estimate[index];
+
+
+  if (!item) {
+    return;
+  }
+
+
+  const stage =
+    getStageById(
+      item.stageId
+    );
+
+
+  if (!stage) {
+    return;
+  }
+
+
+  const materialIndex =
+    stage.materials.findIndex(
+      material =>
+        material.id ===
+        item.materialId
+    );
+
+
+  if (materialIndex < 0) {
+    return;
+  }
+
+
+  openMaterial(
+    stage,
+    materialIndex,
+    {
+      editing: true,
+      estimateIndex: index
+    }
+  );
+
+
+  scrollSheetTop();
+
+}
+
+
+/* ============================================================
+   GET STAGE
+   ============================================================ */
+
+function getStageById(id) {
+
+  if (
+    id === 1 &&
+    MATERIAL_CONFIG.stage1
+  ) {
+
+    return MATERIAL_CONFIG.stage1;
+
+  }
+
+
+  return null;
+
+}
+
+
+/* ============================================================
+   DELETE
+   ============================================================ */
+
+function deleteEstimate(index) {
+
+  if (
+    !confirm(
+      t("confirmDelete")
+    )
+  ) {
+    return;
+  }
+
+
+  state.estimate.splice(
+    index,
+    1
+  );
+
+
+  saveEstimate();
+
+  renderEstimate();
+
+  showToast(
+    t("deleted")
+  );
+
+}
+
+
+/* ============================================================
+   CLEAR
+   ============================================================ */
+
+function clearEstimate() {
+
+  if (!state.estimate.length) {
+    return;
+  }
+
+
+  if (
+    !confirm(
+      t("confirmClear")
+    )
+  ) {
+    return;
+  }
+
+
+  state.estimate = [];
+
+  saveEstimate();
+
+  renderEstimate();
+
+}
+
+
+/* ============================================================
+   CALCULATOR
+   ============================================================ */
+
+function calculateElectrical() {
+
+  const voltage =
+    getNumber(
+      "calcVoltage"
+    );
+
+  const current =
+    getNumber(
+      "calcCurrent"
+    );
+
+  const power =
+    getNumber(
+      "calcPower"
+    );
+
+  const resistance =
+    getNumber(
+      "calcResistance"
+    );
+
+
+  let result = [];
+
+
+  /*
+    V = I × R
+  */
+
+  if (
+    voltage !== null &&
+    current !== null
+  ) {
+
+    result.push(
+      `R = ${(voltage / current).toFixed(2)} Ω`
+    );
+
+  }
+
+
+  if (
+    voltage !== null &&
+    resistance !== null
+  ) {
+
+    result.push(
+      `I = ${(voltage / resistance).toFixed(2)} A`
+    );
+
+  }
+
+
+  if (
+    current !== null &&
+    resistance !== null
+  ) {
+
+    result.push(
+      `V = ${(current * resistance).toFixed(2)} V`
+    );
+
+  }
+
+
+  /*
+    P = V × I
+  */
+
+  if (
+    voltage !== null &&
+    current !== null
+  ) {
+
+    result.push(
+      `P = ${(voltage * current).toFixed(2)} W`
+    );
+
+  }
+
+
+  if (
+    power !== null &&
+    voltage !== null
+  ) {
+
+    result.push(
+      `I = ${(power / voltage).toFixed(2)} A`
+    );
+
+  }
+
+
+  if (
+    power !== null &&
+    current !== null
+  ) {
+
+    result.push(
+      `V = ${(power / current).toFixed(2)} V`
+    );
+
+  }
+
+
+  if (
+    power !== null &&
+    voltage !== null &&
+    current !== null
+  ) {
+
+    result.push(
+      `P = ${power.toFixed(2)} W`
+    );
+
+  }
+
+
+  const output =
+    document.getElementById(
+      "calcResult"
+    );
+
+
+  if (!result.length) {
+
+    output.textContent =
+      t("invalidCalculation");
+
+    return;
+
+  }
+
+
+  output.innerHTML =
+    `<strong>${escapeHTML(
+      t("calculationResult")
+    )}</strong><br>` +
+    result
+      .map(
+        item =>
+          escapeHTML(item)
+      )
+      .join("<br>");
+
+}
+
+
+function getNumber(id) {
+
+  const element =
+    document.getElementById(id);
+
+
+  if (!element) {
+    return null;
+  }
+
+
+  const value =
+    parseFloat(
+      element.value
+    );
+
+
+  if (
+    Number.isNaN(value) ||
+    value <= 0
+  ) {
+    return null;
+  }
+
+
+  return value;
+
+}
+
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+let toastTimer = null;
+
+function showToast(message) {
+
+  if (!APP_CONFIG.ui.toast) {
+    return;
+  }
+
+
+  const toast =
+    document.getElementById(
+      "toast"
+    );
+
+  const text =
+    document.getElementById(
+      "toastText"
+    );
+
+
+  if (!toast || !text) {
+    return;
+  }
+
+
+  text.textContent =
+    message;
+
+
+  toast.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    toastTimer
+  );
+
+
+  toastTimer =
+    setTimeout(() => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    }, 1600);
+
+}
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function clone(value) {
+
+  return JSON.parse(
+    JSON.stringify(value)
+  );
+
+}
+
+
+function createId() {
+
+  return (
+    Date.now().toString(36) +
+    Math.random()
+      .toString(36)
+      .slice(2, 8)
+  );
+
+}
+
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}

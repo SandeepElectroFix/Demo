@@ -1,203 +1,89 @@
-"use strict";
+window.APP_CONFIG = {
 
-/*
-============================================================
-SANDEEP ELECTROFIX
-ESTIMATE LIST
-APP CONFIGURATION
-============================================================
-*/
+  version: 10,
 
-const APP_CONFIG = {
+  defaultLanguage: "en",
 
-  app: {
+  defaultView: "grid",
 
-    name: "Estimate List",
-
-    owner: "Sandeep ElectroFix",
-
-    tagline: "Powering Your Trust",
-
-    defaultLanguage: "en",
-
-    storage: {
-
-      language: "sandeepMaterialLang",
-
-      estimate: "sandeepEstimateItems",
-
-      view: "sandeepMaterialView",
-
-      theme: "sandeepTheme"
-
-    }
-
-  },
-
-
-  /*
-  ==========================================================
-  INDIVIDUAL UI SHOW / HIDE CONTROL
-  ==========================================================
-  */
+  defaultTheme: "dark",
 
   ui: {
 
-    topbar: true,
+    menu: true,
 
-    menuButton: true,
+    language: true,
 
-    languageButton: true,
+    stages: true,
 
-    sideMenu: true,
-
-    homePage: true,
-
-    hero: true,
-
-    stageCards: true,
-
-    materialImages: true,
-
-    materialViewSwitch: true,
-
-    quantityQuickButtons: true,
-
-    quantityStepper: true,
-
-    addButton: true,
-
-    nextButton: true,
-
-    backButton: true,
-
-    estimateEdit: true,
-
-    estimateDelete: true,
-
-    bottomNavigation: true,
+    estimate: true,
 
     calculator: true,
 
     settings: true,
 
-    darkMode: true,
+    bottomNav: true,
 
-    languageSwitch: true,
+    materialImages: true,
 
-    toast: true
+    viewSwitch: true,
 
-  },
+    quantityQuick: true,
 
-
-  /*
-  ==========================================================
-  PAGE CONTROL
-  ==========================================================
-  */
-
-  navigation: {
-
-    pages: {
-
-      home: true,
-
-      estimate: true,
-
-      calculator: true,
-
-      settings: true
-
-    }
+    lastSelectedBorder: true
 
   },
 
+  lastSelectedBorder: {
 
-  /*
-  ==========================================================
-  STAGE CONTROL
-  ==========================================================
-  */
+    enabled: true,
 
-  stages: {
+    rotate: true,
 
-    stage1: true,
+    glow: true,
 
-    stage2: false,
-
-    stage3: false,
-
-    stage4: false,
-
-    stage5: false
-
-  },
-
-
-  /*
-  ==========================================================
-  MATERIAL VIEW
-  ==========================================================
-  */
-
-  materialView: {
-
-    default: "grid",
-
-    available: [
-
-      "grid",
-
-      "list",
-
-      "compact"
-
-    ]
-
-  },
-
-
-  /*
-  ==========================================================
-  QUANTITY
-  ==========================================================
-  */
-
-  quantity: {
-
-    minimum: 1,
-
-    quickValues: [
-
-      1,
-
-      5,
-
-      10,
-
-      20,
-
-      25,
-
-      50,
-
-      100
-
-    ]
-
-  },
-
-
-  /*
-  ==========================================================
-  THEME
-  ==========================================================
-  */
-
-  theme: {
-
-    default: "dark"
+    duration: 2.8
 
   }
 
 };
+
+
+window.STAGES = [
+
+  {
+    id:1,
+    no:"STAGE 01",
+    en:"Slab Conduit Installation",
+    hi:"स्लैब कन्ड्यूट इंस्टॉलेशन"
+  },
+
+  {
+    id:2,
+    no:"STAGE 02",
+    en:"Wall Conduit Installation",
+    hi:"वॉल कन्ड्यूट इंस्टॉलेशन"
+  },
+
+  {
+    id:3,
+    no:"STAGE 03",
+    en:"Wiring Installation",
+    hi:"वायरिंग इंस्टॉलेशन"
+  },
+
+  {
+    id:4,
+    no:"STAGE 04",
+    en:"Final Electrical Fittings",
+    hi:"फाइनल इलेक्ट्रिकल फिटिंग्स"
+  },
+
+  {
+    id:5,
+    no:"STAGE 05",
+    en:"False Ceiling Wiring Material",
+    hi:"फॉल्स सीलिंग वायरिंग मटेरियल"
+  }
+
+];

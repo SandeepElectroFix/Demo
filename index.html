@@ -1,443 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#050816">
-<title>Estimate List — Sandeep ElectroFix</title>
-
-<link rel="stylesheet" href="style.css?v=10">
-
-<script>
-(function () {
-  function unlockApp() {
-    const loader = document.getElementById("loader");
-    const app = document.getElementById("app");
-
-    if (app) app.classList.remove("app-locked");
-
-    if (loader) {
-      loader.classList.add("loader-hide");
-
-      setTimeout(function () {
-        if (loader && loader.parentNode) {
-          loader.parentNode.removeChild(loader);
-        }
-      }, 650);
-    }
-  }
-
-  window.__unlockApp = unlockApp;
-
-  window.addEventListener("error", unlockApp);
-  window.addEventListener("unhandledrejection", unlockApp);
-})();
-</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#050816">
+  <title>Estimate List - Sandeep ElectroFix</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+  <div id="app">
+    <section id="splash" class="splash">
+      <div class="logoMark">SE</div>
+      <h1>Estimate List</h1>
+      <p>Sandeep ElectroFix</p>
+    </section>
 
-<!-- LOADER -->
-<div id="loader" class="loader">
-  <div class="loader-logo">SE</div>
-  <div class="loader-title">ESTIMATE LIST</div>
-  <div class="loader-sub">SANDEEP ELECTROFIX</div>
-  <div class="loader-progress">
-    <span></span>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="app" class="app-shell app-locked">
-
-  <!-- TOP BAR -->
-  <header class="topbar">
-
-    <button id="menuBtn" class="top-icon">
-      ☰
-    </button>
-
-    <div class="top-title">
-      <span>SANDEEP ELECTROFIX</span>
-      <strong id="pageTitle">Estimate List</strong>
-    </div>
-
-    <button id="langBtn" class="lang-btn">
-      HI
-    </button>
-
-  </header>
-
-
-  <!-- SIDE MENU -->
-  <aside id="sideMenu" class="side-menu">
-
-    <div class="menu-brand">
-      <div class="brand-logo">SE</div>
-
+    <header class="topbar">
+      <button id="menuBtn" class="iconBtn">☰</button>
       <div>
-        <strong>Sandeep ElectroFix</strong>
-        <small>Powering Your Trust</small>
+        <div class="appTitle">Estimate List</div>
+        <div class="subTitle">Sandeep ElectroFix</div>
       </div>
-    </div>
-
-    <button class="menu-item" data-page="home">
-      <span>⌂</span>
-      Home
-    </button>
-
-    <button class="menu-item" data-page="estimate">
-      <span>☷</span>
-      Estimate
-    </button>
-
-    <button class="menu-item" data-page="calculator">
-      <span>⌁</span>
-      Calculator
-    </button>
-
-    <button class="menu-item" data-page="settings">
-      <span>⚙</span>
-      Settings
-    </button>
-
-  </aside>
-
-  <div id="menuShade" class="menu-shade"></div>
-
-
-  <!-- MAIN -->
-  <main class="main-content">
-
-    <!-- HOME -->
-    <section id="page-home" class="page active">
-
-      <section class="hero">
-
-        <div class="hero-content">
-
-          <span class="eyebrow">
-            ELECTRICAL MATERIAL ESTIMATE
-          </span>
-
-          <h1>
-            Build your estimate
-            <br>
-            <em>fast & clean.</em>
-          </h1>
-
-          <p>
-            Select a stage and add electrical materials
-            quickly to your estimate.
-          </p>
-
-        </div>
-
-        <div class="hero-bolt">
-          ⚡
-        </div>
-
-      </section>
-
-
-      <div class="section-title">
-        <div>
-          <span class="eyebrow">PROJECT FLOW</span>
-          <h2>Stages</h2>
-        </div>
-      </div>
-
-      <div id="stageGrid" class="stage-grid"></div>
-
-    </section>
-
-
-    <!-- ESTIMATE -->
-    <section id="page-estimate" class="page">
-
-      <div class="page-heading">
-
-        <div>
-          <span class="eyebrow">CURRENT BUILD</span>
-          <h1>Estimate</h1>
-        </div>
-
-        <button id="clearEstimate" class="danger-btn">
-          Clear
-        </button>
-
-      </div>
-
-      <div id="estimateList" class="estimate-list"></div>
-
-      <div id="estimateEmpty" class="empty-state">
-        <div class="empty-icon">☷</div>
-        <strong>No material added</strong>
-        <small>Add materials from any stage.</small>
-      </div>
-
-    </section>
-
-
-    <!-- CALCULATOR -->
-    <section id="page-calculator" class="page">
-
-      <div class="page-heading">
-        <div>
-          <span class="eyebrow">ELECTRICAL HELPER</span>
-          <h1>Calculator</h1>
-        </div>
-      </div>
-
-      <div class="calculator-card">
-
-        <div class="input-grid">
-
-          <label>
-            Voltage (V)
-            <input id="calcV" type="number" value="230">
-          </label>
-
-          <label>
-            Current (A)
-            <input id="calcI" type="number" placeholder="10">
-          </label>
-
-          <label>
-            Power (W)
-            <input id="calcP" type="number" placeholder="2300">
-          </label>
-
-        </div>
-
-        <div class="calc-buttons">
-
-          <button id="calcPower" class="primary-btn">
-            Calculate Power
-          </button>
-
-          <button id="calcCurrent" class="secondary-btn">
-            Calculate Current
-          </button>
-
-          <button id="calcVoltage" class="secondary-btn">
-            Calculate Voltage
-          </button>
-
-        </div>
-
-        <div id="calcResult" class="calc-result">
-          Enter values and calculate.
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- SETTINGS -->
-    <section id="page-settings" class="page">
-
-      <div class="page-heading">
-
-        <div>
-          <span class="eyebrow">APP CONTROL</span>
-          <h1>Settings</h1>
-        </div>
-
-      </div>
-
-      <div class="settings-card">
-
-        <div class="setting-row">
-
-          <div>
-            <strong>Dark Mode</strong>
-            <small>Cyber dark theme</small>
-          </div>
-
-          <button id="themeBtn" class="toggle-btn active">
-            ON
-          </button>
-
-        </div>
-
-
-        <div class="setting-row">
-
-          <div>
-            <strong>Last Selected Border</strong>
-            <small>Rotating neon selection</small>
-          </div>
-
-          <button id="rotateBtn" class="toggle-btn active">
-            ON
-          </button>
-
-        </div>
-
-
-        <div class="setting-row">
-
-          <div>
-            <strong>Material View</strong>
-            <small>Grid / List / Compact</small>
-          </div>
-
-          <div class="view-buttons">
-
-            <button data-view="grid">▦</button>
-            <button data-view="list">☰</button>
-            <button data-view="compact">▤</button>
-
-          </div>
-
-        </div>
-
-
-        <button id="resetApp" class="danger-btn full">
-          Reset App Data
-        </button>
-
-      </div>
-
-    </section>
-
-  </main>
-
-
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-
-    <button class="nav-item active" data-page="home">
-      <span>⌂</span>
-      <small>Home</small>
-    </button>
-
-    <button class="nav-item" data-page="estimate">
-      <span>☷</span>
-      <small>Estimate</small>
-    </button>
-
-    <button class="nav-item" data-page="calculator">
-      <span>⌁</span>
-      <small>Calculator</small>
-    </button>
-
-    <button class="nav-item" data-page="settings">
-      <span>⚙</span>
-      <small>Settings</small>
-    </button>
-
-  </nav>
-
-</div>
-
-
-<!-- MATERIAL SHEET -->
-<div id="materialSheet" class="sheet-backdrop">
-
-  <div class="material-sheet">
-
-    <div class="sheet-handle"></div>
-
-    <div class="sheet-header">
-
-      <button id="sheetBack" class="sheet-icon">
-        ←
-      </button>
-
-      <div>
-        <span id="sheetStageNo" class="eyebrow">
-          STAGE 01
-        </span>
-
-        <h2 id="sheetTitle">
-          Slab Conduit Installation
-        </h2>
-      </div>
-
-      <button id="sheetClose" class="sheet-icon">
-        ×
-      </button>
-
-    </div>
-
-
-    <div class="material-view-buttons">
-
-      <button data-view="grid">▦</button>
-      <button data-view="list">☰</button>
-      <button data-view="compact">▤</button>
-
-    </div>
-
-
-    <div id="materialCards" class="material-cards"></div>
-
+      <button id="langBtn" class="langBtn">हिं</button>
+    </header>
+
+    <aside id="drawer" class="drawer">
+      <button id="closeMenu" class="drawerClose">×</button>
+      <h2>Menu</h2>
+      <button data-page="home">⌂ Home</button>
+      <button data-page="estimate">▤ Estimate</button>
+      <button data-page="calculator">⌁ Calculator</button>
+      <button data-page="settings">⚙ Settings</button>
+    </aside>
+
+    <main id="main"></main>
+
+    <nav class="bottomNav">
+      <button data-page="home">⌂<span>Home</span></button>
+      <button data-page="estimate">▤<span>Estimate</span></button>
+      <button data-page="calculator">⌁<span>Calc</span></button>
+      <button data-page="settings">⚙<span>Settings</span></button>
+    </nav>
   </div>
 
-</div>
-
-
-<!-- OPTIONS SHEET -->
-<div id="optionSheet" class="sheet-backdrop">
-
-  <div class="option-sheet">
-
-    <div class="sheet-handle"></div>
-
-    <div class="sheet-header">
-
-      <button id="optionBack" class="sheet-icon">
-        ←
-      </button>
-
-      <div>
-        <span id="optionStageNo" class="eyebrow">
-          STAGE 01
-        </span>
-
-        <h2 id="optionTitle">
-          Pipe
-        </h2>
-      </div>
-
-      <button id="optionClose" class="sheet-icon">
-        ×
-      </button>
-
-    </div>
-
-
-    <div id="optionBody" class="option-body"></div>
-
-
-    <div class="sheet-actions">
-
-      <button id="nextItem" class="secondary-btn">
-        Next →
-      </button>
-
-      <button id="addEstimate" class="primary-btn">
-        ＋ Add to Estimate
-      </button>
-
-    </div>
-
-  </div>
-
-</div>
-
-
-<div id="toast" class="toast">
-  ✓ Added to Estimate
-</div>
-
-
-<script src="config.js?v=10"></script>
-<script src="material.js?v=10"></script>
-<script src="script.js?v=10"></script>
-
+  <script src="config.js"></script>
+  <script src="material.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

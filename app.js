@@ -14,7 +14,7 @@
   "use strict";
 
   /* =======================================================
-     01. GLOBAL CONFIG / MASTER DATA
+     01. GLOBAL CONFIG / MASTER DATA (FIXED)
      ======================================================= */
 
   const CONFIG =
@@ -26,24 +26,21 @@
     window.MaterialData ||
     {};
 
-  const MATERIALS = Array.isArray(MATERIAL_DATA.MATERIALS)
-    ? MATERIAL_DATA.MATERIALS
-    : Array.isArray(window.MATERIALS)
-      ? window.MATERIALS
-      : [];
+  // material.js में की-नेम्स lowercase (materials, stages, uiText) हैं
+  const MATERIALS = Array.isArray(MATERIAL_DATA.materials)
+    ? MATERIAL_DATA.materials
+    : [];
 
-  const STAGES = Array.isArray(MATERIAL_DATA.MATERIAL_STAGES)
-    ? MATERIAL_DATA.MATERIAL_STAGES
-    : Array.isArray(window.MATERIAL_STAGES)
-      ? window.MATERIAL_STAGES
-      : [];
+  const STAGES = Array.isArray(MATERIAL_DATA.stages)
+    ? MATERIAL_DATA.stages
+    : [];
 
   const UI_TEXT =
-    MATERIAL_DATA.UI_TEXT ||
-    window.UI_TEXT ||
+    MATERIAL_DATA.uiText ||
     {};
 
   const APP_VERSION = "1.0.0";
+
 
 
   /* =======================================================

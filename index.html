@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#050816">
+  <meta name="description" content="Sandeep ElectroFix Estimate List">
+  <title>Estimate List - Sandeep ElectroFix</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <section id="splash" class="splash" aria-label="Loading" aria-live="polite">
+      <div class="splashLogo">SE</div>
+      <div class="splashBrand">Sandeep ElectroFix</div>
+      <div class="splashTagline">Powering Your Trust</div>
+      <div class="splashTitle">Estimate List</div>
+      <div class="splashSub">Material Estimate System</div>
+      <div class="loadingTrack"><div id="loadingLine" class="loadingLine"></div></div>
+      <div id="loadingText" class="loadingText">Loading... / लोड हो रहा है...</div>
+    </section>
+
+    <header class="topbar">
+      <button id="menuBtn" class="iconBtn" type="button" aria-label="Open menu">☰</button>
+      <div class="brandHead">
+        <div class="appTitle">Estimate List</div>
+        <div class="subTitle">Sandeep ElectroFix</div>
+      </div>
+      <button id="langBtn" class="langBtn" type="button">हि</button>
+    </header>
+
+    <aside id="drawer" class="drawer" aria-hidden="true">
+      <button id="closeMenu" class="drawerClose" type="button" aria-label="Close menu">×</button>
+      <h2>Menu</h2>
+      <button data-page="home" type="button">⌂ <span>Home</span></button>
+      <button data-page="estimate" type="button">▤ <span>Estimate</span></button>
+      <button data-page="calculator" type="button">⌁ <span>Calculator</span></button>
+      <button data-page="settings" type="button">⚙ <span>Settings</span></button>
+    </aside>
+
+    <main id="main"></main>
+
+    <nav id="bottomNav" class="bottomNav" aria-label="Bottom navigation">
+      <button data-page="home" type="button">⌂<span>Home</span></button>
+      <button data-page="estimate" type="button">▤<span>Estimate</span></button>
+      <button data-page="calculator" type="button">⌁<span>Calc</span></button>
+      <button data-page="settings" type="button">⚙<span>Settings</span></button>
+    </nav>
+  </div>
+
+  <script>
+    /* Independent loader failsafe: works even if app.js has an error. */
+    window.__sandeepLoaderFailsafe = window.setTimeout(function () {
+      var el = document.getElementById('splash');
+      if (!el) return;
+      el.classList.add('hide');
+      el.setAttribute('aria-hidden', 'true');
+      el.style.pointerEvents = 'none';
+      window.setTimeout(function () {
+        var x = document.getElementById('splash');
+        if (x) x.remove();
+      }, 500);
+    }, 6000);
+  </script>
+  <script src="config.js"></script>
+  <script src="material.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

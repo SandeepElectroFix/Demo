@@ -8,6 +8,8 @@
    config.js   -> UI/config control
    material.js -> Master Material Data
    app.js      -> Logic / Storage / Interaction
+   ---------------------------------------------------------
+   LOADER SCREEN REMOVED
    ========================================================= */
 
 (() => {
@@ -26,17 +28,19 @@
     window.MaterialData ||
     {};
 
-  const MATERIALS = Array.isArray(MATERIAL_DATA.MATERIALS)
-    ? MATERIAL_DATA.MATERIALS
-    : Array.isArray(window.MATERIALS)
-      ? window.MATERIALS
-      : [];
+  const MATERIALS =
+    Array.isArray(MATERIAL_DATA.MATERIALS)
+      ? MATERIAL_DATA.MATERIALS
+      : Array.isArray(window.MATERIALS)
+        ? window.MATERIALS
+        : [];
 
-  const STAGES = Array.isArray(MATERIAL_DATA.MATERIAL_STAGES)
-    ? MATERIAL_DATA.MATERIAL_STAGES
-    : Array.isArray(window.MATERIAL_STAGES)
-      ? window.MATERIAL_STAGES
-      : [];
+  const STAGES =
+    Array.isArray(MATERIAL_DATA.MATERIAL_STAGES)
+      ? MATERIAL_DATA.MATERIAL_STAGES
+      : Array.isArray(window.MATERIAL_STAGES)
+        ? window.MATERIAL_STAGES
+        : [];
 
   const UI_TEXT =
     MATERIAL_DATA.UI_TEXT ||
@@ -99,13 +103,6 @@
 
     estimateItems: loadEstimateItems(),
 
-    /*
-      Drafts are kept per MATERIAL ID so Back/Next can
-      preserve entered values.
-
-      Editing an already-added estimate item uses a
-      separate temporary object.
-    */
     draftValues: {},
 
     editingEstimateId: null,
@@ -122,19 +119,13 @@
      04. DOM CACHE
      ======================================================= */
 
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) =>
+    document.getElementById(id);
 
   const DOM = {};
 
   function cacheDOM() {
     const ids = [
-      "loadingScreen",
-      "loadingLogo",
-      "loadingBusinessName",
-      "loadingTagline",
-      "loadingLine",
-      "loadingText",
-
       "app",
 
       "topBar",
@@ -262,11 +253,15 @@
 
   function loadEstimateItems() {
     try {
-      const raw = localStorage.getItem(STORAGE.estimate);
+      const raw =
+        localStorage.getItem(
+          STORAGE.estimate
+        );
 
       if (!raw) return [];
 
-      const parsed = JSON.parse(raw);
+      const parsed =
+        JSON.parse(raw);
 
       return Array.isArray(parsed)
         ? parsed
@@ -287,7 +282,9 @@
     try {
       localStorage.setItem(
         STORAGE.estimate,
-        JSON.stringify(state.estimateItems)
+        JSON.stringify(
+          state.estimateItems
+        )
       );
 
       return true;
@@ -311,9 +308,15 @@
   }
 
 
-  function saveSetting(key, value) {
+  function saveSetting(
+    key,
+    value
+  ) {
     try {
-      localStorage.setItem(key, value);
+      localStorage.setItem(
+        key,
+        value
+      );
     } catch (error) {
       console.error(error);
     }
@@ -331,14 +334,20 @@
   }
 
 
-  function text(en, hi) {
+  function text(
+    en,
+    hi
+  ) {
     return currentLanguage() === "hi"
       ? (hi || en || "")
       : (en || hi || "");
   }
 
 
-  function getObjectText(obj, fallback = "") {
+  function getObjectText(
+    obj,
+    fallback = ""
+  ) {
     if (!obj) return fallback;
 
     if (
@@ -348,7 +357,9 @@
       return String(obj);
     }
 
-    if (currentLanguage() === "hi") {
+    if (
+      currentLanguage() === "hi"
+    ) {
       return (
         obj.hi ??
         obj.en ??
@@ -368,7 +379,9 @@
   }
 
 
-  function setLanguage(language) {
+  function setLanguage(
+    language
+  ) {
     state.language =
       language === "en"
         ? "en"
@@ -385,7 +398,8 @@
         : "en";
 
     if (
-      typeof window.setMaterialLanguage === "function"
+      typeof window.setMaterialLanguage ===
+      "function"
     ) {
       try {
         window.setMaterialLanguage(
@@ -430,7 +444,9 @@
       state.theme
     );
 
-    if (DOM.themeToggleButton) {
+    if (
+      DOM.themeToggleButton
+    ) {
       DOM.themeToggleButton.textContent =
         state.theme === "dark"
           ? text(
@@ -485,27 +501,13 @@
       CONFIG?.ui?.logo ||
       "logo.png";
 
-    if (DOM.loadingLogo) {
-      DOM.loadingLogo.src = logo;
-    }
-
     if (DOM.heroLogo) {
       DOM.heroLogo.src = logo;
-    }
-
-    if (DOM.loadingBusinessName) {
-      DOM.loadingBusinessName.textContent =
-        businessName;
     }
 
     if (DOM.businessName) {
       DOM.businessName.textContent =
         businessName;
-    }
-
-    if (DOM.loadingTagline) {
-      DOM.loadingTagline.textContent =
-        tagline;
     }
 
     if (DOM.businessTagline) {
@@ -527,10 +529,14 @@
      09. CONFIG HELPERS
      ======================================================= */
 
-  function configEnabled(path, fallback = true) {
-    const parts = String(path)
-      .split(".")
-      .filter(Boolean);
+  function configEnabled(
+    path,
+    fallback = true
+  ) {
+    const parts =
+      String(path)
+        .split(".")
+        .filter(Boolean);
 
     let value = CONFIG;
 
@@ -553,7 +559,10 @@
   }
 
 
-  function setVisible(element, visible) {
+  function setVisible(
+    element,
+    visible
+  ) {
     if (!element) return;
 
     element.hidden = !visible;
@@ -566,13 +575,23 @@
 
 
   function applyConfigVisibility() {
-    const ui = CONFIG?.ui || {};
-    const home = CONFIG?.home || {};
-    const materials = CONFIG?.materials || {};
-    const navigation = CONFIG?.navigation || {};
-    const bottomNav = CONFIG?.bottomNav || {};
-    const calculator = CONFIG?.calculator || {};
-    const settings = CONFIG?.settings || {};
+    const ui =
+      CONFIG?.ui || {};
+
+    const home =
+      CONFIG?.home || {};
+
+    const materials =
+      CONFIG?.materials || {};
+
+    const bottomNav =
+      CONFIG?.bottomNav || {};
+
+    const calculator =
+      CONFIG?.calculator || {};
+
+    const settings =
+      CONFIG?.settings || {};
 
     setVisible(
       DOM.hamburgerButton,
@@ -645,12 +664,6 @@
       materials.showPrice === true &&
       CONFIG?.price?.enabled !== false
     );
-
-    if (
-      navigation.autoNextAfterAdd === false
-    ) {
-      // No visual change required.
-    }
   }
 
 
@@ -658,10 +671,14 @@
      10. MATERIAL HELPERS
      ======================================================= */
 
-  function getMaterialFields(material) {
+  function getMaterialFields(
+    material
+  ) {
     if (!material) return [];
 
-    if (Array.isArray(material.fields)) {
+    if (
+      Array.isArray(material.fields)
+    ) {
       return material.fields.slice();
     }
 
@@ -672,7 +689,9 @@
       try {
         return (
           MATERIAL_DATA
-            .getSelectableFields(material) || []
+            .getSelectableFields(
+              material
+            ) || []
         ).slice();
       } catch (error) {
         console.warn(error);
@@ -683,19 +702,18 @@
   }
 
 
-  /*
-    IMPORTANT:
-    material.js already has the correct field order.
-    Do NOT reorder it here.
-  */
-  function sortFields(fields) {
+  function sortFields(
+    fields
+  ) {
     return Array.isArray(fields)
       ? fields.slice()
       : [];
   }
 
 
-  function fieldKey(field) {
+  function fieldKey(
+    field
+  ) {
     if (!field) return "";
 
     return String(
@@ -708,14 +726,21 @@
   }
 
 
-  function normalizedFieldKey(field) {
+  function normalizedFieldKey(
+    field
+  ) {
     return fieldKey(field)
       .toLowerCase()
-      .replace(/[\s_-]/g, "");
+      .replace(
+        /[\s_-]/g,
+        ""
+      );
   }
 
 
-  function isSystemField(field) {
+  function isSystemField(
+    field
+  ) {
     const key =
       normalizedFieldKey(field);
 
@@ -729,7 +754,9 @@
   }
 
 
-  function fieldLabel(field) {
+  function fieldLabel(
+    field
+  ) {
     if (!field) return "";
 
     if (
@@ -738,7 +765,9 @@
     ) {
       try {
         const result =
-          MATERIAL_DATA.getFieldLabel(field);
+          MATERIAL_DATA.getFieldLabel(
+            field
+          );
 
         if (result) {
           return getObjectText(
@@ -758,7 +787,9 @@
   }
 
 
-  function normalizeOption(option) {
+  function normalizeOption(
+    option
+  ) {
     if (
       typeof option === "string" ||
       typeof option === "number"
@@ -789,6 +820,7 @@
 
     return {
       value: String(value),
+
       en:
         option.en ??
         option.label ??
@@ -805,7 +837,9 @@
   }
 
 
-  function fieldOptions(field) {
+  function fieldOptions(
+    field
+  ) {
     if (!field) return [];
 
     let options =
@@ -824,7 +858,9 @@
       }
     }
 
-    if (!Array.isArray(options)) {
+    if (
+      !Array.isArray(options)
+    ) {
       return [];
     }
 
@@ -834,7 +870,9 @@
   }
 
 
-  function fieldType(field) {
+  function fieldType(
+    field
+  ) {
     const type =
       String(
         field?.type ||
@@ -862,7 +900,9 @@
   }
 
 
-  function getMaterialById(id) {
+  function getMaterialById(
+    id
+  ) {
     if (!id) return null;
 
     return (
@@ -875,7 +915,9 @@
   }
 
 
-  function getStageById(id) {
+  function getStageById(
+    id
+  ) {
     return (
       STAGES.find(
         stage =>
@@ -886,18 +928,9 @@
   }
 
 
-  function materialName(material) {
-    if (!material) return "";
-
-    return getObjectText(
-      material.name ||
-      material.title,
-      ""
-    );
-  }
-
-
-  function materialEnglishName(material) {
+  function materialEnglishName(
+    material
+  ) {
     if (!material) return "";
 
     return (
@@ -910,19 +943,25 @@
   }
 
 
-  function materialHindiName(material) {
+  function materialHindiName(
+    material
+  ) {
     if (!material) return "";
 
     return (
       material.name?.hi ??
       material.title?.hi ??
       material.hi ??
-      materialEnglishName(material)
+      materialEnglishName(
+        material
+      )
     );
   }
 
 
-  function stageEnglishName(stage) {
+  function stageEnglishName(
+    stage
+  ) {
     if (!stage) return "";
 
     return (
@@ -935,14 +974,18 @@
   }
 
 
-  function stageHindiName(stage) {
+  function stageHindiName(
+    stage
+  ) {
     if (!stage) return "";
 
     return (
       stage.hi ??
       stage.name?.hi ??
       stage.title?.hi ??
-      stageEnglishName(stage)
+      stageEnglishName(
+        stage
+      )
     );
   }
 
@@ -951,7 +994,9 @@
      11. DRAFT VALUES
      ======================================================= */
 
-  function getDraftKey(material) {
+  function getDraftKey(
+    material
+  ) {
     if (!material) return "";
 
     return String(
@@ -961,11 +1006,15 @@
   }
 
 
-  function getDraft(material) {
+  function getDraft(
+    material
+  ) {
     const key =
       getDraftKey(material);
 
-    if (!state.draftValues[key]) {
+    if (
+      !state.draftValues[key]
+    ) {
       state.draftValues[key] = {};
     }
 
@@ -973,7 +1022,10 @@
   }
 
 
-  function getDraftValue(material, key) {
+  function getDraftValue(
+    material,
+    key
+  ) {
     const draft =
       getDraft(material);
 
@@ -993,7 +1045,9 @@
   }
 
 
-  function clearDraft(material) {
+  function clearDraft(
+    material
+  ) {
     if (!material) return;
 
     delete state.draftValues[
@@ -1007,7 +1061,9 @@
      ======================================================= */
 
   function renderHome() {
-    if (!DOM.stageCardsContainer) {
+    if (
+      !DOM.stageCardsContainer
+    ) {
       return;
     }
 
@@ -1015,8 +1071,8 @@
       String(
         state.searchText || ""
       )
-      .trim()
-      .toLowerCase();
+        .trim()
+        .toLowerCase();
 
     let visibleMaterials =
       MATERIALS;
@@ -1036,11 +1092,14 @@
       new Set(
         visibleMaterials.map(
           material =>
-            String(material.stage)
+            String(
+              material.stage
+            )
         )
       );
 
-    DOM.stageCardsContainer.innerHTML = "";
+    DOM.stageCardsContainer.innerHTML =
+      "";
 
     const stages =
       Array.isArray(STAGES)
@@ -1058,7 +1117,9 @@
 
         if (
           search &&
-          !visibleStageIds.has(stageId)
+          !visibleStageIds.has(
+            stageId
+          )
         ) {
           return;
         }
@@ -1074,10 +1135,13 @@
 
     if (
       search &&
-      DOM.stageCardsContainer.children.length === 0
+      DOM.stageCardsContainer.children
+        .length === 0
     ) {
       const empty =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       empty.className =
         "empty-state";
@@ -1100,7 +1164,9 @@
     index
   ) {
     const card =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
     card.type = "button";
 
@@ -1121,7 +1187,8 @@
         "--rotation-time",
         `${
           Number(
-            CONFIG?.stageCards?.rotationTime ||
+            CONFIG?.stageCards
+              ?.rotationTime ||
             5000
           ) / 1000
         }s`
@@ -1129,16 +1196,21 @@
     }
 
     const inner =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     inner.className =
       "stage-card-inner";
 
     if (
-      CONFIG?.stageCards?.showNumber !== false
+      CONFIG?.stageCards
+        ?.showNumber !== false
     ) {
       const number =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       number.className =
         "stage-number";
@@ -1149,15 +1221,20 @@
           index + 1
         ).padStart(2, "0")}`;
 
-      inner.appendChild(number);
+      inner.appendChild(
+        number
+      );
     }
 
     if (
-      CONFIG?.stageCards?.showIcon !== false &&
+      CONFIG?.stageCards
+        ?.showIcon !== false &&
       stage.icon
     ) {
       const icon =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       icon.className =
         "stage-icon";
@@ -1165,45 +1242,64 @@
       icon.textContent =
         stage.icon;
 
-      inner.appendChild(icon);
+      inner.appendChild(
+        icon
+      );
     }
 
     if (
-      CONFIG?.stageCards?.showEnglish !== false
+      CONFIG?.stageCards
+        ?.showEnglish !== false
     ) {
       const en =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       en.className =
         "stage-title";
 
       en.textContent =
-        stageEnglishName(stage);
+        stageEnglishName(
+          stage
+        );
 
-      inner.appendChild(en);
+      inner.appendChild(
+        en
+      );
     }
 
     if (
-      CONFIG?.stageCards?.showHindi !== false
+      CONFIG?.stageCards
+        ?.showHindi !== false
     ) {
       const hi =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       hi.className =
         "stage-title-hi";
 
       hi.textContent =
-        stageHindiName(stage);
+        stageHindiName(
+          stage
+        );
 
-      inner.appendChild(hi);
+      inner.appendChild(
+        hi
+      );
     }
 
     if (
-      CONFIG?.stageCards?.showDescription !== false &&
+      CONFIG?.stageCards
+        ?.showDescription !== false &&
       stage.description
     ) {
       const description =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       description.className =
         "stage-description";
@@ -1219,12 +1315,16 @@
       );
     }
 
-    card.appendChild(inner);
+    card.appendChild(
+      inner
+    );
 
     card.addEventListener(
       "click",
       () => {
-        openStage(stage.id);
+        openStage(
+          stage.id
+        );
       }
     );
 
@@ -1249,56 +1349,101 @@
     );
 
     parts.push(
-      materialEnglishName(material)
+      materialEnglishName(
+        material
+      )
     );
 
     parts.push(
-      materialHindiName(material)
+      materialHindiName(
+        material
+      )
     );
 
     const fields =
-      getMaterialFields(material);
-
-    fields.forEach(field => {
-      parts.push(
-        fieldKey(field)
+      getMaterialFields(
+        material
       );
 
-      parts.push(
-        fieldLabel(field)
-      );
+    fields.forEach(
+      field => {
+        parts.push(
+          fieldKey(field)
+        );
 
-      fieldOptions(field).forEach(
-        option => {
-          parts.push(option.value);
-          parts.push(option.en);
-          parts.push(option.hi);
-        }
-      );
-    });
+        parts.push(
+          fieldLabel(field)
+        );
 
-    if (Array.isArray(material.brands)) {
+        fieldOptions(field)
+          .forEach(
+            option => {
+              parts.push(
+                option.value
+              );
+
+              parts.push(
+                option.en
+              );
+
+              parts.push(
+                option.hi
+              );
+            }
+          );
+      }
+    );
+
+    if (
+      Array.isArray(
+        material.brands
+      )
+    ) {
       material.brands.forEach(
         brand => {
           const option =
-            normalizeOption(brand);
+            normalizeOption(
+              brand
+            );
 
-          parts.push(option.value);
-          parts.push(option.en);
-          parts.push(option.hi);
+          parts.push(
+            option.value
+          );
+
+          parts.push(
+            option.en
+          );
+
+          parts.push(
+            option.hi
+          );
         }
       );
     }
 
-    if (Array.isArray(material.units)) {
+    if (
+      Array.isArray(
+        material.units
+      )
+    ) {
       material.units.forEach(
         unit => {
           const option =
-            normalizeOption(unit);
+            normalizeOption(
+              unit
+            );
 
-          parts.push(option.value);
-          parts.push(option.en);
-          parts.push(option.hi);
+          parts.push(
+            option.value
+          );
+
+          parts.push(
+            option.en
+          );
+
+          parts.push(
+            option.hi
+          );
         }
       );
     }
@@ -1315,17 +1460,22 @@
   }
 
 
-  function handleSearch(event) {
+  function handleSearch(
+    event
+  ) {
     state.searchText =
       event.target.value || "";
 
-    if (DOM.searchClearButton) {
+    if (
+      DOM.searchClearButton
+    ) {
       DOM.searchClearButton.hidden =
         !state.searchText;
     }
 
     if (
-      state.currentPage === "home"
+      state.currentPage ===
+      "home"
     ) {
       renderHome();
     }
@@ -1335,11 +1485,16 @@
   function clearSearch() {
     state.searchText = "";
 
-    if (DOM.materialSearch) {
-      DOM.materialSearch.value = "";
+    if (
+      DOM.materialSearch
+    ) {
+      DOM.materialSearch.value =
+        "";
     }
 
-    if (DOM.searchClearButton) {
+    if (
+      DOM.searchClearButton
+    ) {
       DOM.searchClearButton.hidden =
         true;
     }
@@ -1352,7 +1507,9 @@
      14. STAGE / MATERIAL LIST
      ======================================================= */
 
-  function openStage(stageId) {
+  function openStage(
+    stageId
+  ) {
     const stage =
       getStageById(stageId);
 
@@ -1361,13 +1518,18 @@
     state.currentStageId =
       stageId;
 
-    state.currentItemIndex = 0;
+    state.currentItemIndex =
+      0;
 
-    state.currentItem = null;
+    state.currentItem =
+      null;
 
-    state.editingEstimateId = null;
+    state.editingEstimateId =
+      null;
 
-    showPage("materials");
+    showPage(
+      "materials"
+    );
 
     renderMaterialPage();
 
@@ -1378,10 +1540,14 @@
   }
 
 
-  function getStageMaterials(stageId) {
+  function getStageMaterials(
+    stageId
+  ) {
     return MATERIALS.filter(
       material =>
-        String(material.stage) ===
+        String(
+          material.stage
+        ) ===
         String(stageId)
     );
   }
@@ -1400,24 +1566,37 @@
         state.currentStageId
       );
 
-    if (DOM.materialStageNumber) {
+    if (
+      DOM.materialStageNumber
+    ) {
       DOM.materialStageNumber.textContent =
         stage.no ||
         `STAGE ${stage.id}`;
     }
 
-    if (DOM.materialStageTitle) {
+    if (
+      DOM.materialStageTitle
+    ) {
       DOM.materialStageTitle.textContent =
-        stageEnglishName(stage);
+        stageEnglishName(
+          stage
+        );
     }
 
-    if (DOM.materialStageTitleHi) {
+    if (
+      DOM.materialStageTitleHi
+    ) {
       DOM.materialStageTitleHi.textContent =
-        stageHindiName(stage);
+        stageHindiName(
+          stage
+        );
     }
 
-    if (DOM.materialList) {
-      DOM.materialList.innerHTML = "";
+    if (
+      DOM.materialList
+    ) {
+      DOM.materialList.innerHTML =
+        "";
 
       materials.forEach(
         (material, index) => {
@@ -1431,13 +1610,21 @@
       );
     }
 
-    if (DOM.materialEditor) {
-      DOM.materialEditor.hidden = true;
+    if (
+      DOM.materialEditor
+    ) {
+      DOM.materialEditor.hidden =
+        true;
     }
 
-    if (DOM.materialList) {
-      DOM.materialList.hidden = false;
+    if (
+      DOM.materialList
+    ) {
+      DOM.materialList.hidden =
+        false;
     }
+
+    applyMaterialView();
   }
 
 
@@ -1446,7 +1633,9 @@
     index
   ) {
     const card =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
     card.type = "button";
 
@@ -1457,25 +1646,34 @@
       material.id || "";
 
     if (
-      CONFIG?.materials?.showImages !== false &&
+      CONFIG?.materials
+        ?.showImages !== false &&
       material.image
     ) {
       const imageWrap =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       imageWrap.className =
         "material-card-image";
 
       const img =
-        document.createElement("img");
+        document.createElement(
+          "img"
+        );
 
       img.src =
         material.image;
 
       img.alt =
-        materialEnglishName(material);
+        materialEnglishName(
+          material
+        );
 
-      imageWrap.appendChild(img);
+      imageWrap.appendChild(
+        img
+      );
 
       card.appendChild(
         imageWrap
@@ -1483,16 +1681,21 @@
     }
 
     const content =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     content.className =
       "material-card-content";
 
     if (
-      CONFIG?.materials?.showItemNumber !== false
+      CONFIG?.materials
+        ?.showItemNumber !== false
     ) {
       const no =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       no.className =
         "material-item-number";
@@ -1501,33 +1704,48 @@
         material.no ??
         index + 1;
 
-      content.appendChild(no);
+      content.appendChild(
+        no
+      );
     }
 
     if (
-      CONFIG?.materials?.showItemName !== false
+      CONFIG?.materials
+        ?.showItemName !== false
     ) {
       const en =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       en.className =
         "material-name";
 
       en.textContent =
-        materialEnglishName(material);
+        materialEnglishName(
+          material
+        );
 
-      content.appendChild(en);
+      content.appendChild(
+        en
+      );
 
       const hi =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       hi.className =
         "material-name-hi";
 
       hi.textContent =
-        materialHindiName(material);
+        materialHindiName(
+          material
+        );
 
-      content.appendChild(hi);
+      content.appendChild(
+        hi
+      );
     }
 
     card.appendChild(
@@ -1556,7 +1774,9 @@
     options = {}
   ) {
     const material =
-      getMaterialById(materialId);
+      getMaterialById(
+        materialId
+      );
 
     if (!material) return;
 
@@ -1597,14 +1817,22 @@
       );
     }
 
-    showPage("materials");
+    showPage(
+      "materials"
+    );
 
-    if (DOM.materialList) {
-      DOM.materialList.hidden = true;
+    if (
+      DOM.materialList
+    ) {
+      DOM.materialList.hidden =
+        true;
     }
 
-    if (DOM.materialEditor) {
-      DOM.materialEditor.hidden = false;
+    if (
+      DOM.materialEditor
+    ) {
+      DOM.materialEditor.hidden =
+        false;
     }
 
     renderMaterialEditor(
@@ -1627,19 +1855,25 @@
     state.currentItem =
       material;
 
-    if (DOM.editorItemNumber) {
+    if (
+      DOM.editorItemNumber
+    ) {
       DOM.editorItemNumber.textContent =
         material.no || "";
     }
 
-    if (DOM.editorItemName) {
+    if (
+      DOM.editorItemName
+    ) {
       DOM.editorItemName.textContent =
         materialEnglishName(
           material
         );
     }
 
-    if (DOM.editorItemNameHi) {
+    if (
+      DOM.editorItemNameHi
+    ) {
       DOM.editorItemNameHi.textContent =
         materialHindiName(
           material
@@ -1677,12 +1911,15 @@
   function renderMaterialImage(
     material
   ) {
-    if (!DOM.editorImageContainer) {
+    if (
+      !DOM.editorImageContainer
+    ) {
       return;
     }
 
     const showImages =
-      CONFIG?.materials?.showImages !== false;
+      CONFIG?.materials
+        ?.showImages !== false;
 
     if (
       !showImages ||
@@ -1691,7 +1928,9 @@
       DOM.editorImageContainer.hidden =
         true;
 
-      if (DOM.editorItemImage) {
+      if (
+        DOM.editorItemImage
+      ) {
         DOM.editorItemImage.removeAttribute(
           "src"
         );
@@ -1703,7 +1942,9 @@
     DOM.editorImageContainer.hidden =
       false;
 
-    if (DOM.editorItemImage) {
+    if (
+      DOM.editorItemImage
+    ) {
       DOM.editorItemImage.src =
         material.image;
 
@@ -1722,19 +1963,20 @@
   function renderDynamicFields(
     material
   ) {
-    if (!DOM.materialFields) {
+    if (
+      !DOM.materialFields
+    ) {
       return;
     }
 
-    DOM.materialFields.innerHTML = "";
+    DOM.materialFields.innerHTML =
+      "";
 
     let fields =
-      getMaterialFields(material);
+      getMaterialFields(
+        material
+      );
 
-    /*
-      Quantity / Unit / Brand / Price are rendered
-      separately. Therefore never render them here.
-    */
     fields =
       fields.filter(
         field =>
@@ -1768,42 +2010,53 @@
   }
 
 
-  function shouldShowField(field) {
+  function shouldShowField(
+    field
+  ) {
     const key =
-      normalizedFieldKey(field);
+      normalizedFieldKey(
+        field
+      );
 
     if (
       key === "size" &&
-      CONFIG?.materials?.showSize === false
+      CONFIG?.materials
+        ?.showSize === false
     ) {
       return false;
     }
 
     if (
       key === "type" &&
-      CONFIG?.materials?.showType === false
+      CONFIG?.materials
+        ?.showType === false
     ) {
       return false;
     }
 
     if (
       key === "subtype" &&
-      CONFIG?.materials?.showSubType === false
+      CONFIG?.materials
+        ?.showSubType === false
     ) {
       return false;
     }
 
     if (
-      (key === "colour" ||
-       key === "color") &&
-      CONFIG?.materials?.showColour === false
+      (
+        key === "colour" ||
+        key === "color"
+      ) &&
+      CONFIG?.materials
+        ?.showColour === false
     ) {
       return false;
     }
 
     if (
       key === "material" &&
-      CONFIG?.materials?.showMaterial === false
+      CONFIG?.materials
+        ?.showMaterial === false
     ) {
       return false;
     }
@@ -1817,7 +2070,9 @@
     field
   ) {
     const wrapper =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     wrapper.className =
       "option-field";
@@ -1826,7 +2081,9 @@
       fieldKey(field);
 
     const label =
-      document.createElement("label");
+      document.createElement(
+        "label"
+      );
 
     label.className =
       "field-label";
@@ -1847,12 +2104,16 @@
         fieldKey(field)
       );
 
-    if (type === "select") {
+    if (
+      type === "select"
+    ) {
       const options =
         fieldOptions(field);
 
       const optionWrap =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       optionWrap.className =
         "option-buttons";
@@ -1864,7 +2125,8 @@
               "button"
             );
 
-          button.type = "button";
+          button.type =
+            "button";
 
           button.className =
             "option-button";
@@ -1925,7 +2187,6 @@
       return wrapper;
     }
 
-
     const input =
       document.createElement(
         "input"
@@ -1971,13 +2232,17 @@
   function renderQuantityField(
     material
   ) {
-    if (!DOM.quantityField) {
+    if (
+      !DOM.quantityField
+    ) {
       return;
     }
 
     const enabled =
-      CONFIG?.quantity?.enabled !== false &&
-      CONFIG?.materials?.showQuantity !== false;
+      CONFIG?.quantity
+        ?.enabled !== false &&
+      CONFIG?.materials
+        ?.showQuantity !== false;
 
     DOM.quantityField.hidden =
       !enabled;
@@ -1987,7 +2252,9 @@
     const draft =
       getDraft(material);
 
-    if (DOM.quantityInput) {
+    if (
+      DOM.quantityInput
+    ) {
       DOM.quantityInput.value =
         draft.quantity ?? "";
 
@@ -2019,7 +2286,9 @@
     let number =
       Number(value);
 
-    if (!Number.isFinite(number)) {
+    if (
+      !Number.isFinite(number)
+    ) {
       return "";
     }
 
@@ -2068,7 +2337,9 @@
         ? 0
         : Number(current);
 
-    if (!Number.isFinite(value)) {
+    if (
+      !Number.isFinite(value)
+    ) {
       value = 0;
     }
 
@@ -2100,7 +2371,9 @@
       String(value)
     );
 
-    if (DOM.quantityInput) {
+    if (
+      DOM.quantityInput
+    ) {
       DOM.quantityInput.value =
         String(value);
     }
@@ -2111,14 +2384,17 @@
      19. UNIT
      ======================================================= */
 
-  function getUnits(material) {
+  function getUnits(
+    material
+  ) {
     if (!material) return [];
 
     let units =
-      material.units ||
-      [];
+      material.units || [];
 
-    if (!Array.isArray(units)) {
+    if (
+      !Array.isArray(units)
+    ) {
       units = [];
     }
 
@@ -2131,12 +2407,15 @@
   function renderUnitField(
     material
   ) {
-    if (!DOM.unitField) {
+    if (
+      !DOM.unitField
+    ) {
       return;
     }
 
     const enabled =
-      CONFIG?.materials?.showUnit !== false;
+      CONFIG?.materials
+        ?.showUnit !== false;
 
     DOM.unitField.hidden =
       !enabled;
@@ -2152,10 +2431,6 @@
     let current =
       draft.unit ?? "";
 
-    /*
-      Carry forward only when current unit
-      is valid for this material.
-    */
     if (
       !current &&
       state.lastUnit
@@ -2163,8 +2438,12 @@
       const valid =
         units.some(
           unit =>
-            String(unit.value) ===
-            String(state.lastUnit)
+            String(
+              unit.value
+            ) ===
+            String(
+              state.lastUnit
+            )
         );
 
       if (valid) {
@@ -2180,18 +2459,24 @@
       current &&
       !units.some(
         unit =>
-          String(unit.value) ===
+          String(
+            unit.value
+          ) ===
           String(current)
       )
     ) {
       current = "";
+
       draft.unit = "";
     }
 
-    DOM.unitSelect.innerHTML = "";
+    DOM.unitSelect.innerHTML =
+      "";
 
     const blank =
-      document.createElement("option");
+      document.createElement(
+        "option"
+      );
 
     blank.value = "";
 
@@ -2235,14 +2520,17 @@
      20. BRAND
      ======================================================= */
 
-  function getBrands(material) {
+  function getBrands(
+    material
+  ) {
     if (!material) return [];
 
     let brands =
-      material.brands ||
-      [];
+      material.brands || [];
 
-    if (!Array.isArray(brands)) {
+    if (
+      !Array.isArray(brands)
+    ) {
       brands = [];
     }
 
@@ -2255,13 +2543,17 @@
   function renderBrandField(
     material
   ) {
-    if (!DOM.brandField) {
+    if (
+      !DOM.brandField
+    ) {
       return;
     }
 
     const enabled =
-      CONFIG?.brand?.enabled !== false &&
-      CONFIG?.materials?.showBrand !== false;
+      CONFIG?.brand
+        ?.enabled !== false &&
+      CONFIG?.materials
+        ?.showBrand !== false;
 
     DOM.brandField.hidden =
       !enabled;
@@ -2277,10 +2569,13 @@
     const current =
       draft.brand ?? "";
 
-    DOM.brandSelect.innerHTML = "";
+    DOM.brandSelect.innerHTML =
+      "";
 
     const blank =
-      document.createElement("option");
+      document.createElement(
+        "option"
+      );
 
     blank.value = "";
 
@@ -2296,9 +2591,6 @@
 
     brands.forEach(
       brand => {
-        /*
-          Explicitly ignore Skip Brand.
-        */
         const combined =
           `${brand.value} ${brand.en} ${brand.hi}`
             .toLowerCase();
@@ -2345,7 +2637,9 @@
   function renderPriceField(
     material
   ) {
-    if (!DOM.priceField) {
+    if (
+      !DOM.priceField
+    ) {
       return;
     }
 
@@ -2371,7 +2665,9 @@
     const draft =
       getDraft(material);
 
-    if (DOM.priceInput) {
+    if (
+      DOM.priceInput
+    ) {
       DOM.priceInput.value =
         draft.price ?? "";
     }
@@ -2388,7 +2684,9 @@
 
     if (!material) return;
 
-    if (DOM.quantityInput) {
+    if (
+      DOM.quantityInput
+    ) {
       setDraftValue(
         material,
         "quantity",
@@ -2396,7 +2694,9 @@
       );
     }
 
-    if (DOM.unitSelect) {
+    if (
+      DOM.unitSelect
+    ) {
       setDraftValue(
         material,
         "unit",
@@ -2404,7 +2704,9 @@
       );
     }
 
-    if (DOM.brandSelect) {
+    if (
+      DOM.brandSelect
+    ) {
       setDraftValue(
         material,
         "brand",
@@ -2412,7 +2714,9 @@
       );
     }
 
-    if (DOM.priceInput) {
+    if (
+      DOM.priceInput
+    ) {
       setDraftValue(
         material,
         "price",
@@ -2420,7 +2724,9 @@
       );
     }
 
-    if (DOM.materialFields) {
+    if (
+      DOM.materialFields
+    ) {
       DOM.materialFields
         .querySelectorAll(
           "input, select"
@@ -2456,6 +2762,7 @@
     if (!material) {
       return {
         valid: false,
+
         message: text(
           "No material selected.",
           "कोई सामग्री चयनित नहीं है।"
@@ -2474,7 +2781,8 @@
       );
 
     if (
-      CONFIG?.quantity?.required !== false
+      CONFIG?.quantity
+        ?.required !== false
     ) {
       if (
         quantity === "" ||
@@ -2482,6 +2790,7 @@
       ) {
         return {
           valid: false,
+
           message: text(
             "Quantity is required.",
             "क्वांटिटी भरना जरूरी है।"
@@ -2536,7 +2845,8 @@
             value !== undefined &&
             value !== ""
           ) {
-            selections[key] = value;
+            selections[key] =
+              value;
           }
         }
       );
@@ -2610,19 +2920,14 @@
     const draft =
       validation.draft;
 
-    /*
-      Remember unit for next item,
-      but only as carry-forward candidate.
-    */
     if (draft.unit) {
       state.lastUnit =
         draft.unit;
     }
 
-    /*
-      EDIT EXISTING ESTIMATE ITEM
-    */
-    if (state.editingEstimateId) {
+    if (
+      state.editingEstimateId
+    ) {
       const index =
         state.estimateItems.findIndex(
           item =>
@@ -2634,7 +2939,9 @@
 
       if (index >= 0) {
         const old =
-          state.estimateItems[index];
+          state.estimateItems[
+            index
+          ];
 
         const updated =
           createEstimateItem(
@@ -2648,8 +2955,9 @@
         updated.createdAt =
           old.createdAt;
 
-        state.estimateItems[index] =
-          updated;
+        state.estimateItems[
+          index
+        ] = updated;
 
         saveEstimateItems();
 
@@ -2673,10 +2981,6 @@
         null;
     }
 
-
-    /*
-      NORMAL NEW ESTIMATE ITEM
-    */
     const item =
       createEstimateItem(
         material,
@@ -2697,23 +3001,12 @@
       )
     );
 
-    /*
-      Do not clear the draft immediately.
-      This allows Back to preserve the entered
-      selections as requested.
-
-      When opening the next item, it gets its
-      own draft.
-    */
-
     const autoNext =
       CONFIG?.navigation
         ?.autoNextAfterAdd !== false;
 
     if (autoNext) {
-      openNextItem(
-        true
-      );
+      openNextItem(true);
     } else {
       updateNavigationButtons();
     }
@@ -2808,7 +3101,9 @@
       previousIndex;
 
     state.currentItem =
-      materials[previousIndex];
+      materials[
+        previousIndex
+      ];
 
     state.editingEstimateId =
       null;
@@ -2833,12 +3128,16 @@
     const index =
       state.currentItemIndex;
 
-    if (DOM.itemBackButton) {
+    if (
+      DOM.itemBackButton
+    ) {
       DOM.itemBackButton.disabled =
         index <= 0;
     }
 
-    if (DOM.itemNextButton) {
+    if (
+      DOM.itemNextButton
+    ) {
       DOM.itemNextButton.disabled =
         index >=
         materials.length - 1;
@@ -2849,7 +3148,9 @@
   function scrollEditorToTop() {
     requestAnimationFrame(
       () => {
-        if (DOM.materialEditor) {
+        if (
+          DOM.materialEditor
+        ) {
           DOM.materialEditor.scrollIntoView({
             behavior: "auto",
             block: "start"
@@ -2872,12 +3173,16 @@
     state.editingEstimateId =
       null;
 
-    if (DOM.materialEditor) {
+    if (
+      DOM.materialEditor
+    ) {
       DOM.materialEditor.hidden =
         true;
     }
 
-    if (DOM.materialList) {
+    if (
+      DOM.materialList
+    ) {
       DOM.materialList.hidden =
         false;
     }
@@ -2892,7 +3197,10 @@
     material,
     estimateItem
   ) {
-    if (!material || !estimateItem) {
+    if (
+      !material ||
+      !estimateItem
+    ) {
       return;
     }
 
@@ -2943,11 +3251,6 @@
       return;
     }
 
-    /*
-      Estimate-specific edit state.
-      We load only this item's values into
-      the temporary draft.
-    */
     state.editingEstimateId =
       estimateItem.id;
 
@@ -3007,24 +3310,31 @@
      ======================================================= */
 
   function showEstimate() {
-    showPage("estimate");
+    showPage(
+      "estimate"
+    );
 
     renderEstimate();
   }
 
 
   function renderEstimate() {
-    if (!DOM.estimateItems) {
+    if (
+      !DOM.estimateItems
+    ) {
       return;
     }
 
-    DOM.estimateItems.innerHTML = "";
+    DOM.estimateItems.innerHTML =
+      "";
 
     const items =
       state.estimateItems;
 
     if (!items.length) {
-      if (DOM.estimateEmpty) {
+      if (
+        DOM.estimateEmpty
+      ) {
         DOM.estimateEmpty.hidden =
           false;
       }
@@ -3032,7 +3342,9 @@
       return;
     }
 
-    if (DOM.estimateEmpty) {
+    if (
+      DOM.estimateEmpty
+    ) {
       DOM.estimateEmpty.hidden =
         true;
     }
@@ -3126,7 +3438,6 @@
       header
     );
 
-
     const details =
       document.createElement(
         "div"
@@ -3150,7 +3461,9 @@
             fieldKey(field);
 
           const value =
-            item.selections?.[key];
+            item.selections?.[
+              key
+            ];
 
           if (
             value === undefined ||
@@ -3171,7 +3484,9 @@
       );
     }
 
-    if (item.quantity !== "") {
+    if (
+      item.quantity !== ""
+    ) {
       appendEstimateDetail(
         details,
         text(
@@ -3182,7 +3497,9 @@
       );
     }
 
-    if (item.unit !== "") {
+    if (
+      item.unit !== ""
+    ) {
       appendEstimateDetail(
         details,
         text(
@@ -3196,7 +3513,9 @@
       );
     }
 
-    if (item.brand !== "") {
+    if (
+      item.brand !== ""
+    ) {
       appendEstimateDetail(
         details,
         text(
@@ -3210,11 +3529,6 @@
       );
     }
 
-    /*
-      Price is only shown when:
-      - configured visible
-      - value actually exists
-    */
     if (
       item.price !== "" &&
       CONFIG?.price?.enabled !== false &&
@@ -3227,14 +3541,16 @@
           "Price",
           "कीमत"
         ),
-        `${CONFIG?.price?.currency || "₹"}${item.price}`
+        `${
+          CONFIG?.price?.currency ||
+          "₹"
+        }${item.price}`
       );
     }
 
     card.appendChild(
       details
     );
-
 
     const actions =
       document.createElement(
@@ -3272,7 +3588,6 @@
     actions.appendChild(
       edit
     );
-
 
     const remove =
       document.createElement(
@@ -3469,20 +3784,21 @@
   }
 
 
-  function setMaterialView(view) {
-    const allowed =
-      [
-        "grid",
-        "list",
-        "compact",
-        "large",
-        "mini",
-        "two-column",
-        "horizontal",
-        "icon-list",
-        "timeline",
-        "dense"
-      ];
+  function setMaterialView(
+    view
+  ) {
+    const allowed = [
+      "grid",
+      "list",
+      "compact",
+      "large",
+      "mini",
+      "two-column",
+      "horizontal",
+      "icon-list",
+      "timeline",
+      "dense"
+    ];
 
     if (
       !allowed.includes(view)
@@ -3500,7 +3816,9 @@
 
     applyMaterialView();
 
-    if (DOM.materialViewButton) {
+    if (
+      DOM.materialViewButton
+    ) {
       DOM.materialViewButton.textContent =
         view;
     }
@@ -3524,7 +3842,9 @@
     const available =
       views.filter(
         view =>
-          CONFIG?.views?.[view] !== false
+          CONFIG?.views?.[
+            view
+          ] !== false
       );
 
     if (!available.length) {
@@ -3604,22 +3924,30 @@
       behavior: "auto"
     });
 
-    if (page === "home") {
+    if (
+      page === "home"
+    ) {
       renderHome();
     }
 
-    if (page === "estimate") {
+    if (
+      page === "estimate"
+    ) {
       renderEstimate();
     }
 
-    if (page === "settings") {
+    if (
+      page === "settings"
+    ) {
       renderSettings();
     }
   }
 
 
   function updateTopBarTitle() {
-    if (!DOM.topBarTitle) {
+    if (
+      !DOM.topBarTitle
+    ) {
       return;
     }
 
@@ -3656,7 +3984,9 @@
     };
 
     DOM.topBarTitle.textContent =
-      titles[state.currentPage] ||
+      titles[
+        state.currentPage
+      ] ||
       titles.home;
   }
 
@@ -3690,7 +4020,9 @@
   }
 
 
-  function handlePopState(event) {
+  function handlePopState(
+    event
+  ) {
     const page =
       event.state?.sandeepApp
         ? event.state.page
@@ -3700,7 +4032,6 @@
       state.menuOpen
     ) {
       closeSideMenu();
-
       return;
     }
 
@@ -3718,7 +4049,9 @@
   function updateBottomNavigation(
     page
   ) {
-    if (!DOM.bottomNavigation) {
+    if (
+      !DOM.bottomNavigation
+    ) {
       return;
     }
 
@@ -3779,7 +4112,9 @@
 
 
   function toggleSideMenu() {
-    if (state.menuOpen) {
+    if (
+      state.menuOpen
+    ) {
       closeSideMenu();
     } else {
       openSideMenu();
@@ -3794,14 +4129,18 @@
   function renderSettings() {
     applyTheme();
 
-    if (DOM.settingsLanguageButton) {
+    if (
+      DOM.settingsLanguageButton
+    ) {
       DOM.settingsLanguageButton.textContent =
         state.language === "hi"
           ? "हिन्दी"
           : "English";
     }
 
-    if (DOM.materialViewButton) {
+    if (
+      DOM.materialViewButton
+    ) {
       DOM.materialViewButton.textContent =
         state.materialView;
     }
@@ -3927,19 +4266,6 @@
         DOM.voltageInput?.value
       );
 
-    const resistance =
-      Number(
-        DOM.voltageCalculator
-          ?.querySelector(
-            "[data-resistance]"
-          )?.value
-      );
-
-    /*
-      Keep original simple UI compatible:
-      if only current is present, assume 230V
-      style helper rather than breaking the page.
-    */
     let result = "";
 
     if (
@@ -3950,7 +4276,9 @@
         `${current} A`;
     }
 
-    if (DOM.voltageResult) {
+    if (
+      DOM.voltageResult
+    ) {
       DOM.voltageResult.textContent =
         result ||
         text(
@@ -4088,7 +4416,9 @@
       );
     }
 
-    if (DOM.toastIcon) {
+    if (
+      DOM.toastIcon
+    ) {
       const icons = {
         success: "✓",
         error: "!",
@@ -4101,7 +4431,9 @@
         "✓";
     }
 
-    if (DOM.toastMessage) {
+    if (
+      DOM.toastMessage
+    ) {
       DOM.toastMessage.textContent =
         message;
     }
@@ -4134,7 +4466,6 @@
 
   function bindEvents() {
 
-    /* Hamburger */
     DOM.hamburgerButton?.addEventListener(
       "click",
       toggleSideMenu
@@ -4151,7 +4482,6 @@
     );
 
 
-    /* Language */
     DOM.languageButton?.addEventListener(
       "click",
       toggleLanguage
@@ -4163,7 +4493,6 @@
     );
 
 
-    /* Search */
     DOM.materialSearch?.addEventListener(
       "input",
       handleSearch
@@ -4175,7 +4504,6 @@
     );
 
 
-    /* Material header Back */
     DOM.materialBackButton?.addEventListener(
       "click",
       () => {
@@ -4185,7 +4513,9 @@
         ) {
           closeMaterialEditor();
 
-          if (DOM.materialList) {
+          if (
+            DOM.materialList
+          ) {
             DOM.materialList.hidden =
               false;
           }
@@ -4200,13 +4530,14 @@
     );
 
 
-    /* Editor Back */
     DOM.editorBackButton?.addEventListener(
       "click",
       () => {
         closeMaterialEditor();
 
-        if (DOM.materialList) {
+        if (
+          DOM.materialList
+        ) {
           DOM.materialList.hidden =
             false;
         }
@@ -4219,53 +4550,41 @@
     );
 
 
-    /* Item Back */
     DOM.itemBackButton?.addEventListener(
       "click",
       openPreviousItem
     );
 
 
-    /* Item Next */
     DOM.itemNextButton?.addEventListener(
       "click",
       () => {
-        /*
-          IMPORTANT:
-          Next does NOT add/save current item.
-        */
-        openNextItem(
-          false
-        );
+        openNextItem(false);
       }
     );
 
 
-    /* Add */
     DOM.addToEstimateButton?.addEventListener(
       "click",
       addCurrentToEstimate
     );
 
 
-    /* Quantity */
     DOM.quantityMinus?.addEventListener(
       "click",
       () => {
-        changeQuantity(
-          -1
-        );
+        changeQuantity(-1);
       }
     );
+
 
     DOM.quantityPlus?.addEventListener(
       "click",
       () => {
-        changeQuantity(
-          1
-        );
+        changeQuantity(1);
       }
     );
+
 
     DOM.quantityInput?.addEventListener(
       "input",
@@ -4278,9 +4597,6 @@
         const value =
           event.target.value;
 
-        /*
-          Allow empty temporarily while typing.
-        */
         if (value === "") {
           setDraftValue(
             material,
@@ -4308,7 +4624,6 @@
     );
 
 
-    /* Unit */
     DOM.unitSelect?.addEventListener(
       "change",
       event => {
@@ -4334,7 +4649,6 @@
     );
 
 
-    /* Brand */
     DOM.brandSelect?.addEventListener(
       "change",
       event => {
@@ -4352,7 +4666,6 @@
     );
 
 
-    /* Price */
     DOM.priceInput?.addEventListener(
       "input",
       event => {
@@ -4370,7 +4683,6 @@
     );
 
 
-    /* Bottom nav */
     DOM.bottomNavigation
       ?.querySelectorAll(
         "[data-page]"
@@ -4389,7 +4701,6 @@
       );
 
 
-    /* Side menu nav */
     DOM.sideMenuNav
       ?.querySelectorAll(
         "[data-page]"
@@ -4410,42 +4721,36 @@
       );
 
 
-    /* Theme */
     DOM.themeToggleButton?.addEventListener(
       "click",
       toggleTheme
     );
 
 
-    /* Material view */
     DOM.materialViewButton?.addEventListener(
       "click",
       cycleMaterialView
     );
 
 
-    /* Backup */
     DOM.backupButton?.addEventListener(
       "click",
       backupEstimate
     );
 
 
-    /* Reset */
     DOM.resetButton?.addEventListener(
       "click",
       resetEstimate
     );
 
 
-    /* About */
     DOM.aboutButton?.addEventListener(
       "click",
       showAbout
     );
 
 
-    /* Browser / Android Back */
     window.addEventListener(
       "popstate",
       handlePopState
@@ -4507,9 +4812,7 @@
 
         if (
           material.id &&
-          ids.has(
-            material.id
-          )
+          ids.has(material.id)
         ) {
           console.error(
             "Duplicate material ID:",
@@ -4525,10 +4828,6 @@
       }
     );
 
-    /*
-      Expected current master:
-      10 + 7 + 5 + 51 + 16 = 89
-    */
     const expectedCounts = {
       1: 10,
       2: 7,
@@ -4586,16 +4885,14 @@
 
     bindCalculatorInputs();
 
+    bindEvents();
+
     updateTopBarTitle();
 
     updateBottomNavigation(
       "home"
     );
 
-    /*
-      Replace current history entry so Android/browser
-      back has a known app state.
-    */
     try {
       window.history.replaceState(
         {
@@ -4628,87 +4925,7 @@
 
 
   /* =======================================================
-     40. LOADING SCREEN
-     ======================================================= */
-
-  let loaderHidden =
-    false;
-
-  function hideLoadingScreen() {
-    if (
-      loaderHidden ||
-      !DOM.loadingScreen
-    ) {
-      return;
-    }
-
-    loaderHidden =
-      true;
-
-    DOM.loadingScreen.classList.add(
-      "hidden"
-    );
-
-    DOM.loadingScreen.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    /*
-      Hard fallback in case CSS transition
-      does not remove visual layer.
-    */
-    setTimeout(
-      () => {
-        if (
-          DOM.loadingScreen
-        ) {
-          DOM.loadingScreen.style.display =
-            "none";
-        }
-      },
-      700
-    );
-  }
-
-
-  function showLoadingProgress() {
-    if (DOM.loadingText) {
-      DOM.loadingText.textContent =
-        text(
-          "Loading...",
-          "लोड हो रहा है..."
-        );
-    }
-
-    if (DOM.loadingLine) {
-      DOM.loadingLine.style.width =
-        "35%";
-    }
-
-    requestAnimationFrame(
-      () => {
-        if (DOM.loadingLine) {
-          DOM.loadingLine.style.width =
-            "70%";
-        }
-
-        setTimeout(
-          () => {
-            if (DOM.loadingLine) {
-              DOM.loadingLine.style.width =
-                "100%";
-            }
-          },
-          100
-        );
-      }
-    );
-  }
-
-
-  /* =======================================================
-     41. GLOBAL ERROR SAFETY
+     40. GLOBAL ERROR SAFETY
      ======================================================= */
 
   function installErrorSafety() {
@@ -4720,12 +4937,6 @@
           event.error ||
           event.message
         );
-
-        /*
-          Never allow an unexpected error
-          to permanently trap the user on loader.
-        */
-        hideLoadingScreen();
       }
     );
 
@@ -4736,15 +4947,13 @@
           "Unhandled promise rejection:",
           event.reason
         );
-
-        hideLoadingScreen();
       }
     );
   }
 
 
   /* =======================================================
-     42. RENDER ALL
+     41. RENDER ALL
      ======================================================= */
 
   function renderAll() {
@@ -4789,7 +4998,7 @@
 
 
   /* =======================================================
-     43. PUBLIC API
+     42. PUBLIC API
      ======================================================= */
 
   window.SandeepEstimateApp = {
@@ -4821,7 +5030,7 @@
 
 
   /* =======================================================
-     44. INIT
+     43. INIT
      ======================================================= */
 
   function init() {
@@ -4830,43 +5039,26 @@
 
       installErrorSafety();
 
-      showLoadingProgress();
-
       validateMasterData();
 
       initializeUI();
 
       /*
-        Small delay gives browser time to paint
-        the first UI frame before removing loader.
+        Loader system completely removed.
+        App starts directly.
       */
-      requestAnimationFrame(
-        () => {
-          setTimeout(
-            hideLoadingScreen,
-            150
-          );
-        }
-      );
 
     } catch (error) {
       console.error(
         "Estimate List initialization failed:",
         error
       );
-
-      /*
-        Critical:
-        even if initialization has a problem,
-        never keep the loading screen forever.
-      */
-      hideLoadingScreen();
     }
   }
 
 
   /* =======================================================
-     45. START
+     44. START
      ======================================================= */
 
   if (

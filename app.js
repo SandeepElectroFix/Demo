@@ -5611,94 +5611,117 @@
     );
   }
 
+/* =======================================================
+   41. LOADING SCREEN
+   ======================================================= */
 
-  /* =======================================================
-     41. LOADING SCREEN
-     ======================================================= */
+let loaderHidden = false;
 
-  let loaderHidden =
-    false;
+function hideLoadingScreen() {
+  if (loaderHidden) {
+    return;
+  }
 
+  const loader = DOM.loadingScreen;
 
-  function hideLoadingScreen() {
-    if (
-      loaderHidden ||
-      !DOM.loadingScreen
-    ) {
+  if (!loader) {
+    loaderHidden = true;
+    return;
+  }
+
+  loaderHidden = true;
+
+  /* Stop loader interaction immediately */
+  loader.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  loader.classList.add(
+    "hidden"
+  );
+
+  /*
+    Completely remove it from interaction
+    after CSS transition.
+  */
+  setTimeout(() => {
+    if (!loader) {
       return;
     }
 
-    loaderHidden =
-      true;
+    loader.style.pointerEvents =
+      "none";
 
-    DOM.loadingScreen.classList.add(
-      "hidden"
-    );
+    loader.style.opacity =
+      "0";
 
-    DOM.loadingScreen.setAttribute(
-      "aria-hidden",
-      "true"
-    );
+    loader.style.visibility =
+      "hidden";
 
-    /*
-      Hard fallback so the loader can never
-      permanently block the app.
-    */
-    setTimeout(
-      () => {
-        if (
-          DOM.loadingScreen
-        ) {
-          DOM.loadingScreen.style.display =
-            "none";
-        }
-      },
-      700
+    loader.style.display =
+      "none";
+
+    loader.removeAttribute(
+      "aria-hidden"
     );
+  }, 700);
+}
+
+
+function showLoadingProgress() {
+  const loader =
+    DOM.loadingScreen;
+
+  if (!loader) {
+    return;
   }
 
+  if (DOM.loadingText) {
+    DOM.loadingText.textContent =
+      text(
+        "Loading...",
+        "लोड हो रहा है..."
+      );
+  }
 
-  function showLoadingProgress() {
-    if (
-      DOM.loadingText
-    ) {
-      DOM.loadingText.textContent =
-        text(
-          "Loading...",
-          "लोड हो रहा है..."
-        );
-    }
+  if (DOM.loadingLine) {
+    DOM.loadingLine.style.width =
+      "20%";
+  }
 
-    if (
-      DOM.loadingLine
-    ) {
+  requestAnimationFrame(() => {
+
+    if (DOM.loadingLine) {
       DOM.loadingLine.style.width =
-        "35%";
+        "60%";
     }
 
-    requestAnimationFrame(
-      () => {
-        if (
-          DOM.loadingLine
-        ) {
-          DOM.loadingLine.style.width =
-            "70%";
-        }
+    setTimeout(() => {
 
-        setTimeout(
-          () => {
-            if (
-              DOM.loadingLine
-            ) {
-              DOM.loadingLine.style.width =
-                "100%";
-            }
-          },
-          100
-        );
+      if (DOM.loadingLine) {
+        DOM.loadingLine.style.width =
+          "100%";
       }
-    );
-  }
+
+    }, 120);
+  });
+}
+
+
+/*
+  Emergency fallback:
+  even if some other JavaScript error
+  occurs during startup, loader cannot
+  remain permanently visible.
+*/
+function forceHideLoadingScreen() {
+  setTimeout(() => {
+    if (!loaderHidden) {
+      hideLoadingScreen();
+    }
+  }, 2500);
+}
 
 
   /* =======================================================
@@ -5812,48 +5835,77 @@
   };
 
 
-  /* =======================================================
-     45. INIT
-     ======================================================= */
+ /* =======================================================
+   45. INIT
+   ======================================================= */
 
-  function init() {
-    try {
-      cacheDOM();
+function init() {
 
-      installErrorSafety();
+  try {
 
-      showLoadingProgress();
+    /* -----------------------------------------------
+       1. Cache DOM first
+       ----------------------------------------------- */
+    cacheDOM();
 
-      validateMasterData();
+    /* -----------------------------------------------
+       2. Install global error protection
+       ----------------------------------------------- */
+    installErrorSafety();
 
-      initializeUI();
+    /* -----------------------------------------------
+       3. Start loading animation
+       ----------------------------------------------- */
+    showLoadingProgress();
 
-      /*
-        Give browser one paint cycle before
-        removing the loader.
-      */
-      requestAnimationFrame(
-        () => {
-          setTimeout(
-            hideLoadingScreen,
-            150
-          );
-        }
-      );
+    /* -----------------------------------------------
+       4. Validate master data
+       ----------------------------------------------- */
+    validateMasterData();
 
-    } catch (error) {
-      console.error(
-        "Estimate List initialization failed:",
-        error
-      );
+    /* -----------------------------------------------
+       5. Initialize complete UI
+       ----------------------------------------------- */
+    initializeUI();
 
-      /*
-        Never leave user permanently trapped
-        behind loading screen.
-      */
-      hideLoadingScreen();
-    }
+    /*
+      Wait for browser paint so the user
+      actually sees the completed app
+      before loader disappears.
+    */
+    requestAnimationFrame(() => {
+
+      requestAnimationFrame(() => {
+
+        setTimeout(() => {
+          hideLoadingScreen();
+        }, 150);
+
+      });
+
+    });
+
+    /*
+      Absolute safety fallback.
+      Loader can NEVER remain stuck.
+    */
+    forceHideLoadingScreen();
+
+  } catch (error) {
+
+    console.error(
+      "Estimate List initialization failed:",
+      error
+    );
+
+    /*
+      Even if initialization fails,
+      remove the loader and expose the app
+      instead of trapping the user.
+    */
+    hideLoadingScreen();
   }
+}
 
 
   /* =======================================================

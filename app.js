@@ -26,18 +26,21 @@
     window.MaterialData ||
     {};
 
-  const MATERIALS =
-    Array.isArray(MATERIAL_DATA.materials)
-      ? MATERIAL_DATA.materials
+  const MATERIALS = Array.isArray(MATERIAL_DATA.MATERIALS)
+    ? MATERIAL_DATA.MATERIALS
+    : Array.isArray(window.MATERIALS)
+      ? window.MATERIALS
       : [];
 
-  const STAGES =
-    Array.isArray(MATERIAL_DATA.stages)
-      ? MATERIAL_DATA.stages
+  const STAGES = Array.isArray(MATERIAL_DATA.MATERIAL_STAGES)
+    ? MATERIAL_DATA.MATERIAL_STAGES
+    : Array.isArray(window.MATERIAL_STAGES)
+      ? window.MATERIAL_STAGES
       : [];
 
   const UI_TEXT =
-    MATERIAL_DATA.uiText ||
+    MATERIAL_DATA.UI_TEXT ||
+    window.UI_TEXT ||
     {};
 
   const APP_VERSION = "1.0.0";
@@ -94,32 +97,24 @@
 
     currentItem: null,
 
-    estimateItems:
-      loadEstimateItems(),
+    estimateItems: loadEstimateItems(),
 
     /*
-      Draft values are stored per material ID.
-      This preserves values while moving Back / Next.
+      Drafts are kept per MATERIAL ID so Back/Next can
+      preserve entered values.
+
+      Editing an already-added estimate item uses a
+      separate temporary object.
     */
     draftValues: {},
 
-    /*
-      When editing an already-added estimate item,
-      this stores the estimate item's ID.
-    */
     editingEstimateId: null,
 
     lastUnit: "",
 
     searchText: "",
 
-    menuOpen: false,
-
-    /*
-      Internal navigation state.
-      Used for Android/browser Back handling.
-    */
-    materialEditorOpen: false
+    menuOpen: false
   };
 
 
@@ -127,8 +122,7 @@
      04. DOM CACHE
      ======================================================= */
 
-  const $ = (id) =>
-    document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
   const DOM = {};
 
@@ -268,17 +262,11 @@
 
   function loadEstimateItems() {
     try {
-      const raw =
-        localStorage.getItem(
-          STORAGE.estimate
-        );
+      const raw = localStorage.getItem(STORAGE.estimate);
 
-      if (!raw) {
-        return [];
-      }
+      if (!raw) return [];
 
-      const parsed =
-        JSON.parse(raw);
+      const parsed = JSON.parse(raw);
 
       return Array.isArray(parsed)
         ? parsed
@@ -299,9 +287,7 @@
     try {
       localStorage.setItem(
         STORAGE.estimate,
-        JSON.stringify(
-          state.estimateItems
-        )
+        JSON.stringify(state.estimateItems)
       );
 
       return true;
@@ -325,20 +311,11 @@
   }
 
 
-  function saveSetting(
-    key,
-    value
-  ) {
+  function saveSetting(key, value) {
     try {
-      localStorage.setItem(
-        key,
-        value
-      );
+      localStorage.setItem(key, value);
     } catch (error) {
-      console.error(
-        "Setting save error:",
-        error
-      );
+      console.error(error);
     }
   }
 
@@ -354,23 +331,15 @@
   }
 
 
-  function text(
-    en,
-    hi
-  ) {
+  function text(en, hi) {
     return currentLanguage() === "hi"
       ? (hi || en || "")
       : (en || hi || "");
   }
 
 
-  function getObjectText(
-    obj,
-    fallback = ""
-  ) {
-    if (!obj) {
-      return fallback;
-    }
+  function getObjectText(obj, fallback = "") {
+    if (!obj) return fallback;
 
     if (
       typeof obj === "string" ||
@@ -379,9 +348,7 @@
       return String(obj);
     }
 
-    if (
-      currentLanguage() === "hi"
-    ) {
+    if (currentLanguage() === "hi") {
       return (
         obj.hi ??
         obj.en ??
@@ -401,9 +368,7 @@
   }
 
 
-  function setLanguage(
-    language
-  ) {
+  function setLanguage(language) {
     state.language =
       language === "en"
         ? "en"
@@ -420,8 +385,7 @@
         : "en";
 
     if (
-      typeof window.setMaterialLanguage ===
-      "function"
+      typeof window.setMaterialLanguage === "function"
     ) {
       try {
         window.setMaterialLanguage(
@@ -429,7 +393,7 @@
         );
       } catch (error) {
         console.warn(
-          "Material language sync error:",
+          "Material language sync:",
           error
         );
       }
@@ -466,9 +430,7 @@
       state.theme
     );
 
-    if (
-      DOM.themeToggleButton
-    ) {
+    if (DOM.themeToggleButton) {
       DOM.themeToggleButton.textContent =
         state.theme === "dark"
           ? text(
@@ -523,49 +485,41 @@
       CONFIG?.ui?.logo ||
       "logo.png";
 
-    if (
-      DOM.loadingLogo
-    ) {
-      DOM.loadingLogo.src =
-        logo;
+    if (DOM.loadingLogo) {
+      DOM.loadingLogo.src = logo;
     }
 
-    if (
-      DOM.heroLogo
-    ) {
-      DOM.heroLogo.src =
-        logo;
+    if (DOM.heroLogo) {
+      DOM.heroLogo.src = logo;
     }
 
-    if (
-      DOM.loadingBusinessName
-    ) {
+    if (DOM.loadingBusinessName) {
       DOM.loadingBusinessName.textContent =
         businessName;
     }
 
-    if (
-      DOM.businessName
-    ) {
+    if (DOM.businessName) {
       DOM.businessName.textContent =
         businessName;
     }
 
-    if (
-      DOM.loadingTagline
-    ) {
+    if (DOM.loadingTagline) {
       DOM.loadingTagline.textContent =
         tagline;
     }
 
-    if (
-      DOM.businessTagline
-    ) {
+    if (DOM.businessTagline) {
       DOM.businessTagline.textContent =
         tagline;
     }
 
-    updateTopBarTitle();
+    if (DOM.topBarTitle) {
+      DOM.topBarTitle.textContent =
+        text(
+          "Estimate List",
+          "एस्टिमेट लिस्ट"
+        );
+    }
   }
 
 
@@ -573,21 +527,14 @@
      09. CONFIG HELPERS
      ======================================================= */
 
-  function configEnabled(
-    path,
-    fallback = true
-  ) {
-    const parts =
-      String(path)
-        .split(".")
-        .filter(Boolean);
+  function configEnabled(path, fallback = true) {
+    const parts = String(path)
+      .split(".")
+      .filter(Boolean);
 
-    let value =
-      CONFIG;
+    let value = CONFIG;
 
-    for (
-      const part of parts
-    ) {
+    for (const part of parts) {
       if (
         value === null ||
         value === undefined ||
@@ -599,24 +546,17 @@
         return fallback;
       }
 
-      value =
-        value[part];
+      value = value[part];
     }
 
     return value !== false;
   }
 
 
-  function setVisible(
-    element,
-    visible
-  ) {
-    if (!element) {
-      return;
-    }
+  function setVisible(element, visible) {
+    if (!element) return;
 
-    element.hidden =
-      !visible;
+    element.hidden = !visible;
 
     element.classList.toggle(
       "config-hidden",
@@ -626,23 +566,13 @@
 
 
   function applyConfigVisibility() {
-    const ui =
-      CONFIG?.ui || {};
-
-    const home =
-      CONFIG?.home || {};
-
-    const materials =
-      CONFIG?.materials || {};
-
-    const bottomNav =
-      CONFIG?.bottomNav || {};
-
-    const calculator =
-      CONFIG?.calculator || {};
-
-    const settings =
-      CONFIG?.settings || {};
+    const ui = CONFIG?.ui || {};
+    const home = CONFIG?.home || {};
+    const materials = CONFIG?.materials || {};
+    const navigation = CONFIG?.navigation || {};
+    const bottomNav = CONFIG?.bottomNav || {};
+    const calculator = CONFIG?.calculator || {};
+    const settings = CONFIG?.settings || {};
 
     setVisible(
       DOM.hamburgerButton,
@@ -676,11 +606,6 @@
 
     setVisible(
       DOM.materialBackButton,
-      ui.backButton !== false
-    );
-
-    setVisible(
-      DOM.editorBackButton,
       ui.backButton !== false
     );
 
@@ -721,30 +646,10 @@
       CONFIG?.price?.enabled !== false
     );
 
-    /*
-      Also hide individual bottom-nav buttons
-      when their corresponding page is disabled.
-    */
-    if (DOM.bottomNavigation) {
-      const calculatorButton =
-        DOM.bottomNavigation.querySelector(
-          '[data-page="calculator"]'
-        );
-
-      const settingsButton =
-        DOM.bottomNavigation.querySelector(
-          '[data-page="settings"]'
-        );
-
-      setVisible(
-        calculatorButton,
-        calculator.enabled !== false
-      );
-
-      setVisible(
-        settingsButton,
-        settings.enabled !== false
-      );
+    if (
+      navigation.autoNextAfterAdd === false
+    ) {
+      // No visual change required.
     }
   }
 
@@ -753,39 +658,24 @@
      10. MATERIAL HELPERS
      ======================================================= */
 
-  function getMaterialFields(
-    material
-  ) {
-    if (!material) {
-      return [];
-    }
+  function getMaterialFields(material) {
+    if (!material) return [];
 
-    if (
-      Array.isArray(
-        material.fields
-      )
-    ) {
+    if (Array.isArray(material.fields)) {
       return material.fields.slice();
     }
 
     if (
-      typeof MATERIAL_DATA
-        .getSelectableFields ===
+      typeof MATERIAL_DATA.getSelectableFields ===
       "function"
     ) {
       try {
         return (
           MATERIAL_DATA
-            .getSelectableFields(
-              material
-            ) || []
+            .getSelectableFields(material) || []
         ).slice();
-
       } catch (error) {
-        console.warn(
-          "Selectable field error:",
-          error
-        );
+        console.warn(error);
       }
     }
 
@@ -795,27 +685,18 @@
 
   /*
     IMPORTANT:
-    material.js controls the final field order.
-
-    app.js MUST NOT reorder:
-    Size -> Type -> Sub Type -> Quantity -> Unit -> Brand
-    etc.
+    material.js already has the correct field order.
+    Do NOT reorder it here.
   */
-  function sortFields(
-    fields
-  ) {
+  function sortFields(fields) {
     return Array.isArray(fields)
       ? fields.slice()
       : [];
   }
 
 
-  function fieldKey(
-    field
-  ) {
-    if (!field) {
-      return "";
-    }
+  function fieldKey(field) {
+    if (!field) return "";
 
     return String(
       field.key ??
@@ -827,21 +708,14 @@
   }
 
 
-  function normalizedFieldKey(
-    field
-  ) {
+  function normalizedFieldKey(field) {
     return fieldKey(field)
       .toLowerCase()
-      .replace(
-        /[\s_-]/g,
-        ""
-      );
+      .replace(/[\s_-]/g, "");
   }
 
 
-  function isSystemField(
-    field
-  ) {
+  function isSystemField(field) {
     const key =
       normalizedFieldKey(field);
 
@@ -855,24 +729,16 @@
   }
 
 
-  function fieldLabel(
-    field
-  ) {
-    if (!field) {
-      return "";
-    }
+  function fieldLabel(field) {
+    if (!field) return "";
 
     if (
-      typeof MATERIAL_DATA
-        .getFieldLabel ===
+      typeof MATERIAL_DATA.getFieldLabel ===
       "function"
     ) {
       try {
         const result =
-          MATERIAL_DATA
-            .getFieldLabel(
-              field
-            );
+          MATERIAL_DATA.getFieldLabel(field);
 
         if (result) {
           return getObjectText(
@@ -892,9 +758,7 @@
   }
 
 
-  function normalizeOption(
-    option
-  ) {
+  function normalizeOption(option) {
     if (
       typeof option === "string" ||
       typeof option === "number"
@@ -925,7 +789,6 @@
 
     return {
       value: String(value),
-
       en:
         option.en ??
         option.label ??
@@ -942,12 +805,8 @@
   }
 
 
-  function fieldOptions(
-    field
-  ) {
-    if (!field) {
-      return [];
-    }
+  function fieldOptions(field) {
+    if (!field) return [];
 
     let options =
       field.options ??
@@ -956,20 +815,16 @@
       [];
 
     if (
-      typeof options ===
-      "function"
+      typeof options === "function"
     ) {
       try {
-        options =
-          options();
+        options = options();
       } catch (_) {
         options = [];
       }
     }
 
-    if (
-      !Array.isArray(options)
-    ) {
+    if (!Array.isArray(options)) {
       return [];
     }
 
@@ -979,9 +834,7 @@
   }
 
 
-  function fieldType(
-    field
-  ) {
+  function fieldType(field) {
     const type =
       String(
         field?.type ||
@@ -1009,12 +862,8 @@
   }
 
 
-  function getMaterialById(
-    id
-  ) {
-    if (!id) {
-      return null;
-    }
+  function getMaterialById(id) {
+    if (!id) return null;
 
     return (
       MATERIALS.find(
@@ -1026,9 +875,7 @@
   }
 
 
-  function getStageById(
-    id
-  ) {
+  function getStageById(id) {
     return (
       STAGES.find(
         stage =>
@@ -1039,82 +886,63 @@
   }
 
 
-  function materialEnglishName(
-    material
-  ) {
-    if (!material) {
-      return "";
-    }
+  function materialName(material) {
+    if (!material) return "";
+
+    return getObjectText(
+      material.name ||
+      material.title,
+      ""
+    );
+  }
+
+
+  function materialEnglishName(material) {
+    if (!material) return "";
 
     return (
       material.name?.en ??
       material.title?.en ??
       material.en ??
-      (
-        typeof material.name ===
-        "string"
-          ? material.name
-          : ""
-      ) ??
+      material.name ??
       ""
     );
   }
 
 
-  function materialHindiName(
-    material
-  ) {
-    if (!material) {
-      return "";
-    }
+  function materialHindiName(material) {
+    if (!material) return "";
 
     return (
       material.name?.hi ??
       material.title?.hi ??
       material.hi ??
-      materialEnglishName(
-        material
-      )
+      materialEnglishName(material)
     );
   }
 
 
-  function stageEnglishName(
-    stage
-  ) {
-    if (!stage) {
-      return "";
-    }
+  function stageEnglishName(stage) {
+    if (!stage) return "";
 
     return (
       stage.en ??
       stage.name?.en ??
       stage.title?.en ??
-      (
-        typeof stage.name ===
-        "string"
-          ? stage.name
-          : ""
-      ) ??
+      stage.name ??
       ""
     );
   }
 
 
-  function stageHindiName(
-    stage
-  ) {
-    if (!stage) {
-      return "";
-    }
+  function stageHindiName(stage) {
+    if (!stage) return "";
 
     return (
       stage.hi ??
       stage.name?.hi ??
       stage.title?.hi ??
-      stageEnglishName(
-        stage
-      )
+      stageEnglishName(stage)
     );
   }
 
@@ -1123,12 +951,8 @@
      11. DRAFT VALUES
      ======================================================= */
 
-  function getDraftKey(
-    material
-  ) {
-    if (!material) {
-      return "";
-    }
+  function getDraftKey(material) {
+    if (!material) return "";
 
     return String(
       material.id ||
@@ -1137,15 +961,11 @@
   }
 
 
-  function getDraft(
-    material
-  ) {
+  function getDraft(material) {
     const key =
       getDraftKey(material);
 
-    if (
-      !state.draftValues[key]
-    ) {
+    if (!state.draftValues[key]) {
       state.draftValues[key] = {};
     }
 
@@ -1153,10 +973,7 @@
   }
 
 
-  function getDraftValue(
-    material,
-    key
-  ) {
+  function getDraftValue(material, key) {
     const draft =
       getDraft(material);
 
@@ -1176,12 +993,8 @@
   }
 
 
-  function clearDraft(
-    material
-  ) {
-    if (!material) {
-      return;
-    }
+  function clearDraft(material) {
+    if (!material) return;
 
     delete state.draftValues[
       getDraftKey(material)
@@ -1194,9 +1007,7 @@
      ======================================================= */
 
   function renderHome() {
-    if (
-      !DOM.stageCardsContainer
-    ) {
+    if (!DOM.stageCardsContainer) {
       return;
     }
 
@@ -1204,8 +1015,8 @@
       String(
         state.searchText || ""
       )
-        .trim()
-        .toLowerCase();
+      .trim()
+      .toLowerCase();
 
     let visibleMaterials =
       MATERIALS;
@@ -1225,16 +1036,18 @@
       new Set(
         visibleMaterials.map(
           material =>
-            String(
-              material.stage
-            )
+            String(material.stage)
         )
       );
 
-    DOM.stageCardsContainer.innerHTML =
-      "";
+    DOM.stageCardsContainer.innerHTML = "";
 
-    STAGES.forEach(
+    const stages =
+      Array.isArray(STAGES)
+        ? STAGES
+        : [];
+
+    stages.forEach(
       (stage, index) => {
         const stageId =
           String(
@@ -1245,9 +1058,7 @@
 
         if (
           search &&
-          !visibleStageIds.has(
-            stageId
-          )
+          !visibleStageIds.has(stageId)
         ) {
           return;
         }
@@ -1263,13 +1074,10 @@
 
     if (
       search &&
-      DOM.stageCardsContainer
-        .children.length === 0
+      DOM.stageCardsContainer.children.length === 0
     ) {
       const empty =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       empty.className =
         "empty-state";
@@ -1292,9 +1100,7 @@
     index
   ) {
     const card =
-      document.createElement(
-        "button"
-      );
+      document.createElement("button");
 
     card.type = "button";
 
@@ -1309,8 +1115,7 @@
       );
 
     if (
-      CONFIG?.stageCards?.rotation !==
-      false
+      CONFIG?.stageCards?.rotation !== false
     ) {
       card.style.setProperty(
         "--rotation-time",
@@ -1324,21 +1129,16 @@
     }
 
     const inner =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     inner.className =
       "stage-card-inner";
 
     if (
-      CONFIG?.stageCards?.showNumber !==
-      false
+      CONFIG?.stageCards?.showNumber !== false
     ) {
       const number =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       number.className =
         "stage-number";
@@ -1349,20 +1149,15 @@
           index + 1
         ).padStart(2, "0")}`;
 
-      inner.appendChild(
-        number
-      );
+      inner.appendChild(number);
     }
 
     if (
-      CONFIG?.stageCards?.showIcon !==
-      false &&
+      CONFIG?.stageCards?.showIcon !== false &&
       stage.icon
     ) {
       const icon =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       icon.className =
         "stage-icon";
@@ -1370,19 +1165,14 @@
       icon.textContent =
         stage.icon;
 
-      inner.appendChild(
-        icon
-      );
+      inner.appendChild(icon);
     }
 
     if (
-      CONFIG?.stageCards?.showEnglish !==
-      false
+      CONFIG?.stageCards?.showEnglish !== false
     ) {
       const en =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       en.className =
         "stage-title";
@@ -1390,19 +1180,14 @@
       en.textContent =
         stageEnglishName(stage);
 
-      inner.appendChild(
-        en
-      );
+      inner.appendChild(en);
     }
 
     if (
-      CONFIG?.stageCards?.showHindi !==
-      false
+      CONFIG?.stageCards?.showHindi !== false
     ) {
       const hi =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       hi.className =
         "stage-title-hi";
@@ -1410,20 +1195,15 @@
       hi.textContent =
         stageHindiName(stage);
 
-      inner.appendChild(
-        hi
-      );
+      inner.appendChild(hi);
     }
 
     if (
-      CONFIG?.stageCards?.showDescription !==
-      false &&
+      CONFIG?.stageCards?.showDescription !== false &&
       stage.description
     ) {
       const description =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       description.className =
         "stage-description";
@@ -1439,16 +1219,12 @@
       );
     }
 
-    card.appendChild(
-      inner
-    );
+    card.appendChild(inner);
 
     card.addEventListener(
       "click",
       () => {
-        openStage(
-          stage.id
-        );
+        openStage(stage.id);
       }
     );
 
@@ -1464,9 +1240,7 @@
     material,
     query
   ) {
-    if (!material) {
-      return false;
-    }
+    if (!material) return false;
 
     const parts = [];
 
@@ -1475,126 +1249,83 @@
     );
 
     parts.push(
-      materialEnglishName(
-        material
-      )
+      materialEnglishName(material)
     );
 
     parts.push(
-      materialHindiName(
-        material
-      )
+      materialHindiName(material)
     );
 
-    getMaterialFields(
-      material
-    ).forEach(
-      field => {
-        parts.push(
-          fieldKey(field)
-        );
+    const fields =
+      getMaterialFields(material);
 
-        parts.push(
-          fieldLabel(field)
-        );
+    fields.forEach(field => {
+      parts.push(
+        fieldKey(field)
+      );
 
-        fieldOptions(field)
-          .forEach(
-            option => {
-              parts.push(
-                option.value
-              );
+      parts.push(
+        fieldLabel(field)
+      );
 
-              parts.push(
-                option.en
-              );
+      fieldOptions(field).forEach(
+        option => {
+          parts.push(option.value);
+          parts.push(option.en);
+          parts.push(option.hi);
+        }
+      );
+    });
 
-              parts.push(
-                option.hi
-              );
-            }
-          );
-      }
-    );
-
-    if (
-      Array.isArray(
-        material.brands
-      )
-    ) {
+    if (Array.isArray(material.brands)) {
       material.brands.forEach(
         brand => {
           const option =
-            normalizeOption(
-              brand
-            );
+            normalizeOption(brand);
 
-          parts.push(
-            option.value
-          );
-
-          parts.push(
-            option.en
-          );
-
-          parts.push(
-            option.hi
-          );
+          parts.push(option.value);
+          parts.push(option.en);
+          parts.push(option.hi);
         }
       );
     }
 
-    if (
-      Array.isArray(
-        material.units
-      )
-    ) {
+    if (Array.isArray(material.units)) {
       material.units.forEach(
         unit => {
           const option =
-            normalizeOption(
-              unit
-            );
+            normalizeOption(unit);
 
-          parts.push(
-            option.value
-          );
-
-          parts.push(
-            option.en
-          );
-
-          parts.push(
-            option.hi
-          );
+          parts.push(option.value);
+          parts.push(option.en);
+          parts.push(option.hi);
         }
       );
     }
 
-    return parts
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(query);
+    const haystack =
+      parts
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+    return haystack.includes(
+      query
+    );
   }
 
 
-  function handleSearch(
-    event
-  ) {
+  function handleSearch(event) {
     state.searchText =
       event.target.value || "";
 
-    if (
-      DOM.searchClearButton
-    ) {
+    if (DOM.searchClearButton) {
       DOM.searchClearButton.hidden =
         !state.searchText;
     }
 
     if (
-      state.currentPage ===
-      "home"
+      state.currentPage === "home"
     ) {
       renderHome();
     }
@@ -1602,19 +1333,13 @@
 
 
   function clearSearch() {
-    state.searchText =
-      "";
+    state.searchText = "";
 
-    if (
-      DOM.materialSearch
-    ) {
-      DOM.materialSearch.value =
-        "";
+    if (DOM.materialSearch) {
+      DOM.materialSearch.value = "";
     }
 
-    if (
-      DOM.searchClearButton
-    ) {
+    if (DOM.searchClearButton) {
       DOM.searchClearButton.hidden =
         true;
     }
@@ -1624,95 +1349,27 @@
 
 
   /* =======================================================
-     14. HISTORY HELPERS
+     14. STAGE / MATERIAL LIST
      ======================================================= */
 
-  function replaceHistory(
-    stateObject,
-    hash
-  ) {
-    try {
-      window.history.replaceState(
-        stateObject,
-        "",
-        hash
-      );
-    } catch (error) {
-      console.warn(
-        "History replace error:",
-        error
-      );
-    }
-  }
-
-
-  function pushHistory(
-    stateObject,
-    hash
-  ) {
-    try {
-      window.history.pushState(
-        stateObject,
-        "",
-        hash
-      );
-    } catch (error) {
-      console.warn(
-        "History push error:",
-        error
-      );
-    }
-  }
-
-
-  /* =======================================================
-     15. STAGE / MATERIAL LIST
-     ======================================================= */
-
-  function openStage(
-    stageId,
-    pushHistoryEntry = true
-  ) {
+  function openStage(stageId) {
     const stage =
       getStageById(stageId);
 
-    if (!stage) {
-      return;
-    }
+    if (!stage) return;
 
     state.currentStageId =
       stageId;
 
-    state.currentItemIndex =
-      0;
+    state.currentItemIndex = 0;
 
-    state.currentItem =
-      null;
+    state.currentItem = null;
 
-    state.editingEstimateId =
-      null;
+    state.editingEstimateId = null;
 
-    state.materialEditorOpen =
-      false;
-
-    showPage(
-      "materials",
-      false
-    );
+    showPage("materials");
 
     renderMaterialPage();
-
-    if (pushHistoryEntry) {
-      pushHistory(
-        {
-          sandeepApp: true,
-          page: "materials",
-          stageId: stageId,
-          editor: false
-        },
-        "#materials"
-      );
-    }
 
     window.scrollTo({
       top: 0,
@@ -1721,9 +1378,7 @@
   }
 
 
-  function getStageMaterials(
-    stageId
-  ) {
+  function getStageMaterials(stageId) {
     return MATERIALS.filter(
       material =>
         String(material.stage) ===
@@ -1738,46 +1393,31 @@
         state.currentStageId
       );
 
-    if (!stage) {
-      return;
-    }
+    if (!stage) return;
 
     const materials =
       getStageMaterials(
         state.currentStageId
       );
 
-    if (
-      DOM.materialStageNumber
-    ) {
+    if (DOM.materialStageNumber) {
       DOM.materialStageNumber.textContent =
         stage.no ||
         `STAGE ${stage.id}`;
     }
 
-    if (
-      DOM.materialStageTitle
-    ) {
+    if (DOM.materialStageTitle) {
       DOM.materialStageTitle.textContent =
-        stageEnglishName(
-          stage
-        );
+        stageEnglishName(stage);
     }
 
-    if (
-      DOM.materialStageTitleHi
-    ) {
+    if (DOM.materialStageTitleHi) {
       DOM.materialStageTitleHi.textContent =
-        stageHindiName(
-          stage
-        );
+        stageHindiName(stage);
     }
 
-    if (
-      DOM.materialList
-    ) {
-      DOM.materialList.innerHTML =
-        "";
+    if (DOM.materialList) {
+      DOM.materialList.innerHTML = "";
 
       materials.forEach(
         (material, index) => {
@@ -1789,20 +1429,15 @@
           );
         }
       );
-
-      DOM.materialList.hidden =
-        false;
     }
 
-    if (
-      DOM.materialEditor
-    ) {
-      DOM.materialEditor.hidden =
-        true;
+    if (DOM.materialEditor) {
+      DOM.materialEditor.hidden = true;
     }
 
-    state.materialEditorOpen =
-      false;
+    if (DOM.materialList) {
+      DOM.materialList.hidden = false;
+    }
   }
 
 
@@ -1811,9 +1446,7 @@
     index
   ) {
     const card =
-      document.createElement(
-        "button"
-      );
+      document.createElement("button");
 
     card.type = "button";
 
@@ -1824,37 +1457,25 @@
       material.id || "";
 
     if (
-      CONFIG?.materials?.showImages !==
-      false &&
+      CONFIG?.materials?.showImages !== false &&
       material.image
     ) {
       const imageWrap =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       imageWrap.className =
         "material-card-image";
 
       const img =
-        document.createElement(
-          "img"
-        );
+        document.createElement("img");
 
       img.src =
         material.image;
 
       img.alt =
-        materialEnglishName(
-          material
-        );
+        materialEnglishName(material);
 
-      img.loading =
-        "lazy";
-
-      imageWrap.appendChild(
-        img
-      );
+      imageWrap.appendChild(img);
 
       card.appendChild(
         imageWrap
@@ -1862,21 +1483,16 @@
     }
 
     const content =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     content.className =
       "material-card-content";
 
     if (
-      CONFIG?.materials?.showItemNumber !==
-      false
+      CONFIG?.materials?.showItemNumber !== false
     ) {
       const no =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       no.className =
         "material-item-number";
@@ -1885,48 +1501,33 @@
         material.no ??
         index + 1;
 
-      content.appendChild(
-        no
-      );
+      content.appendChild(no);
     }
 
     if (
-      CONFIG?.materials?.showItemName !==
-      false
+      CONFIG?.materials?.showItemName !== false
     ) {
       const en =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       en.className =
         "material-name";
 
       en.textContent =
-        materialEnglishName(
-          material
-        );
+        materialEnglishName(material);
 
-      content.appendChild(
-        en
-      );
+      content.appendChild(en);
 
       const hi =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       hi.className =
         "material-name-hi";
 
       hi.textContent =
-        materialHindiName(
-          material
-        );
+        materialHindiName(material);
 
-      content.appendChild(
-        hi
-      );
+      content.appendChild(hi);
     }
 
     card.appendChild(
@@ -1947,7 +1548,7 @@
 
 
   /* =======================================================
-     16. OPEN MATERIAL
+     15. OPEN MATERIAL
      ======================================================= */
 
   function openMaterial(
@@ -1955,13 +1556,9 @@
     options = {}
   ) {
     const material =
-      getMaterialById(
-        materialId
-      );
+      getMaterialById(materialId);
 
-    if (!material) {
-      return;
-    }
+    if (!material) return;
 
     const stageMaterials =
       getStageMaterials(
@@ -1975,9 +1572,7 @@
           String(material.id)
       );
 
-    if (index < 0) {
-      return;
-    }
+    if (index < 0) return;
 
     state.currentStageId =
       material.stage;
@@ -2002,84 +1597,49 @@
       );
     }
 
-    showPage(
-      "materials",
-      false
-    );
+    showPage("materials");
 
-    if (
-      DOM.materialList
-    ) {
-      DOM.materialList.hidden =
-        true;
+    if (DOM.materialList) {
+      DOM.materialList.hidden = true;
     }
 
-    if (
-      DOM.materialEditor
-    ) {
-      DOM.materialEditor.hidden =
-        false;
+    if (DOM.materialEditor) {
+      DOM.materialEditor.hidden = false;
     }
-
-    state.materialEditorOpen =
-      true;
 
     renderMaterialEditor(
       material
     );
-
-    if (
-      options.pushHistory !== false
-    ) {
-      pushHistory(
-        {
-          sandeepApp: true,
-          page: "materials",
-          stageId: material.stage,
-          editor: true,
-          materialId: material.id
-        },
-        "#materials"
-      );
-    }
 
     scrollEditorToTop();
   }
 
 
   /* =======================================================
-     17. MATERIAL EDITOR
+     16. MATERIAL EDITOR
      ======================================================= */
 
   function renderMaterialEditor(
     material
   ) {
-    if (!material) {
-      return;
-    }
+    if (!material) return;
 
     state.currentItem =
       material;
 
-    if (
-      DOM.editorItemNumber
-    ) {
+    if (DOM.editorItemNumber) {
       DOM.editorItemNumber.textContent =
         material.no || "";
     }
 
-    if (
-      DOM.editorItemName
-    ) {
+    if (DOM.editorItemName) {
       DOM.editorItemName.textContent =
         materialEnglishName(
           material
         );
     }
 
-    if (
-      DOM.editorItemNameHi
-    ) {
+    if (DOM.editorItemNameHi) {
       DOM.editorItemNameHi.textContent =
         materialHindiName(
           material
@@ -2117,15 +1677,12 @@
   function renderMaterialImage(
     material
   ) {
-    if (
-      !DOM.editorImageContainer
-    ) {
+    if (!DOM.editorImageContainer) {
       return;
     }
 
     const showImages =
-      CONFIG?.materials?.showImages !==
-      false;
+      CONFIG?.materials?.showImages !== false;
 
     if (
       !showImages ||
@@ -2134,9 +1691,7 @@
       DOM.editorImageContainer.hidden =
         true;
 
-      if (
-        DOM.editorItemImage
-      ) {
+      if (DOM.editorItemImage) {
         DOM.editorItemImage.removeAttribute(
           "src"
         );
@@ -2148,9 +1703,7 @@
     DOM.editorImageContainer.hidden =
       false;
 
-    if (
-      DOM.editorItemImage
-    ) {
+    if (DOM.editorItemImage) {
       DOM.editorItemImage.src =
         material.image;
 
@@ -2163,36 +1716,31 @@
 
 
   /* =======================================================
-     18. DYNAMIC FIELDS
+     17. DYNAMIC FIELDS
      ======================================================= */
 
   function renderDynamicFields(
     material
   ) {
-    if (
-      !DOM.materialFields
-    ) {
+    if (!DOM.materialFields) {
       return;
     }
 
-    DOM.materialFields.innerHTML =
-      "";
+    DOM.materialFields.innerHTML = "";
 
     let fields =
-      getMaterialFields(
-        material
-      );
+      getMaterialFields(material);
 
+    /*
+      Quantity / Unit / Brand / Price are rendered
+      separately. Therefore never render them here.
+    */
     fields =
       fields.filter(
         field =>
           !isSystemField(field)
       );
 
-    /*
-      DO NOT reorder fields.
-      material.js is the master source.
-    */
     fields =
       sortFields(fields);
 
@@ -2220,51 +1768,42 @@
   }
 
 
-  function shouldShowField(
-    field
-  ) {
+  function shouldShowField(field) {
     const key =
       normalizedFieldKey(field);
 
     if (
       key === "size" &&
-      CONFIG?.materials?.showSize ===
-      false
+      CONFIG?.materials?.showSize === false
     ) {
       return false;
     }
 
     if (
       key === "type" &&
-      CONFIG?.materials?.showType ===
-      false
+      CONFIG?.materials?.showType === false
     ) {
       return false;
     }
 
     if (
       key === "subtype" &&
-      CONFIG?.materials?.showSubType ===
-      false
+      CONFIG?.materials?.showSubType === false
     ) {
       return false;
     }
 
     if (
-      (
-        key === "colour" ||
-        key === "color"
-      ) &&
-      CONFIG?.materials?.showColour ===
-      false
+      (key === "colour" ||
+       key === "color") &&
+      CONFIG?.materials?.showColour === false
     ) {
       return false;
     }
 
     if (
       key === "material" &&
-      CONFIG?.materials?.showMaterial ===
-      false
+      CONFIG?.materials?.showMaterial === false
     ) {
       return false;
     }
@@ -2278,9 +1817,7 @@
     field
   ) {
     const wrapper =
-      document.createElement(
-        "div"
-      );
+      document.createElement("div");
 
     wrapper.className =
       "option-field";
@@ -2289,9 +1826,7 @@
       fieldKey(field);
 
     const label =
-      document.createElement(
-        "label"
-      );
+      document.createElement("label");
 
     label.className =
       "field-label";
@@ -2312,16 +1847,12 @@
         fieldKey(field)
       );
 
-    if (
-      type === "select"
-    ) {
+    if (type === "select") {
       const options =
         fieldOptions(field);
 
       const optionWrap =
-        document.createElement(
-          "div"
-        );
+        document.createElement("div");
 
       optionWrap.className =
         "option-buttons";
@@ -2333,8 +1864,7 @@
               "button"
             );
 
-          button.type =
-            "button";
+          button.type = "button";
 
           button.className =
             "option-button";
@@ -2395,6 +1925,7 @@
       return wrapper;
     }
 
+
     const input =
       document.createElement(
         "input"
@@ -2434,37 +1965,29 @@
 
 
   /* =======================================================
-     19. QUANTITY
+     18. QUANTITY
      ======================================================= */
 
   function renderQuantityField(
     material
   ) {
-    if (
-      !DOM.quantityField
-    ) {
+    if (!DOM.quantityField) {
       return;
     }
 
     const enabled =
-      CONFIG?.quantity?.enabled !==
-      false &&
-      CONFIG?.materials?.showQuantity !==
-      false;
+      CONFIG?.quantity?.enabled !== false &&
+      CONFIG?.materials?.showQuantity !== false;
 
     DOM.quantityField.hidden =
       !enabled;
 
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
 
     const draft =
       getDraft(material);
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       DOM.quantityInput.value =
         draft.quantity ?? "";
 
@@ -2496,9 +2019,7 @@
     let number =
       Number(value);
 
-    if (
-      !Number.isFinite(number)
-    ) {
+    if (!Number.isFinite(number)) {
       return "";
     }
 
@@ -2534,9 +2055,7 @@
     const material =
       state.currentItem;
 
-    if (!material) {
-      return;
-    }
+    if (!material) return;
 
     const current =
       getDraftValue(
@@ -2549,9 +2068,7 @@
         ? 0
         : Number(current);
 
-    if (
-      !Number.isFinite(value)
-    ) {
+    if (!Number.isFinite(value)) {
       value = 0;
     }
 
@@ -2583,9 +2100,7 @@
       String(value)
     );
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       DOM.quantityInput.value =
         String(value);
     }
@@ -2593,22 +2108,19 @@
 
 
   /* =======================================================
-     20. UNIT
+     19. UNIT
      ======================================================= */
 
-  function getUnits(
-    material
-  ) {
-    if (!material) {
-      return [];
-    }
+  function getUnits(material) {
+    if (!material) return [];
 
-    const units =
-      Array.isArray(
-        material.units
-      )
-        ? material.units
-        : [];
+    let units =
+      material.units ||
+      [];
+
+    if (!Array.isArray(units)) {
+      units = [];
+    }
 
     return units.map(
       normalizeOption
@@ -2619,22 +2131,17 @@
   function renderUnitField(
     material
   ) {
-    if (
-      !DOM.unitField
-    ) {
+    if (!DOM.unitField) {
       return;
     }
 
     const enabled =
-      CONFIG?.materials?.showUnit !==
-      false;
+      CONFIG?.materials?.showUnit !== false;
 
     DOM.unitField.hidden =
       !enabled;
 
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
 
     const units =
       getUnits(material);
@@ -2646,8 +2153,8 @@
       draft.unit ?? "";
 
     /*
-      Carry-forward unit only when
-      valid for current material.
+      Carry forward only when current unit
+      is valid for this material.
     */
     if (
       !current &&
@@ -2657,9 +2164,7 @@
         units.some(
           unit =>
             String(unit.value) ===
-            String(
-              state.lastUnit
-            )
+            String(state.lastUnit)
         );
 
       if (valid) {
@@ -2680,21 +2185,15 @@
       )
     ) {
       current = "";
-
-      draft.unit =
-        "";
+      draft.unit = "";
     }
 
-    DOM.unitSelect.innerHTML =
-      "";
+    DOM.unitSelect.innerHTML = "";
 
     const blank =
-      document.createElement(
-        "option"
-      );
+      document.createElement("option");
 
-    blank.value =
-      "";
+    blank.value = "";
 
     blank.textContent =
       text(
@@ -2733,22 +2232,19 @@
 
 
   /* =======================================================
-     21. BRAND
+     20. BRAND
      ======================================================= */
 
-  function getBrands(
-    material
-  ) {
-    if (!material) {
-      return [];
-    }
+  function getBrands(material) {
+    if (!material) return [];
 
-    const brands =
-      Array.isArray(
-        material.brands
-      )
-        ? material.brands
-        : [];
+    let brands =
+      material.brands ||
+      [];
+
+    if (!Array.isArray(brands)) {
+      brands = [];
+    }
 
     return brands.map(
       normalizeOption
@@ -2759,24 +2255,18 @@
   function renderBrandField(
     material
   ) {
-    if (
-      !DOM.brandField
-    ) {
+    if (!DOM.brandField) {
       return;
     }
 
     const enabled =
-      CONFIG?.brand?.enabled !==
-      false &&
-      CONFIG?.materials?.showBrand !==
-      false;
+      CONFIG?.brand?.enabled !== false &&
+      CONFIG?.materials?.showBrand !== false;
 
     DOM.brandField.hidden =
       !enabled;
 
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
 
     const brands =
       getBrands(material);
@@ -2787,16 +2277,12 @@
     const current =
       draft.brand ?? "";
 
-    DOM.brandSelect.innerHTML =
-      "";
+    DOM.brandSelect.innerHTML = "";
 
     const blank =
-      document.createElement(
-        "option"
-      );
+      document.createElement("option");
 
-    blank.value =
-      "";
+    blank.value = "";
 
     blank.textContent =
       text(
@@ -2810,14 +2296,13 @@
 
     brands.forEach(
       brand => {
+        /*
+          Explicitly ignore Skip Brand.
+        */
         const combined =
           `${brand.value} ${brand.en} ${brand.hi}`
             .toLowerCase();
 
-        /*
-          Skip Brand is intentionally never
-          displayed in the UI.
-        */
         if (
           combined.includes(
             "skip brand"
@@ -2848,36 +2333,19 @@
       }
     );
 
-    /*
-      If old saved data contains a removed
-      Skip Brand value, do not select it.
-    */
-    const validCurrent =
-      Array.from(
-        DOM.brandSelect.options
-      ).some(
-        option =>
-          String(option.value) ===
-          String(current)
-      );
-
     DOM.brandSelect.value =
-      validCurrent
-        ? current
-        : "";
+      current;
   }
 
 
   /* =======================================================
-     22. PRICE
+     21. PRICE
      ======================================================= */
 
   function renderPriceField(
     material
   ) {
-    if (
-      !DOM.priceField
-    ) {
+    if (!DOM.priceField) {
       return;
     }
 
@@ -2888,29 +2356,22 @@
       CONFIG?.materials || {};
 
     const enabled =
-      priceConfig.enabled !==
-      false;
+      priceConfig.enabled !== false;
 
     const visible =
       enabled &&
-      priceConfig.visible ===
-      true &&
-      materialConfig.showPrice ===
-      true;
+      priceConfig.visible === true &&
+      materialConfig.showPrice === true;
 
     DOM.priceField.hidden =
       !visible;
 
-    if (!visible) {
-      return;
-    }
+    if (!visible) return;
 
     const draft =
       getDraft(material);
 
-    if (
-      DOM.priceInput
-    ) {
+    if (DOM.priceInput) {
       DOM.priceInput.value =
         draft.price ?? "";
     }
@@ -2918,20 +2379,16 @@
 
 
   /* =======================================================
-     23. SAVE FIELD INPUTS
+     22. SAVE FIELD INPUTS
      ======================================================= */
 
   function syncEditorInputsToDraft() {
     const material =
       state.currentItem;
 
-    if (!material) {
-      return;
-    }
+    if (!material) return;
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       setDraftValue(
         material,
         "quantity",
@@ -2939,9 +2396,7 @@
       );
     }
 
-    if (
-      DOM.unitSelect
-    ) {
+    if (DOM.unitSelect) {
       setDraftValue(
         material,
         "unit",
@@ -2949,9 +2404,7 @@
       );
     }
 
-    if (
-      DOM.brandSelect
-    ) {
+    if (DOM.brandSelect) {
       setDraftValue(
         material,
         "brand",
@@ -2959,9 +2412,7 @@
       );
     }
 
-    if (
-      DOM.priceInput
-    ) {
+    if (DOM.priceInput) {
       setDraftValue(
         material,
         "price",
@@ -2969,9 +2420,7 @@
       );
     }
 
-    if (
-      DOM.materialFields
-    ) {
+    if (DOM.materialFields) {
       DOM.materialFields
         .querySelectorAll(
           "input, select"
@@ -2997,7 +2446,7 @@
 
 
   /* =======================================================
-     24. VALIDATE MATERIAL
+     23. VALIDATE MATERIAL
      ======================================================= */
 
   function validateCurrentMaterial() {
@@ -3025,8 +2474,7 @@
       );
 
     if (
-      CONFIG?.quantity?.required !==
-      false
+      CONFIG?.quantity?.required !== false
     ) {
       if (
         quantity === "" ||
@@ -3057,7 +2505,7 @@
 
 
   /* =======================================================
-     25. CREATE ESTIMATE ITEM
+     24. CREATE ESTIMATE ITEM
      ======================================================= */
 
   function createEstimateItem(
@@ -3071,9 +2519,7 @@
 
     const selections = {};
 
-    getMaterialFields(
-      material
-    )
+    getMaterialFields(material)
       .filter(
         field =>
           !isSystemField(field)
@@ -3090,8 +2536,7 @@
             value !== undefined &&
             value !== ""
           ) {
-            selections[key] =
-              value;
+            selections[key] = value;
           }
         }
       );
@@ -3141,16 +2586,14 @@
 
 
   /* =======================================================
-     26. ADD TO ESTIMATE
+     25. ADD TO ESTIMATE
      ======================================================= */
 
   function addCurrentToEstimate() {
     const material =
       state.currentItem;
 
-    if (!material) {
-      return;
-    }
+    if (!material) return;
 
     const validation =
       validateCurrentMaterial();
@@ -3167,21 +2610,19 @@
     const draft =
       validation.draft;
 
-    if (
-      draft.unit
-    ) {
+    /*
+      Remember unit for next item,
+      but only as carry-forward candidate.
+    */
+    if (draft.unit) {
       state.lastUnit =
         draft.unit;
     }
 
-
-    /* -------------------------------------------------------
-       EDIT EXISTING ESTIMATE ITEM
-       ------------------------------------------------------- */
-
-    if (
-      state.editingEstimateId
-    ) {
+    /*
+      EDIT EXISTING ESTIMATE ITEM
+    */
+    if (state.editingEstimateId) {
       const index =
         state.estimateItems.findIndex(
           item =>
@@ -3233,10 +2674,9 @@
     }
 
 
-    /* -------------------------------------------------------
-       NORMAL NEW ITEM
-       ------------------------------------------------------- */
-
+    /*
+      NORMAL NEW ESTIMATE ITEM
+    */
     const item =
       createEstimateItem(
         material,
@@ -3258,15 +2698,17 @@
     );
 
     /*
-      Important:
-      Draft is NOT cleared.
-      Back can therefore restore entered values.
+      Do not clear the draft immediately.
+      This allows Back to preserve the entered
+      selections as requested.
+
+      When opening the next item, it gets its
+      own draft.
     */
 
     const autoNext =
       CONFIG?.navigation
-        ?.autoNextAfterAdd !==
-      false;
+        ?.autoNextAfterAdd !== false;
 
     if (autoNext) {
       openNextItem(
@@ -3279,7 +2721,7 @@
 
 
   /* =======================================================
-     27. NEXT / BACK
+     26. NEXT / BACK
      ======================================================= */
 
   function getCurrentStageMaterials() {
@@ -3328,35 +2770,13 @@
     state.editingEstimateId =
       null;
 
-    state.materialEditorOpen =
-      true;
-
     renderMaterialEditor(
       state.currentItem
     );
 
-    /*
-      Replace current editor history state
-      rather than creating a huge history chain
-      for every Next tap.
-    */
-    replaceHistory(
-      {
-        sandeepApp: true,
-        page: "materials",
-        stageId:
-          state.currentStageId,
-        editor: true,
-        materialId:
-          state.currentItem.id
-      },
-      "#materials"
-    );
-
     if (
       CONFIG?.navigation
-        ?.scrollNextToTop !==
-      false
+        ?.scrollNextToTop !== false
     ) {
       scrollEditorToTop();
     }
@@ -3379,9 +2799,7 @@
     if (
       previousIndex < 0
     ) {
-      closeMaterialEditor(
-        false
-      );
+      closeMaterialEditor();
 
       return;
     }
@@ -3390,37 +2808,18 @@
       previousIndex;
 
     state.currentItem =
-      materials[
-        previousIndex
-      ];
+      materials[previousIndex];
 
     state.editingEstimateId =
       null;
-
-    state.materialEditorOpen =
-      true;
 
     renderMaterialEditor(
       state.currentItem
     );
 
-    replaceHistory(
-      {
-        sandeepApp: true,
-        page: "materials",
-        stageId:
-          state.currentStageId,
-        editor: true,
-        materialId:
-          state.currentItem.id
-      },
-      "#materials"
-    );
-
     if (
       CONFIG?.navigation
-        ?.restorePreviousItemTop !==
-      false
+        ?.restorePreviousItemTop !== false
     ) {
       scrollEditorToTop();
     }
@@ -3434,16 +2833,12 @@
     const index =
       state.currentItemIndex;
 
-    if (
-      DOM.itemBackButton
-    ) {
+    if (DOM.itemBackButton) {
       DOM.itemBackButton.disabled =
         index <= 0;
     }
 
-    if (
-      DOM.itemNextButton
-    ) {
+    if (DOM.itemNextButton) {
       DOM.itemNextButton.disabled =
         index >=
         materials.length - 1;
@@ -3454,15 +2849,11 @@
   function scrollEditorToTop() {
     requestAnimationFrame(
       () => {
-        if (
-          DOM.materialEditor
-        ) {
-          DOM.materialEditor.scrollIntoView(
-            {
-              behavior: "auto",
-              block: "start"
-            }
-          );
+        if (DOM.materialEditor) {
+          DOM.materialEditor.scrollIntoView({
+            behavior: "auto",
+            block: "start"
+          });
         }
 
         window.scrollTo({
@@ -3474,29 +2865,19 @@
   }
 
 
-  function closeMaterialEditor(
-    renderList = true
-  ) {
+  function closeMaterialEditor() {
     state.currentItem =
       null;
 
     state.editingEstimateId =
       null;
 
-    state.materialEditorOpen =
-      false;
-
-    if (
-      DOM.materialEditor
-    ) {
+    if (DOM.materialEditor) {
       DOM.materialEditor.hidden =
         true;
     }
 
-    if (
-      DOM.materialList &&
-      renderList
-    ) {
+    if (DOM.materialList) {
       DOM.materialList.hidden =
         false;
     }
@@ -3504,17 +2885,14 @@
 
 
   /* =======================================================
-     28. ESTIMATE ITEM EDITING
+     27. ESTIMATE ITEM EDITING
      ======================================================= */
 
   function loadEstimateItemIntoDraft(
     material,
     estimateItem
   ) {
-    if (
-      !material ||
-      !estimateItem
-    ) {
+    if (!material || !estimateItem) {
       return;
     }
 
@@ -3522,25 +2900,20 @@
 
     Object.assign(
       draft,
-      estimateItem.selections ||
-      {}
+      estimateItem.selections || {}
     );
 
     draft.quantity =
-      estimateItem.quantity ??
-      "";
+      estimateItem.quantity ?? "";
 
     draft.unit =
-      estimateItem.unit ??
-      "";
+      estimateItem.unit ?? "";
 
     draft.brand =
-      estimateItem.brand ??
-      "";
+      estimateItem.brand ?? "";
 
     draft.price =
-      estimateItem.price ??
-      "";
+      estimateItem.price ?? "";
 
     state.draftValues[
       getDraftKey(material)
@@ -3551,9 +2924,7 @@
   function editEstimateItem(
     estimateItem
   ) {
-    if (!estimateItem) {
-      return;
-    }
+    if (!estimateItem) return;
 
     const material =
       getMaterialById(
@@ -3572,6 +2943,11 @@
       return;
     }
 
+    /*
+      Estimate-specific edit state.
+      We load only this item's values into
+      the temporary draft.
+    */
     state.editingEstimateId =
       estimateItem.id;
 
@@ -3584,9 +2960,7 @@
       material.id,
       {
         fromEdit: true,
-        estimateItem,
-        editingEstimateId:
-          estimateItem.id
+        estimateItem
       }
     );
   }
@@ -3622,40 +2996,35 @@
       "success",
       text(
         "Estimate item deleted.",
-        "एस्टिमेट आइटम डिलीट हो गया।"
+        "एस्टिमेट आइटम हटा दिया गया।"
       )
     );
   }
 
 
   /* =======================================================
-     29. ESTIMATE PAGE
+     28. ESTIMATE PAGE
      ======================================================= */
 
   function showEstimate() {
-    showPage(
-      "estimate"
-    );
+    showPage("estimate");
+
+    renderEstimate();
   }
 
 
   function renderEstimate() {
-    if (
-      !DOM.estimateItems
-    ) {
+    if (!DOM.estimateItems) {
       return;
     }
 
-    DOM.estimateItems.innerHTML =
-      "";
+    DOM.estimateItems.innerHTML = "";
 
     const items =
       state.estimateItems;
 
     if (!items.length) {
-      if (
-        DOM.estimateEmpty
-      ) {
+      if (DOM.estimateEmpty) {
         DOM.estimateEmpty.hidden =
           false;
       }
@@ -3663,9 +3032,7 @@
       return;
     }
 
-    if (
-      DOM.estimateEmpty
-    ) {
+    if (DOM.estimateEmpty) {
       DOM.estimateEmpty.hidden =
         true;
     }
@@ -3769,45 +3136,42 @@
       "estimate-item-details";
 
     if (material) {
-      getMaterialFields(
-        material
-      )
-        .filter(
+      const fields =
+        getMaterialFields(
+          material
+        ).filter(
           field =>
             !isSystemField(field)
-        )
-        .forEach(
-          field => {
-            const key =
-              fieldKey(field);
-
-            const value =
-              item.selections?.[
-                key
-              ];
-
-            if (
-              value === undefined ||
-              value === ""
-            ) {
-              return;
-            }
-
-            appendEstimateDetail(
-              details,
-              fieldLabel(field),
-              resolveOptionDisplay(
-                field,
-                value
-              )
-            );
-          }
         );
+
+      fields.forEach(
+        field => {
+          const key =
+            fieldKey(field);
+
+          const value =
+            item.selections?.[key];
+
+          if (
+            value === undefined ||
+            value === ""
+          ) {
+            return;
+          }
+
+          appendEstimateDetail(
+            details,
+            fieldLabel(field),
+            resolveOptionDisplay(
+              field,
+              value
+            )
+          );
+        }
+      );
     }
 
-    if (
-      item.quantity !== ""
-    ) {
+    if (item.quantity !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3818,9 +3182,7 @@
       );
     }
 
-    if (
-      item.unit !== ""
-    ) {
+    if (item.unit !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3834,9 +3196,7 @@
       );
     }
 
-    if (
-      item.brand !== ""
-    ) {
+    if (item.brand !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3850,14 +3210,16 @@
       );
     }
 
+    /*
+      Price is only shown when:
+      - configured visible
+      - value actually exists
+    */
     if (
       item.price !== "" &&
-      CONFIG?.price?.enabled !==
-      false &&
-      CONFIG?.price?.visible ===
-      true &&
-      CONFIG?.materials?.showPrice ===
-      true
+      CONFIG?.price?.enabled !== false &&
+      CONFIG?.price?.visible === true &&
+      CONFIG?.materials?.showPrice === true
     ) {
       appendEstimateDetail(
         details,
@@ -3865,10 +3227,7 @@
           "Price",
           "कीमत"
         ),
-        `${
-          CONFIG?.price?.currency ||
-          "₹"
-        }${item.price}`
+        `${CONFIG?.price?.currency || "₹"}${item.price}`
       );
     }
 
@@ -3885,14 +3244,12 @@
     actions.className =
       "estimate-item-actions";
 
-
     const edit =
       document.createElement(
         "button"
       );
 
-    edit.type =
-      "button";
+    edit.type = "button";
 
     edit.className =
       "estimate-edit-button";
@@ -3922,8 +3279,7 @@
         "button"
       );
 
-    remove.type =
-      "button";
+    remove.type = "button";
 
     remove.className =
       "estimate-delete-button";
@@ -4068,44 +3424,38 @@
 
 
   /* =======================================================
-     30. MATERIAL VIEW MODES
+     29. MATERIAL VIEW MODES
      ======================================================= */
-
-  const MATERIAL_VIEWS = [
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "two-column",
-    "horizontal",
-    "icon-list",
-    "timeline",
-    "dense"
-  ];
-
 
   function applyMaterialView() {
     const list =
       DOM.materialList;
 
-    if (!list) {
-      return;
-    }
+    if (!list) return;
+
+    const validViews = [
+      "grid",
+      "list",
+      "compact",
+      "large",
+      "mini",
+      "two-column",
+      "horizontal",
+      "icon-list",
+      "timeline",
+      "dense"
+    ];
 
     let view =
       state.materialView;
 
     if (
-      !MATERIAL_VIEWS.includes(
-        view
-      )
+      !validViews.includes(view)
     ) {
-      view =
-        "grid";
+      view = "grid";
     }
 
-    MATERIAL_VIEWS.forEach(
+    validViews.forEach(
       mode => {
         list.classList.remove(
           `view-${mode}`
@@ -4119,13 +3469,23 @@
   }
 
 
-  function setMaterialView(
-    view
-  ) {
+  function setMaterialView(view) {
+    const allowed =
+      [
+        "grid",
+        "list",
+        "compact",
+        "large",
+        "mini",
+        "two-column",
+        "horizontal",
+        "icon-list",
+        "timeline",
+        "dense"
+      ];
+
     if (
-      !MATERIAL_VIEWS.includes(
-        view
-      )
+      !allowed.includes(view)
     ) {
       return;
     }
@@ -4140,9 +3500,7 @@
 
     applyMaterialView();
 
-    if (
-      DOM.materialViewButton
-    ) {
+    if (DOM.materialViewButton) {
       DOM.materialViewButton.textContent =
         view;
     }
@@ -4150,25 +3508,33 @@
 
 
   function cycleMaterialView() {
+    const views = [
+      "grid",
+      "list",
+      "compact",
+      "large",
+      "mini",
+      "two-column",
+      "horizontal",
+      "icon-list",
+      "timeline",
+      "dense"
+    ];
+
     const available =
-      MATERIAL_VIEWS.filter(
+      views.filter(
         view =>
-          CONFIG?.views?.[view] !==
-          false
+          CONFIG?.views?.[view] !== false
       );
 
     if (!available.length) {
       return;
     }
 
-    let index =
+    const index =
       available.indexOf(
         state.materialView
       );
-
-    if (index < 0) {
-      index = 0;
-    }
 
     const next =
       available[
@@ -4183,12 +3549,12 @@
 
 
   /* =======================================================
-     31. PAGE NAVIGATION
+     30. PAGE NAVIGATION
      ======================================================= */
 
   function showPage(
     page,
-    pushHistoryEntry = true
+    pushHistory = true
   ) {
     const pages = {
       home:
@@ -4207,21 +3573,11 @@
         DOM.settingsPage
     };
 
-    if (
-      !pages[page] &&
-      page !== "home"
-    ) {
-      page =
-        "home";
-    }
-
     Object.entries(
       pages
     ).forEach(
       ([key, element]) => {
-        if (!element) {
-          return;
-        }
+        if (!element) return;
 
         element.hidden =
           key !== page;
@@ -4231,22 +3587,13 @@
     state.currentPage =
       page;
 
-    if (
-      page !== "materials"
-    ) {
-      state.materialEditorOpen =
-        false;
-    }
-
     updateTopBarTitle();
 
     updateBottomNavigation(
       page
     );
 
-    if (
-      pushHistoryEntry
-    ) {
+    if (pushHistory) {
       pushNavigationState(
         page
       );
@@ -4257,63 +3604,22 @@
       behavior: "auto"
     });
 
-    if (
-      page === "home"
-    ) {
+    if (page === "home") {
       renderHome();
     }
 
-    if (
-      page === "materials"
-    ) {
-      if (
-        state.currentStageId
-      ) {
-        if (
-          state.materialEditorOpen &&
-          state.currentItem
-        ) {
-          renderMaterialEditor(
-            state.currentItem
-          );
-
-          if (
-            DOM.materialList
-          ) {
-            DOM.materialList.hidden =
-              true;
-          }
-
-          if (
-            DOM.materialEditor
-          ) {
-            DOM.materialEditor.hidden =
-              false;
-          }
-        } else {
-          renderMaterialPage();
-        }
-      }
-    }
-
-    if (
-      page === "estimate"
-    ) {
+    if (page === "estimate") {
       renderEstimate();
     }
 
-    if (
-      page === "settings"
-    ) {
+    if (page === "settings") {
       renderSettings();
     }
   }
 
 
   function updateTopBarTitle() {
-    if (
-      !DOM.topBarTitle
-    ) {
+    if (!DOM.topBarTitle) {
       return;
     }
 
@@ -4350,9 +3656,7 @@
     };
 
     DOM.topBarTitle.textContent =
-      titles[
-        state.currentPage
-      ] ||
+      titles[state.currentPage] ||
       titles.home;
   }
 
@@ -4360,154 +3664,45 @@
   function pushNavigationState(
     page
   ) {
+    if (!window.history) return;
+
     const current =
       window.history.state;
 
     if (
       current &&
-      current.sandeepApp ===
-      true &&
-      current.page ===
-      page
+      current.sandeepApp === true &&
+      current.page === page
     ) {
       return;
     }
 
-    pushHistory(
-      {
-        sandeepApp: true,
-        page
-      },
-      `#${page}`
-    );
+    try {
+      window.history.pushState(
+        {
+          sandeepApp: true,
+          page
+        },
+        "",
+        `#${page}`
+      );
+    } catch (_) {}
   }
 
 
-  function handlePopState(
-    event
-  ) {
-    /*
-      First priority:
-      close side menu.
-    */
+  function handlePopState(event) {
+    const page =
+      event.state?.sandeepApp
+        ? event.state.page
+        : "home";
+
     if (
       state.menuOpen
     ) {
       closeSideMenu();
 
-      /*
-        Restore current UI without
-        pushing another history state.
-      */
       return;
     }
-
-    const historyState =
-      event.state;
-
-    /*
-      MATERIAL EDITOR
-      */
-    if (
-      historyState?.sandeepApp ===
-      true &&
-      historyState.page ===
-      "materials" &&
-      historyState.editor ===
-      true
-    ) {
-      state.currentStageId =
-        historyState.stageId;
-
-      const material =
-        getMaterialById(
-          historyState.materialId
-        );
-
-      if (material) {
-        state.currentItem =
-          material;
-
-        state.currentItemIndex =
-          getStageMaterials(
-            material.stage
-          ).findIndex(
-            item =>
-              String(item.id) ===
-              String(material.id)
-          );
-
-        state.materialEditorOpen =
-          true;
-
-        showPage(
-          "materials",
-          false
-        );
-
-        if (
-          DOM.materialList
-        ) {
-          DOM.materialList.hidden =
-            true;
-        }
-
-        if (
-          DOM.materialEditor
-        ) {
-          DOM.materialEditor.hidden =
-            false;
-        }
-
-        renderMaterialEditor(
-          material
-        );
-
-        scrollEditorToTop();
-
-        return;
-      }
-    }
-
-
-    /*
-      MATERIAL LIST
-      */
-    if (
-      historyState?.sandeepApp ===
-      true &&
-      historyState.page ===
-      "materials"
-    ) {
-      state.currentStageId =
-        historyState.stageId ||
-        state.currentStageId;
-
-      state.currentItem =
-        null;
-
-      state.materialEditorOpen =
-        false;
-
-      showPage(
-        "materials",
-        false
-      );
-
-      renderMaterialPage();
-
-      return;
-    }
-
-
-    /*
-      Normal page state.
-    */
-    const page =
-      historyState?.sandeepApp ===
-      true
-        ? historyState.page
-        : "home";
 
     showPage(
       page,
@@ -4517,15 +3712,13 @@
 
 
   /* =======================================================
-     32. BOTTOM NAVIGATION
+     31. BOTTOM NAVIGATION
      ======================================================= */
 
   function updateBottomNavigation(
     page
   ) {
-    if (
-      !DOM.bottomNavigation
-    ) {
+    if (!DOM.bottomNavigation) {
       return;
     }
 
@@ -4546,7 +3739,7 @@
 
 
   /* =======================================================
-     33. SIDE MENU
+     32. SIDE MENU
      ======================================================= */
 
   function openSideMenu() {
@@ -4586,9 +3779,7 @@
 
 
   function toggleSideMenu() {
-    if (
-      state.menuOpen
-    ) {
+    if (state.menuOpen) {
       closeSideMenu();
     } else {
       openSideMenu();
@@ -4597,24 +3788,20 @@
 
 
   /* =======================================================
-     34. SETTINGS
+     33. SETTINGS
      ======================================================= */
 
   function renderSettings() {
     applyTheme();
 
-    if (
-      DOM.settingsLanguageButton
-    ) {
+    if (DOM.settingsLanguageButton) {
       DOM.settingsLanguageButton.textContent =
         state.language === "hi"
           ? "हिन्दी"
           : "English";
     }
 
-    if (
-      DOM.materialViewButton
-    ) {
+    if (DOM.materialViewButton) {
       DOM.materialViewButton.textContent =
         state.materialView;
     }
@@ -4654,10 +3841,7 @@
     anchor.download =
       `sandeep-estimate-${new Date()
         .toISOString()
-        .slice(
-          0,
-          10
-        )}.json`;
+        .slice(0, 10)}.json`;
 
     document.body.appendChild(
       anchor
@@ -4734,7 +3918,7 @@
 
 
   /* =======================================================
-     35. CALCULATOR
+     34. CALCULATOR
      ======================================================= */
 
   function calculateVoltage() {
@@ -4751,26 +3935,14 @@
           )?.value
       );
 
+    /*
+      Keep original simple UI compatible:
+      if only current is present, assume 230V
+      style helper rather than breaking the page.
+    */
     let result = "";
 
-    /*
-      If resistance input exists and is valid:
-      V = I × R
-
-      Otherwise preserve the old helper behaviour.
-    */
     if (
-      Number.isFinite(current) &&
-      current >= 0 &&
-      Number.isFinite(resistance) &&
-      resistance > 0
-    ) {
-      result =
-        `${(
-          current *
-          resistance
-        ).toFixed(2)} V`;
-    } else if (
       Number.isFinite(current) &&
       current > 0
     ) {
@@ -4778,9 +3950,7 @@
         `${current} A`;
     }
 
-    if (
-      DOM.voltageResult
-    ) {
+    if (DOM.voltageResult) {
       DOM.voltageResult.textContent =
         result ||
         text(
@@ -4884,26 +4054,21 @@
 
 
   /* =======================================================
-     36. TOAST
+     35. TOAST
      ======================================================= */
 
-  let toastTimer =
-    null;
-
+  let toastTimer = null;
 
   function showToast(
     type,
     message
   ) {
-    if (
-      !DOM.appToast
-    ) {
+    if (!DOM.appToast) {
       return;
     }
 
     if (
-      CONFIG?.toast?.enabled ===
-      false
+      CONFIG?.toast?.enabled === false
     ) {
       return;
     }
@@ -4923,9 +4088,7 @@
       );
     }
 
-    if (
-      DOM.toastIcon
-    ) {
+    if (DOM.toastIcon) {
       const icons = {
         success: "✓",
         error: "!",
@@ -4938,9 +4101,7 @@
         "✓";
     }
 
-    if (
-      DOM.toastMessage
-    ) {
+    if (DOM.toastMessage) {
       DOM.toastMessage.textContent =
         message;
     }
@@ -4958,7 +4119,7 @@
     toastTimer =
       setTimeout(
         () => {
-          DOM.appToast?.classList.remove(
+          DOM.appToast.classList.remove(
             "show"
           );
         },
@@ -4968,15 +4129,12 @@
 
 
   /* =======================================================
-     37. EVENT BINDING
+     36. EVENT BINDING
      ======================================================= */
 
   function bindEvents() {
 
-    /* -------------------------------------------------------
-       Hamburger
-       ------------------------------------------------------- */
-
+    /* Hamburger */
     DOM.hamburgerButton?.addEventListener(
       "click",
       toggleSideMenu
@@ -4993,10 +4151,7 @@
     );
 
 
-    /* -------------------------------------------------------
-       Language
-       ------------------------------------------------------- */
-
+    /* Language */
     DOM.languageButton?.addEventListener(
       "click",
       toggleLanguage
@@ -5008,10 +4163,7 @@
     );
 
 
-    /* -------------------------------------------------------
-       Search
-       ------------------------------------------------------- */
-
+    /* Search */
     DOM.materialSearch?.addEventListener(
       "input",
       handleSearch
@@ -5023,40 +4175,20 @@
     );
 
 
-    /* -------------------------------------------------------
-       Material Header Back
-       ------------------------------------------------------- */
-
+    /* Material header Back */
     DOM.materialBackButton?.addEventListener(
       "click",
       () => {
         if (
-          state.materialEditorOpen
+          DOM.materialEditor &&
+          !DOM.materialEditor.hidden
         ) {
           closeMaterialEditor();
 
-          if (
-            DOM.materialList
-          ) {
+          if (DOM.materialList) {
             DOM.materialList.hidden =
               false;
           }
-
-          replaceHistory(
-            {
-              sandeepApp: true,
-              page: "materials",
-              stageId:
-                state.currentStageId,
-              editor: false
-            },
-            "#materials"
-          );
-
-          window.scrollTo({
-            top: 0,
-            behavior: "auto"
-          });
 
           return;
         }
@@ -5068,32 +4200,16 @@
     );
 
 
-    /* -------------------------------------------------------
-       Editor Back
-       ------------------------------------------------------- */
-
+    /* Editor Back */
     DOM.editorBackButton?.addEventListener(
       "click",
       () => {
         closeMaterialEditor();
 
-        if (
-          DOM.materialList
-        ) {
+        if (DOM.materialList) {
           DOM.materialList.hidden =
             false;
         }
-
-        replaceHistory(
-          {
-            sandeepApp: true,
-            page: "materials",
-            stageId:
-              state.currentStageId,
-            editor: false
-          },
-          "#materials"
-        );
 
         window.scrollTo({
           top: 0,
@@ -5103,26 +4219,20 @@
     );
 
 
-    /* -------------------------------------------------------
-       Item Back
-       ------------------------------------------------------- */
-
+    /* Item Back */
     DOM.itemBackButton?.addEventListener(
       "click",
       openPreviousItem
     );
 
 
-    /* -------------------------------------------------------
-       Item Next
-       ------------------------------------------------------- */
-
+    /* Item Next */
     DOM.itemNextButton?.addEventListener(
       "click",
       () => {
         /*
           IMPORTANT:
-          Next does NOT save/add current item.
+          Next does NOT add/save current item.
         */
         openNextItem(
           false
@@ -5131,20 +4241,14 @@
     );
 
 
-    /* -------------------------------------------------------
-       Add
-       ------------------------------------------------------- */
-
+    /* Add */
     DOM.addToEstimateButton?.addEventListener(
       "click",
       addCurrentToEstimate
     );
 
 
-    /* -------------------------------------------------------
-       Quantity
-       ------------------------------------------------------- */
-
+    /* Quantity */
     DOM.quantityMinus?.addEventListener(
       "click",
       () => {
@@ -5169,20 +4273,15 @@
         const material =
           state.currentItem;
 
-        if (!material) {
-          return;
-        }
+        if (!material) return;
 
         const value =
           event.target.value;
 
         /*
-          Empty is allowed temporarily
-          while typing.
+          Allow empty temporarily while typing.
         */
-        if (
-          value === ""
-        ) {
+        if (value === "") {
           setDraftValue(
             material,
             "quantity",
@@ -5209,19 +4308,14 @@
     );
 
 
-    /* -------------------------------------------------------
-       Unit
-       ------------------------------------------------------- */
-
+    /* Unit */
     DOM.unitSelect?.addEventListener(
       "change",
       event => {
         const material =
           state.currentItem;
 
-        if (!material) {
-          return;
-        }
+        if (!material) return;
 
         const value =
           event.target.value;
@@ -5240,19 +4334,14 @@
     );
 
 
-    /* -------------------------------------------------------
-       Brand
-       ------------------------------------------------------- */
-
+    /* Brand */
     DOM.brandSelect?.addEventListener(
       "change",
       event => {
         const material =
           state.currentItem;
 
-        if (!material) {
-          return;
-        }
+        if (!material) return;
 
         setDraftValue(
           material,
@@ -5263,19 +4352,14 @@
     );
 
 
-    /* -------------------------------------------------------
-       Price
-       ------------------------------------------------------- */
-
+    /* Price */
     DOM.priceInput?.addEventListener(
       "input",
       event => {
         const material =
           state.currentItem;
 
-        if (!material) {
-          return;
-        }
+        if (!material) return;
 
         setDraftValue(
           material,
@@ -5286,10 +4370,7 @@
     );
 
 
-    /* -------------------------------------------------------
-       Bottom Navigation
-       ------------------------------------------------------- */
-
+    /* Bottom nav */
     DOM.bottomNavigation
       ?.querySelectorAll(
         "[data-page]"
@@ -5299,31 +4380,8 @@
           button.addEventListener(
             "click",
             () => {
-              const page =
-                button.dataset.page;
-
-              if (
-                page ===
-                "calculator" &&
-                CONFIG?.calculator
-                  ?.enabled ===
-                false
-              ) {
-                return;
-              }
-
-              if (
-                page ===
-                "settings" &&
-                CONFIG?.settings
-                  ?.enabled ===
-                false
-              ) {
-                return;
-              }
-
               showPage(
-                page
+                button.dataset.page
               );
             }
           );
@@ -5331,10 +4389,7 @@
       );
 
 
-    /* -------------------------------------------------------
-       Side Menu Navigation
-       ------------------------------------------------------- */
-
+    /* Side menu nav */
     DOM.sideMenuNav
       ?.querySelectorAll(
         "[data-page]"
@@ -5355,60 +4410,42 @@
       );
 
 
-    /* -------------------------------------------------------
-       Theme
-       ------------------------------------------------------- */
-
+    /* Theme */
     DOM.themeToggleButton?.addEventListener(
       "click",
       toggleTheme
     );
 
 
-    /* -------------------------------------------------------
-       Material View
-       ------------------------------------------------------- */
-
+    /* Material view */
     DOM.materialViewButton?.addEventListener(
       "click",
       cycleMaterialView
     );
 
 
-    /* -------------------------------------------------------
-       Backup
-       ------------------------------------------------------- */
-
+    /* Backup */
     DOM.backupButton?.addEventListener(
       "click",
       backupEstimate
     );
 
 
-    /* -------------------------------------------------------
-       Reset
-       ------------------------------------------------------- */
-
+    /* Reset */
     DOM.resetButton?.addEventListener(
       "click",
       resetEstimate
     );
 
 
-    /* -------------------------------------------------------
-       About
-       ------------------------------------------------------- */
-
+    /* About */
     DOM.aboutButton?.addEventListener(
       "click",
       showAbout
     );
 
 
-    /* -------------------------------------------------------
-       Browser / Android Back
-       ------------------------------------------------------- */
-
+    /* Browser / Android Back */
     window.addEventListener(
       "popstate",
       handlePopState
@@ -5417,20 +4454,17 @@
 
 
   /* =======================================================
-     38. INITIAL PAGE
+     37. INITIAL PAGE
      ======================================================= */
 
   function getInitialPage() {
     const hash =
       String(
-        window.location.hash ||
+        window.location.hash || ""
+      ).replace(
+        "#",
         ""
-      )
-        .replace(
-          "#",
-          ""
-        )
-        .split("?")[0];
+      );
 
     const allowed = [
       "home",
@@ -5440,22 +4474,18 @@
       "settings"
     ];
 
-    return allowed.includes(
-      hash
-    )
+    return allowed.includes(hash)
       ? hash
       : "home";
   }
 
 
   /* =======================================================
-     39. MASTER DATA VALIDATION
+     38. MASTER DATA VALIDATION
      ======================================================= */
 
   function validateMasterData() {
-    if (
-      !MATERIALS.length
-    ) {
+    if (!MATERIALS.length) {
       console.error(
         "Material master list is empty."
       );
@@ -5473,39 +4503,32 @@
             "Material without ID:",
             material
           );
-
-          return;
         }
 
-        const id =
-          String(
-            material.id
-          );
-
         if (
-          ids.has(id)
+          material.id &&
+          ids.has(
+            material.id
+          )
         ) {
           console.error(
             "Duplicate material ID:",
-            id
+            material.id
           );
         }
 
-        ids.add(id);
+        if (material.id) {
+          ids.add(
+            material.id
+          );
+        }
       }
     );
 
-
     /*
-      Current app master:
-      Stage 1 = 10
-      Stage 2 = 7
-      Stage 3 = 5
-      Stage 4 = 51
-      Stage 5 = 16
-      Total = 89
+      Expected current master:
+      10 + 7 + 5 + 51 + 16 = 89
     */
-
     const expectedCounts = {
       1: 10,
       2: 7,
@@ -5545,7 +4568,7 @@
 
 
   /* =======================================================
-     40. INITIAL UI
+     39. INITIAL UI
      ======================================================= */
 
   function initializeUI() {
@@ -5569,56 +4592,47 @@
       "home"
     );
 
+    /*
+      Replace current history entry so Android/browser
+      back has a known app state.
+    */
+    try {
+      window.history.replaceState(
+        {
+          sandeepApp: true,
+          page: getInitialPage()
+        },
+        "",
+        `#${getInitialPage()}`
+      );
+    } catch (_) {}
+
     const initialPage =
       getInitialPage();
 
-    /*
-      A direct #materials URL cannot know which
-      stage/item was open unless that state is stored.
-      Therefore safely fall back to home.
-    */
     if (
       initialPage ===
       "materials"
     ) {
-      replaceHistory(
-        {
-          sandeepApp: true,
-          page: "home"
-        },
-        "#home"
-      );
-
       showPage(
         "home",
         false
       );
-
-      return;
+    } else {
+      showPage(
+        initialPage,
+        false
+      );
     }
-
-    replaceHistory(
-      {
-        sandeepApp: true,
-        page: initialPage
-      },
-      `#${initialPage}`
-    );
-
-    showPage(
-      initialPage,
-      false
-    );
   }
 
 
   /* =======================================================
-     41. LOADING SCREEN
+     40. LOADING SCREEN
      ======================================================= */
 
   let loaderHidden =
     false;
-
 
   function hideLoadingScreen() {
     if (
@@ -5641,8 +4655,8 @@
     );
 
     /*
-      Hard fallback so the loader can never
-      permanently block the app.
+      Hard fallback in case CSS transition
+      does not remove visual layer.
     */
     setTimeout(
       () => {
@@ -5659,9 +4673,7 @@
 
 
   function showLoadingProgress() {
-    if (
-      DOM.loadingText
-    ) {
+    if (DOM.loadingText) {
       DOM.loadingText.textContent =
         text(
           "Loading...",
@@ -5669,27 +4681,21 @@
         );
     }
 
-    if (
-      DOM.loadingLine
-    ) {
+    if (DOM.loadingLine) {
       DOM.loadingLine.style.width =
         "35%";
     }
 
     requestAnimationFrame(
       () => {
-        if (
-          DOM.loadingLine
-        ) {
+        if (DOM.loadingLine) {
           DOM.loadingLine.style.width =
             "70%";
         }
 
         setTimeout(
           () => {
-            if (
-              DOM.loadingLine
-            ) {
+            if (DOM.loadingLine) {
               DOM.loadingLine.style.width =
                 "100%";
             }
@@ -5702,7 +4708,7 @@
 
 
   /* =======================================================
-     42. GLOBAL ERROR SAFETY
+     41. GLOBAL ERROR SAFETY
      ======================================================= */
 
   function installErrorSafety() {
@@ -5715,6 +4721,10 @@
           event.message
         );
 
+        /*
+          Never allow an unexpected error
+          to permanently trap the user on loader.
+        */
         hideLoadingScreen();
       }
     );
@@ -5734,7 +4744,7 @@
 
 
   /* =======================================================
-     43. RENDER ALL
+     42. RENDER ALL
      ======================================================= */
 
   function renderAll() {
@@ -5750,9 +4760,7 @@
       state.currentPage ===
       "materials"
     ) {
-      if (
-        state.currentItem
-      ) {
+      if (state.currentItem) {
         renderMaterialEditor(
           state.currentItem
         );
@@ -5781,7 +4789,7 @@
 
 
   /* =======================================================
-     44. PUBLIC API
+     43. PUBLIC API
      ======================================================= */
 
   window.SandeepEstimateApp = {
@@ -5813,7 +4821,7 @@
 
 
   /* =======================================================
-     45. INIT
+     44. INIT
      ======================================================= */
 
   function init() {
@@ -5829,8 +4837,8 @@
       initializeUI();
 
       /*
-        Give browser one paint cycle before
-        removing the loader.
+        Small delay gives browser time to paint
+        the first UI frame before removing loader.
       */
       requestAnimationFrame(
         () => {
@@ -5848,8 +4856,9 @@
       );
 
       /*
-        Never leave user permanently trapped
-        behind loading screen.
+        Critical:
+        even if initialization has a problem,
+        never keep the loading screen forever.
       */
       hideLoadingScreen();
     }
@@ -5857,7 +4866,7 @@
 
 
   /* =======================================================
-     46. START
+     45. START
      ======================================================= */
 
   if (

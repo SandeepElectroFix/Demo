@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050816">
+<meta name="description" content="Sandeep ElectroFix - Estimate List">
+<title>Estimate List - Sandeep ElectroFix</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+<header class="topbar">
+  <button id="menuBtn" class="iconBtn" type="button" aria-label="Open menu">☰</button>
+  <div class="brandHead"><div class="appTitle">Estimate List</div><div class="subTitle">Sandeep ElectroFix</div></div>
+  <button id="langBtn" class="langBtn" type="button">हि</button>
+</header>
+<aside id="drawer" class="drawer" aria-hidden="true">
+  <button id="closeMenu" class="drawerClose" type="button" aria-label="Close menu">×</button>
+  <div class="drawerBrand"><div class="drawerLogo">SE</div><b>Sandeep ElectroFix</b><small>Powering Your Trust</small></div>
+  <h2>Menu</h2>
+  <button data-page="home" type="button">⌂ <span>Home</span></button>
+  <button data-page="estimate" type="button">▤ <span>Estimate</span></button>
+  <button data-page="calculator" type="button">⌁ <span>Calculator</span></button>
+  <button data-page="settings" type="button">⚙ <span>Settings</span></button>
+</aside>
+<div id="drawerOverlay" class="drawerOverlay"></div>
+<main id="main"></main>
+<nav id="bottomNav" class="bottomNav" aria-label="Bottom navigation">
+  <button data-page="home" type="button">⌂<span>Home</span></button>
+  <button data-page="estimate" type="button">▤<span>Estimate</span></button>
+  <button data-page="calculator" type="button">⌁<span>Calculator</span></button>
+  <button data-page="settings" type="button">⚙<span>Settings</span></button>
+</nav>
+</div>
+<script src="config.js"></script>
+<script src="material.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

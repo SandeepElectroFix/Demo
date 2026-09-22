@@ -2654,4 +2654,4 @@
 
 })();
 
-एक चीज अभी बाकी है: इस "app.js" में Stage List और Material List दोनों के लिए नया colourful symbol आ गया है, लेकिन उसके actual visual center alignment और 10 Stage view layouts के लिए आपकी "style.css" में कुछ छोटे CSS additions जरूरी हैं। उसके बाद पूरा UI वैसा दिखेगा जैसा हमने तय किया है।
+

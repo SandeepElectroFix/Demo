@@ -66,7 +66,7 @@ button:disabled {
    ========================================================= */
 
 .topbar {
-  position: sticky;
+  position: relative;
   top: 0;
   z-index: 100;
   background: rgba(5, 8, 22, .96);
@@ -98,38 +98,50 @@ button:disabled {
 }
 
 .brandHead {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
+  width: max-content;
   text-align: center;
-  flex: 1;
+  pointer-events: none;
 }
 
 .topLogo {
-  width: 54px;
-  height: 54px;
+  width: 34px;
+  height: 34px;
+  max-width: 34px;
+  max-height: 34px;
   object-fit: contain;
   display: block;
-  margin: 0 auto 3px;
+  margin: 0 auto 2px;
+
   filter:
-    drop-shadow(0 0 6px #0ea5e9aa)
-    drop-shadow(0 0 10px #facc1555);
+    drop-shadow(0 0 5px #0ea5e9aa)
+    drop-shadow(0 0 7px #facc1555);
 }
 
 .appTitle {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 900;
   color: #facc15;
-  line-height: 1.1;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .subTitle {
   margin-top: 2px;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 700;
   color: #38bdf8;
-  line-height: 1.1;
+  line-height: 1;
+  white-space: nowrap;
 }
 /* =========================================================
    DRAWER

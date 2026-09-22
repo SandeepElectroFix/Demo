@@ -708,14 +708,20 @@ button:disabled {
   left: 50%;
   transform: translateX(-50%);
   width: min(350px, 92vw);
+
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
+
   padding: 8px;
+
   border: 1px solid var(--border);
   border-radius: 15px;
+
   background: #030b18;
-  box-shadow: 0 12px 35px #0009;
+  box-shadow:
+    0 12px 35px #0009,
+    0 0 18px #0ea5e922;
 }
 
 .viewOptions[hidden] {
@@ -1252,7 +1258,6 @@ button:disabled {
    ========================================================= */
 
 @media (max-width: 359px) {
-
   .stageGrid {
     grid-template-columns: 1fr;
   }
@@ -1270,7 +1275,6 @@ button:disabled {
   .stageViewOptions {
     grid-template-columns: repeat(2, 1fr);
   }
-
 }
 
 /* =========================================================

@@ -15,9 +15,168 @@ function nav(){ $$('[data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;
 function openDrawer(){$("#drawer")?.classList.add("open");$("#drawerOverlay")?.classList.add("show");$("#drawer")?.setAttribute("aria-hidden","false")}function closeDrawer(){$("#drawer")?.classList.remove("open");$("#drawerOverlay")?.classList.remove("show");$("#drawer")?.setAttribute("aria-hidden","true")}
 function home(){return `<section class="page"><div class="hero"><div class="heroLogo">SE</div><h1>${esc(C.businessName||"Sandeep ElectroFix")}</h1><div class="tagline">${esc(C.tagline||"Powering Your Trust")}</div><p>${esc(C.appName||"Estimate List")} • ${M.reduce((n,s)=>n+itemsOf(s).length,0)} ${t("items")}</p></div>${C.ui?.search!==false?`<div class="searchBox">⌕<input id="search" placeholder="${esc(t("search"))}" autocomplete="off"><button id="clearSearch" type="button">×</button></div>`:""}<div id="stageGrid" class="stageGrid">${M.map((s,i)=>`<button class="stageCard" data-stage="${i}" type="button"><span class="stageNo">${esc(s[0])}</span><b>${esc(s[1])}</b><small>${esc(s[2]||"")}</small><span>${itemsOf(s).length} ${t("items")}</span></button>`).join("")}</div></section>`}
 function renderHome(){ $("#main").innerHTML=home();$$("[data-stage]").forEach(b=>b.onclick=()=>{stageIndex=+b.dataset.stage;itemIndex=-1;page="stage";render()});const q=$("#search");q?.addEventListener("input",()=>filterStages(q.value));$("#clearSearch")?.addEventListener("click",()=>{q.value="";filterStages("")})}
-function filterStages(q){q=q.trim().toLowerCase();$$(".stageCard").forEach(b=>{b.style.display=!q||b.textContent.toLowerCase().includes(q)?"":"none"})}
-function stage(){const s=M[stageIndex];if(!s){page="home";return render()}const its=itemsOf(s);$("#main").innerHTML=`<section class="page"><button class="back" id="backStage">← ${t("back")}</button><div class="stageHead"><div><h1>${esc(s[1])}</h1><p>${esc(s[0])} • ${its.length} ${t("items")}</p></div></div><div class="viewBar">${views().map(v=>`<button data-view="${v.id}" class="${view===v.id?"active":""}">${v.icon} ${v.name}</button>`).join("")}</div><div class="itemGrid ${view}">${its.map((it,i)=>`<button class="itemCard" data-item="${i}" type="button"><b>${esc(it[0])}</b><span>${t("open")}</span></button>`).join("")}</div></section>`;$("#backStage").onclick=()=>{page="home";render()};$$('[data-item]').forEach(b=>b.onclick=()=>{itemIndex=+b.dataset.item;draft={};page="item";render()});$$('[data-view]').forEach(b=>b.onclick=()=>{view=b.dataset.view;localStorage.setItem(viewKey,view);render()})}
-function views(){const map=[['grid','▦','Grid'],['list','☰','List'],['compact','≡','Compact'],['large','▣','Large'],['mini','☷','Mini'],['two-column','▤','2 Column'],['horizontal','↔','Horizontal'],['icon-list','◉','Icon List'],['timeline','⌁','Timeline'],['dense','▤','Dense']];return map.filter(x=>C.views?.[x[0].replace('-','')]!==false).map(x=>({id:x[0],icon:x[1],name:x[2]}))}
+function filterStages(q){q=q.trim().toLowerCase();$$(".stageCard").forEach(b=>{b.style.display=!q||b.textContent.toLowerCase().includes(q)?"":"none"})}function stage(){
+  const s=M[stageIndex];
+
+  if(!s){
+    page="home";
+    return render();
+  }
+
+  const its=itemsOf(s);
+
+  $("#main").innerHTML=`
+    <section class="page">
+
+      <button class="back" id="backStage">
+        ← ${t("back")}
+      </button>
+
+      <div class="stageHead">
+        <div>
+          <h1>${esc(s[1])}</h1>
+          <p>${esc(s[0])} • ${its.length} ${t("items")}</p>
+        </div>
+      </div>
+
+      ${C.ui?.viewSwitch!==false ? `
+      <div class="viewSelector" id="viewSelector">
+
+        <button
+          class="viewSelectorHead"
+          id="viewSelectorBtn"
+          type="button"
+          aria-expanded="false"
+        >
+          <span>
+            <span class="viewSelectorIcon">
+              ${views().find(v=>v.id===view)?.icon||"▦"}
+            </span>
+
+            <span>
+              <b>View Mode</b>
+              <small>${views().find(v=>v.id===view)?.name||"Grid"}</small>
+            </span>
+          </span>
+
+          <span class="viewArrow">›</span>
+        </button>
+
+        <div
+          class="viewOptions"
+          id="viewOptions"
+          hidden
+        >
+          ${views().map(v=>`
+            <button
+              class="viewOption ${view===v.id?"active":""}"
+              data-view="${esc(v.id)}"
+              type="button"
+            >
+              <span class="viewOptionIcon">${v.icon}</span>
+              <span>${esc(v.name)}</span>
+              ${view===v.id?`<span class="viewCheck">✓</span>`:""}
+            </button>
+          `).join("")}
+        </div>
+
+      </div>
+      `:""}
+
+      <div class="itemGrid ${esc(view)}">
+        ${its.map((it,i)=>`
+          <button
+            class="itemCard"
+            data-item="${i}"
+            type="button"
+          >
+            <b>${esc(it[0])}</b>
+            <span>${t("open")}</span>
+          </button>
+        `).join("")}
+      </div>
+
+    </section>
+  `;
+
+  $("#backStage").onclick=()=>{
+    page="home";
+    render();
+  };
+
+  $$('[data-item]').forEach(b=>{
+    b.onclick=()=>{
+      itemIndex=+b.dataset.item;
+      draft={};
+      page="item";
+      render();
+    };
+  });
+
+  /* =====================================================
+     VIEW MODE DROPDOWN
+     ===================================================== */
+
+  const viewBtn=$("#viewSelectorBtn");
+  const viewOptions=$("#viewOptions");
+  const viewSelector=$("#viewSelector");
+
+  viewBtn?.addEventListener("click",()=>{
+    if(!viewOptions)return;
+
+    const isOpen=!viewOptions.hidden;
+
+    viewOptions.hidden=isOpen;
+    viewBtn.setAttribute("aria-expanded",String(!isOpen));
+    viewSelector?.classList.toggle("open",!isOpen);
+  });
+
+  /* =====================================================
+     SELECT VIEW
+     ===================================================== */
+
+  $$('[data-view]').forEach(b=>{
+    b.onclick=()=>{
+      view=b.dataset.view;
+
+      localStorage.setItem(viewKey,view);
+
+      /*
+       * Re-render immediately.
+       * This automatically closes the view selector.
+       */
+      render();
+    };
+  });
+}
+
+
+function views(){
+
+  const map=[
+    ["grid","▦","Grid"],
+    ["list","☰","List"],
+    ["compact","≡","Compact"],
+    ["large","▣","Large"],
+    ["mini","☷","Mini"],
+    ["two-column","▤","2 Column"],
+    ["horizontal","↔","Horizontal"],
+    ["icon-list","◉","Icon List"],
+    ["timeline","⌁","Timeline"],
+    ["dense","▤","Dense"]
+  ];
+
+  return map
+    .filter(x=>{
+      const key=x[0].replace(/-/g,"");
+      return C.views?.[key]!==false;
+    })
+    .map(x=>({
+      id:x[0],
+      icon:x[1],
+      name:x[2]
+    }));
+}
 function field(label,opts){opts=Array.isArray(opts)?opts:[];if(opts.length===1&&/^User Input/i.test(String(opts[0])))return `<label class="field"><span>${esc(label)}</span><input data-input="${esc(label)}" placeholder="${esc(opts[0])}" value="${esc(draft[label]||"")}"></label>`;return `<div class="field"><span>${esc(label)}</span><div class="choices">${opts.map(o=>`<button class="choice ${draft[label]===o?"selected":""}" data-label="${esc(label)}" data-value="${esc(o)}" type="button">${esc(o)}</button>`).join("")}</div></div>`}
 function item(){const s=M[stageIndex],it=itemsOf(s)[itemIndex];if(!it){page="stage";return render()}const name=it[0],fields=it[1]||[],units=it[2]||[],brands=it[3]||[];$("#main").innerHTML=`<section class="page"><button class="back" id="backItem">← ${t("back")}</button><div class="itemHead"><div><small>${esc(s[0])}</small><h1>${esc(name)}</h1></div></div><div class="formCard">${fields.map(f=>field(f[0],f[1])).join("")}<div class="field"><span>${t("quantity")} *</span><div class="qtyRow"><button id="qtyMinus" type="button">−</button><input id="qty" type="number" min="1" step="1" inputmode="numeric" value="${esc(draft.qty||"")}" placeholder="${esc(t("quantity"))}"><button id="qtyPlus" type="button">+</button></div><div class="qtyQuick"><button data-q="10">10</button><button data-q="20">20</button><button data-q="30">30</button><button data-q="50">50</button><button data-q="100">100</button></div></div><label class="field"><span>${t("unit")}</span><select id="unit"><option value="">— ${t("optional")} —</option>${units.map(x=>`<option ${draft.unit===x?"selected":""} value="${esc(x)}">${esc(x)}</option>`).join("")}</select></label>${C.ui?.price!==false?`<div class="priceWrap"><button id="priceToggle" class="priceToggle" type="button">＋ Add Price</button><div id="priceBox" class="priceBox" hidden><label class="field"><span>Price (${t("optional")})</span><input id="price" type="number" min="0" step="0.01" value="${esc(draft.price||"")}"></label></div></div>`:""}<label class="field"><span>${t("brand")} <em>(${t("optional")})</em></span><select id="brand"><option value="">— ${t("optional")} —</option>${(C.rules?.skipBrandOption?["Skip Brand",...brands]:brands).map(x=>`<option ${draft.brand===x?"selected":""} value="${esc(x)}">${esc(x)}</option>`).join("")}</select></label><button class="secondary" id="prevBtn" type="button">← ${t("prev")}</button><button class="secondary" id="nextBtn" type="button">${t("next")} →</button><button class="primary" id="addBtn" type="button">✓ ${t("add")}</button><p class="hint">${t("required")}. ${lang==="hi"?"बाकी सभी फ़ील्ड वैकल्पिक हैं":"All other fields are optional"}.</p></div></section>`;bindItem(s,name)}
 function bindItem(s,name){$$('.choice').forEach(b=>b.onclick=()=>{b.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');draft[b.dataset.label]=b.dataset.value});$$('[data-input]').forEach(e=>e.oninput=()=>draft[e.dataset.input]=e.value);const q=$("#qty");$("#qtyMinus").onclick=()=>q.value=Math.max(1,(Number(q.value)||1)-1);$("#qtyPlus").onclick=()=>q.value=(Number(q.value)||0)+1;$$('[data-q]').forEach(b=>b.onclick=()=>q.value=b.dataset.q);$("#unit").onchange=()=>draft.unit=$("#unit").value;$("#brand").onchange=()=>draft.brand=$("#brand").value;$("#price")?.addEventListener("input",e=>draft.price=e.target.value);$("#priceToggle")?.addEventListener("click",()=>{$("#priceBox").hidden=false;$("#priceToggle").hidden=true});$("#backItem").onclick=()=>{page="stage";render()};$("#prevBtn").onclick=()=>{if(itemIndex>0){syncDraft();itemIndex--;draft={};render();scrollTop()}};$("#nextBtn").onclick=()=>{if(itemIndex<itemsOf(s).length-1){syncDraft();itemIndex++;draft={};render();scrollTop()}};$("#addBtn").onclick=()=>add(s,name)}

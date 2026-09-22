@@ -709,7 +709,7 @@ button:disabled {
   transform: translateX(-50%);
   width: min(350px, 92vw);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
   padding: 8px;
   border: 1px solid var(--border);
@@ -1268,7 +1268,7 @@ button:disabled {
 
   .viewOptions,
   .stageViewOptions {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
 }

@@ -541,8 +541,11 @@
         <div class="hero">
 
           <div class="heroLogo">
-            SE
-          </div>
+  <img
+    src="logo.png"
+    alt="Sandeep ElectroFix Logo"
+  >
+</div>
 
           <h1>
             ${esc(

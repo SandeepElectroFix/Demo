@@ -1,49 +1,66 @@
+/* =========================================================
+   SANDEEP ELECTROFIX - ESTIMATE LIST
+   app.js
+   ---------------------------------------------------------
+   5 FILE STRUCTURE
+   index.html
+   style.css
+   config.js
+   material.js
+   app.js
+
+   LANGUAGE:
+   Hindi / English - Full UI + Material Translation
+
+   IMPORTANT:
+   material.js master data is NOT modified.
+   Internal values remain English so saved data stays safe.
+   ========================================================= */
+
 (() => {
   "use strict";
 
-/* =========================================================
-     Sandeep ElectroFix - Estimate List
-     app.js
-     ---------------------------------------------------------
-     Added:
-     1. Stage List View Mode
-     2. Material List View Mode
-     3. Refresh State Restore
-     4. Draft / Filled Value Restore
-     5. Small Current Item Clear
-     6. Step-by-Step Back
-     7. Exit Warning
-     ========================================================= */
+  /* =======================================================
+     01. GLOBAL CONFIG / MASTER DATA
+     ======================================================= */
 
   const C = window.APP_CONFIG || {};
   const M = Array.isArray(window.MATERIALS)
     ? window.MATERIALS
     : [];
 
-  const $ = s => document.querySelector(s);
-  const $$ = s => [...document.querySelectorAll(s)];
+  const $ = selector =>
+    document.querySelector(selector);
+
+  const $$ = selector =>
+    [...document.querySelectorAll(selector)];
 
   const storeKey =
-    C.storageKey || "sandeepEstimateItems";
+    C.storageKey ||
+    "sandeepEstimateItems";
 
   const langKey =
-    C.languageKey || "sandeepMaterialLang";
+    C.languageKey ||
+    "sandeepMaterialLang";
 
   const viewKey =
-    C.viewKey || "sandeepMaterialView";
-
-  const stageViewKey =
-    "sandeepStageView";
+    C.viewKey ||
+    "sandeepMaterialView";
 
   const themeKey =
-    C.themeKey || "sandeepTheme";
+    C.themeKey ||
+    "sandeepTheme";
 
   const stateKey =
     "sandeepEstimateAppState";
 
-  /* =========================================================
-     APP STATE
-     ========================================================= */
+  const stageViewKey =
+    "sandeepStageView";
+
+
+  /* =======================================================
+     02. APP STATE
+     ======================================================= */
 
   let lang =
     localStorage.getItem(langKey) ||
@@ -51,8 +68,10 @@
     "hi";
 
   let page = "home";
-  let stageIndex = -1;
-  let itemIndex = -1;
+
+  let currentStage = -1;
+
+  let currentIndex = -1;
 
   let view =
     localStorage.getItem(viewKey) ||
@@ -62,158 +81,1076 @@
     localStorage.getItem(stageViewKey) ||
     "grid";
 
+  let lastValues = {};
+
   let draft = {};
 
   let internalNavigation = false;
 
-  /* =========================================================
-     TRANSLATIONS
-     ========================================================= */
 
-  const T = {
+  /* =======================================================
+     03. COMMON UI TEXT
+     ======================================================= */
+
+  const TEXT = {
 
     hi: {
+
       home: "होम",
+
       estimate: "एस्टिमेट",
+
       calculator: "कैलकुलेटर",
+
       settings: "सेटिंग्स",
+
+      menu: "मेन्यू",
+
       items: "आइटम",
+
       open: "खोलें",
+
       back: "वापस",
+
       quantity: "मात्रा",
+
       unit: "यूनिट",
+
       brand: "ब्रांड",
+
       optional: "वैकल्पिक",
+
       add: "एस्टिमेट में जोड़ें",
-      added: "एस्टिमेट में जोड़ा गया",
+
+      added: "एस्टिमेट में जोड़ दिया गया",
+
       required: "मात्रा भरना जरूरी है",
-      clear: "एस्टिमेट साफ करें",
-      clearItem: "Clear",
-      empty: "अभी कोई आइटम नहीं जोड़ा गया",
-      search: "सामग्री खोजें",
-      dark: "Dark",
-      light: "Light",
-      calculate: "Calculate",
-      power: "Power (W)",
-      voltage: "Voltage (V)",
-      current: "Current (A)",
-      resistance: "Resistance (Ω)",
-      formula: "Formula",
-      reset: "Saved estimate reset करें",
-      edit: "Edit",
-      delete: "Delete",
-      next: "Next",
-      prev: "Previous",
-      exitTitle: "App बंद करें?",
-      exitText: "क्या आप app से बाहर जाना चाहते हैं?",
-      cancel: "Cancel",
-      exit: "Exit"
+
+      other:
+        "बाकी सभी फ़ील्ड वैकल्पिक हैं",
+
+      price: "कीमत",
+
+      addPrice: "कीमत जोड़ें",
+
+      hidePrice: "कीमत छुपाएँ",
+
+      noItems:
+        "अभी कोई आइटम नहीं जोड़ा गया",
+
+      clear:
+        "एस्टिमेट साफ करें",
+
+      clearItem:
+        "आइटम साफ करें",
+
+      saved:
+        "सेव आइटम",
+
+      dark:
+        "डार्क",
+
+      light:
+        "लाइट",
+
+      grid:
+        "ग्रिड",
+
+      list:
+        "लिस्ट",
+
+      compact:
+        "कॉम्पैक्ट",
+
+      large:
+        "बड़ा",
+
+      mini:
+        "मिनी",
+
+      twoColumn:
+        "2 कॉलम",
+
+      horizontal:
+        "हॉरिज़ॉन्टल",
+
+      iconList:
+        "आइकन लिस्ट",
+
+      timeline:
+        "टाइमलाइन",
+
+      dense:
+        "डेंस",
+
+      power:
+        "पावर (W)",
+
+      voltage:
+        "वोल्टेज (V)",
+
+      current:
+        "करंट (A)",
+
+      resistance:
+        "रेजिस्टेंस (Ω)",
+
+      calculate:
+        "गणना करें",
+
+      formula:
+        "फॉर्मूला",
+
+      calcHint:
+        "पावर और वोल्टेज भरें",
+
+      electricalFormulas:
+        "इलेक्ट्रिकल फॉर्मूला",
+
+      enterPowerVoltage:
+        "पावर और वोल्टेज भरें",
+
+      reset:
+        "सेव किया गया एस्टिमेट रीसेट करें",
+
+      edit:
+        "एडिट",
+
+      delete:
+        "डिलीट",
+
+      next:
+        "अगला",
+
+      prev:
+        "पिछला",
+
+      cancel:
+        "रद्द करें",
+
+      exit:
+        "बाहर निकलें",
+
+      exitTitle:
+        "ऐप बंद करें?",
+
+      exitText:
+        "क्या आप ऐप से बाहर जाना चाहते हैं?",
+
+      theme:
+        "थीम",
+
+      language:
+        "भाषा",
+
+      materialViews:
+        "मटेरियल व्यू",
+
+      viewsEnabled:
+        "व्यूप्स उपलब्ध",
+
+      confirmClear:
+        "क्या आप एस्टिमेट साफ करना चाहते हैं?",
+
+      confirmReset:
+        "क्या आप सेव किया गया एस्टिमेट और सेटिंग्स रीसेट करना चाहते हैं?"
     },
 
-    en: {
-      home: "Home",
-      estimate: "Estimate",
-      calculator: "Calculator",
-      settings: "Settings",
-      items: "Items",
-      open: "Open",
-      back: "Back",
-      quantity: "Quantity",
-      unit: "Unit",
-      brand: "Brand",
-      optional: "optional",
-      add: "Add to Estimate",
-      added: "Added to Estimate",
-      required: "Quantity is required",
-      clear: "Clear Estimate",
-      clearItem: "Clear",
-      empty: "No items added yet",
-      search: "Search materials",
-      dark: "Dark",
-      light: "Light",
-      calculate: "Calculate",
-      power: "Power (W)",
-      voltage: "Voltage (V)",
-      current: "Current (A)",
-      resistance: "Resistance (Ω)",
-      formula: "Formula",
-      reset: "Reset saved estimate",
-      edit: "Edit",
-      delete: "Delete",
-      next: "Next",
-      prev: "Previous",
-      exitTitle: "Exit App?",
-      exitText: "Do you want to leave the app?",
-      cancel: "Cancel",
-      exit: "Exit"
-    }
 
+    en: {
+
+      home: "Home",
+
+      estimate: "Estimate",
+
+      calculator: "Calculator",
+
+      settings: "Settings",
+
+      menu: "Menu",
+
+      items: "Items",
+
+      open: "Open",
+
+      back: "Back",
+
+      quantity: "Quantity",
+
+      unit: "Unit",
+
+      brand: "Brand",
+
+      optional: "optional",
+
+      add: "Add to Estimate",
+
+      added: "Added to Estimate",
+
+      required: "Quantity is required",
+
+      other:
+        "All other fields are optional",
+
+      price: "Price",
+
+      addPrice: "Add Price",
+
+      hidePrice: "Hide Price",
+
+      noItems:
+        "No items added yet",
+
+      clear:
+        "Clear Estimate",
+
+      clearItem:
+        "Clear Item",
+
+      saved:
+        "saved items",
+
+      dark:
+        "Dark",
+
+      light:
+        "Light",
+
+      grid:
+        "Grid",
+
+      list:
+        "List",
+
+      compact:
+        "Compact",
+
+      large:
+        "Large",
+
+      mini:
+        "Mini",
+
+      twoColumn:
+        "2 Column",
+
+      horizontal:
+        "Horizontal",
+
+      iconList:
+        "Icon List",
+
+      timeline:
+        "Timeline",
+
+      dense:
+        "Dense",
+
+      power:
+        "Power (W)",
+
+      voltage:
+        "Voltage (V)",
+
+      current:
+        "Current (A)",
+
+      resistance:
+        "Resistance (Ω)",
+
+      calculate:
+        "Calculate",
+
+      formula:
+        "Formula",
+
+      calcHint:
+        "Enter Power and Voltage",
+
+      electricalFormulas:
+        "Electrical Formulas",
+
+      enterPowerVoltage:
+        "Enter Power and Voltage",
+
+      reset:
+        "Reset saved estimate",
+
+      edit:
+        "Edit",
+
+      delete:
+        "Delete",
+
+      next:
+        "Next",
+
+      prev:
+        "Previous",
+
+      cancel:
+        "Cancel",
+
+      exit:
+        "Exit",
+
+      exitTitle:
+        "Exit App?",
+
+      exitText:
+        "Do you want to leave the app?",
+
+      theme:
+        "Theme",
+
+      language:
+        "Language",
+
+      materialViews:
+        "Material Views",
+
+      viewsEnabled:
+        "views enabled",
+
+      confirmClear:
+        "Clear estimate?",
+
+      confirmReset:
+        "Reset saved estimate and preferences?"
+    }
   };
 
-  const t = k =>
-    (T[lang] || T.en)[k] || k;
 
-  const esc = x =>
-    String(x ?? "").replace(
-      /[&<>"']/g,
-      m => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-      }[m])
+  const t = key =>
+    (TEXT[lang] || TEXT.en)[key] ||
+    key;
+
+
+  /* =======================================================
+     04. MATERIAL TRANSLATION DICTIONARY
+     -------------------------------------------------------
+     IMPORTANT:
+     Original material.js values remain unchanged.
+     Only display text is translated.
+     ======================================================= */
+
+  const MT = {
+
+    /* ---------- STAGES ---------- */
+
+    "STAGE 1":
+      "स्टेज 1",
+
+    "STAGE 2":
+      "स्टेज 2",
+
+    "STAGE 3":
+      "स्टेज 3",
+
+    "STAGE 4":
+      "स्टेज 4",
+
+    "STAGE 5":
+      "स्टेज 5",
+
+    "Slab Conduit Installation":
+      "स्लैब कंड्यूट इंस्टॉलेशन",
+
+    "Wall Conduit Installation":
+      "दीवार कंड्यूट इंस्टॉलेशन",
+
+    "Wiring Installation":
+      "वायरिंग इंस्टॉलेशन",
+
+    "Final Electrical Fittings":
+      "फाइनल इलेक्ट्रिकल फिटिंग्स",
+
+    "False Ceiling Wiring Material":
+      "फॉल्स सीलिंग वायरिंग सामग्री",
+
+
+    /* ---------- GROUPS ---------- */
+
+    "Conduit & Box":
+      "कंड्यूट और बॉक्स",
+
+    "Wiring Material":
+      "वायरिंग सामग्री",
+
+    "Switch & Socket":
+      "स्विच और सॉकेट",
+
+    "Wiring & Conduit":
+      "वायरिंग और कंड्यूट",
+
+    "Installation Material":
+      "इंस्टॉलेशन सामग्री",
+
+    "Pulling Material":
+      "पुलिंग सामग्री",
+
+    "MCB & Protection":
+      "MCB और प्रोटेक्शन",
+
+    "Fan & Ceiling":
+      "फैन और सीलिंग",
+
+    "Lighting":
+      "लाइटिंग",
+
+    "Installation & Finishing":
+      "इंस्टॉलेशन और फिनिशिंग",
+
+    "Installation & Fastening":
+      "इंस्टॉलेशन और फास्टनिंग",
+
+
+    /* ---------- MAIN MATERIALS ---------- */
+
+    "Pipe":
+      "पाइप",
+
+    "Bend":
+      "बेंड",
+
+    "Junction Box":
+      "जंक्शन बॉक्स",
+
+    "Fan Box":
+      "फैन बॉक्स",
+
+    "Concealed Light Box":
+      "कंसील्ड लाइट बॉक्स",
+
+    "Tape":
+      "टेप",
+
+    "Tape (Shuttering & Joint Sealing)":
+      "टेप (शटरिंग और जॉइंट सीलिंग)",
+
+    "Solvent Cement":
+      "सॉल्वेंट सीमेंट",
+
+    "Neel Powder (Marking Powder)":
+      "नील पाउडर (मार्किंग पाउडर)",
+
+    "Binding Wire":
+      "बाइंडिंग वायर",
+
+    "Cable Tie / Zip Tie":
+      "केबल टाई / जिप टाई",
+
+    "Modular Board (Concealed Metal/PVC Box)":
+      "मॉड्यूलर बोर्ड (कंसील्ड मेटल/PVC बॉक्स)",
+
+    "MCB Box (Distribution Board)":
+      "MCB बॉक्स (डिस्ट्रीब्यूशन बोर्ड)",
+
+    "Tape (Masking & Plaster Protection)":
+      "टेप (मास्किंग और प्लास्टर प्रोटेक्शन)",
+
+    "Cable Clip":
+      "केबल क्लिप",
+
+    "Wire":
+      "वायर",
+
+    "Flexible Pipe":
+      "फ्लेक्सिबल पाइप",
+
+    "Electrical Tape":
+      "इलेक्ट्रिकल टेप",
+
+    "Fastener":
+      "फास्टनर",
+
+    "Steel Wire / Spring Wire (Fish Tape)":
+      "स्टील वायर / स्प्रिंग वायर (फिश टेप)",
+
+
+    /* ---------- STAGE 4 ---------- */
+
+    "Switch Plate":
+      "स्विच प्लेट",
+
+    "Switch Board (Surface Gang Box)":
+      "स्विच बोर्ड (सरफेस गैंग बॉक्स)",
+
+    "Switch":
+      "स्विच",
+
+    "Socket":
+      "सॉकेट",
+
+    "Fan Regulator":
+      "फैन रेगुलेटर",
+
+    "2 Way Switch":
+      "2 वे स्विच",
+
+    "Bell Push":
+      "बेल पुश",
+
+    "Neon Indicator":
+      "नियॉन इंडिकेटर",
+
+    "Blank Plate / Dummy Switch":
+      "ब्लैंक प्लेट / डमी स्विच",
+
+    "DP Switch (Double Pole Switch)":
+      "DP स्विच (डबल पोल स्विच)",
+
+    "Mini MCB":
+      "मिनी MCB",
+
+    "SP MCB (Single Pole)":
+      "SP MCB (सिंगल पोल)",
+
+    "DP MCB (Double Pole)":
+      "DP MCB (डबल पोल)",
+
+    "TPN MCB (Three Pole with Neutral)":
+      "TPN MCB (थ्री पोल विद न्यूट्रल)",
+
+    "MCB Changeover":
+      "MCB चेंजओवर",
+
+    "DP Isolator":
+      "DP आइसोलेटर",
+
+    "TPN Isolator (3P / 4P)":
+      "TPN आइसोलेटर (3P / 4P)",
+
+    "RCCB / RCD":
+      "RCCB / RCD",
+
+    "MCB Box":
+      "MCB बॉक्स",
+
+    "Kit Kat Fuse":
+      "किट-कैट फ्यूज",
+
+    "Fan Sheet":
+      "फैन शीट",
+
+    "Round Sheet":
+      "राउंड शीट",
+
+    "Fan Rod":
+      "फैन रॉड",
+
+    "Fan Clamp":
+      "फैन क्लैंप",
+
+    "Holder":
+      "होल्डर",
+
+    "Ceiling Rose":
+      "सीलिंग रोज",
+
+    "Chain":
+      "चेन",
+
+
+    /* ---------- LIGHTING ---------- */
+
+    "LED Bulb":
+      "LED बल्ब",
+
+    "LED Tube Light":
+      "LED ट्यूब लाइट",
+
+    "Foot Light":
+      "फुट लाइट",
+
+    "Up Down Light":
+      "अप डाउन लाइट",
+
+    "Panel Light":
+      "पैनल लाइट",
+
+    "Surface Light":
+      "सरफेस लाइट",
+
+    "COB Light":
+      "COB लाइट",
+
+    "COB Spot Light":
+      "COB स्पॉट लाइट",
+
+    "Down Light":
+      "डाउन लाइट",
+
+    "Strip Light":
+      "स्ट्रिप लाइट",
+
+    "Rope Light":
+      "रोप लाइट",
+
+    "LED Profile Channel":
+      "LED प्रोफाइल चैनल",
+
+    "LED Strip Driver (SMPS)":
+      "LED स्ट्रिप ड्राइवर (SMPS)",
+
+
+    /* ---------- FINISHING ---------- */
+
+    "Door Bell":
+      "डोर बेल",
+
+    "Tape (Mounting / Double Sided)":
+      "माउंटिंग / डबल साइडेड टेप",
+
+    "Instant Glue":
+      "इंस्टेंट ग्लू",
+
+    "Araldite Glue (Epoxy)":
+      "अराल्डाइट ग्लू (एपॉक्सी)",
+
+    "POP (Plaster of Paris)":
+      "POP (प्लास्टर ऑफ पेरिस)",
+
+    "Putty Blade / Patta":
+      "पुट्टी ब्लेड / पट्टा",
+
+    "Screw":
+      "स्क्रू",
+
+    "Lug (Cable Terminal Lug)":
+      "लग (केबल टर्मिनल लग)",
+
+    "Washer":
+      "वॉशर",
+
+
+    /* ---------- STAGE 5 ---------- */
+
+    "Saddle (Pipe Clamp)":
+      "सैडल (पाइप क्लैंप)",
+
+    "PVC Wall Plug / Gulli / Gitti":
+      "PVC वॉल प्लग / गुल्ली / गिट्टी",
+
+
+    /* ---------- FIELD LABELS ---------- */
+
+    "Size":
+      "साइज",
+
+    "Type":
+      "टाइप",
+
+    "Sub Type":
+      "सब टाइप",
+
+    "Conduit Size":
+      "कंड्यूट साइज",
+
+    "Shape / Ways":
+      "शेप / वे",
+
+    "Material":
+      "मटेरियल",
+
+    "Module":
+      "मॉड्यूल",
+
+    "Depth":
+      "गहराई",
+
+    "Ways":
+      "वे",
+
+    "Hook Rod":
+      "हुक रॉड",
+
+    "Diameter":
+      "डायमीटर",
+
+    "Material Type":
+      "मटेरियल टाइप",
+
+    "Size (Width)":
+      "साइज (चौड़ाई)",
+
+    "Pack Size":
+      "पैक साइज",
+
+    "Gauge / Size":
+      "गेज / साइज",
+
+    "Size (Length)":
+      "साइज (लंबाई)",
+
+    "Colour":
+      "रंग",
+
+    "Phase Selection":
+      "फेज सिलेक्शन",
+
+    "Door Type":
+      "डोर टाइप",
+
+    "Amp":
+      "एम्पियर",
+
+    "Curve":
+      "कर्व",
+
+    "Sensitivity":
+      "सेंसिटिविटी",
+
+    "Door":
+      "डोर",
+
+    "Voltage":
+      "वोल्टेज",
+
+    "Length":
+      "लंबाई",
+
+    "Wattage":
+      "वॉटेज",
+
+    "Base":
+      "बेस",
+
+    "Colour Temp":
+      "कलर टेम्परेचर",
+
+    "Mounting":
+      "माउंटिंग",
+
+    "Shape":
+      "शेप",
+
+    "Movement":
+      "मूवमेंट",
+
+    "Beam Angle":
+      "बीम एंगल",
+
+    "Body Finish":
+      "बॉडी फिनिश",
+
+    "Density":
+      "डेंसिटी",
+
+    "Supply Voltage":
+      "सप्लाई वोल्टेज",
+
+    "Dimensions (W × D)":
+      "डायमेंशन (W × D)",
+
+    "Diffuser":
+      "डिफ्यूज़र",
+
+    "Output Voltage":
+      "आउटपुट वोल्टेज",
+
+    "Size (Weight)":
+      "साइज (वजन)",
+
+    "Pack Size (Weight)":
+      "पैक साइज (वजन)",
+
+    "Size (Cable Size × Stud Size)":
+      "साइज (केबल साइज × स्टड साइज)",
+
+
+    /* ---------- COMMON OPTIONS ---------- */
+
+    "Heavy":
+      "हेवी",
+
+    "Medium":
+      "मीडियम",
+
+    "Light":
+      "लाइट",
+
+    "Heavy (HMS)":
+      "हेवी (HMS)",
+
+    "Medium (MMS)":
+      "मीडियम (MMS)",
+
+    "Light (LMS)":
+      "लाइट (LMS)",
+
+    "Short":
+      "शॉर्ट",
+
+    "Long":
+      "लॉन्ग",
+
+    "Short Bend":
+      "शॉर्ट बेंड",
+
+    "Long Bend":
+      "लॉन्ग बेंड",
+
+    "Normal":
+      "नॉर्मल",
+
+    "Deep":
+      "डीप",
+
+    "Normal Junction Box":
+      "नॉर्मल जंक्शन बॉक्स",
+
+    "Deep Junction Box":
+      "डीप जंक्शन बॉक्स",
+
+    "PVC":
+      "PVC",
+
+    "GI":
+      "GI",
+
+    "GI Metal":
+      "GI मेटल",
+
+    "MS Metal":
+      "MS मेटल",
+
+    "1 Way":
+      "1 वे",
+
+    "2 Way Straight":
+      "2 वे स्ट्रेट",
+
+    "2 Way Angle":
+      "2 वे एंगल",
+
+    "3 Way T-Type":
+      "3 वे T-Type",
+
+    "4 Way Cross":
+      "4 वे क्रॉस",
+
+    "4 Way Cross Type":
+      "4 वे क्रॉस टाइप",
+
+    "Y Type":
+      "Y टाइप",
+
+    "H Type":
+      "H टाइप",
+
+    "U Type":
+      "U टाइप",
+
+    "V Type":
+      "V टाइप",
+
+    "Y/H/U/V Type":
+      "Y/H/U/V टाइप",
+
+    "White":
+      "सफेद",
+
+    "Black":
+      "काला",
+
+    "Red":
+      "लाल",
+
+    "Green":
+      "हरा",
+
+    "Yellow":
+      "पीला",
+
+    "Blue":
+      "नीला",
+
+    "Grey":
+      "ग्रे",
+
+    "Single Door":
+      "सिंगल डोर",
+
+    "Double Door":
+      "डबल डोर",
+
+    "Transparent Acrylic Door":
+      "ट्रांसपेरेंट एक्रेलिक डोर",
+
+    "Single Phase (SPN)":
+      "सिंगल फेज (SPN)",
+
+    "Three Phase (TPN)":
+      "थ्री फेज (TPN)",
+
+    "Single Phase":
+      "सिंगल फेज",
+
+    "Three Phase":
+      "थ्री फेज",
+
+    "1 Way Switch":
+      "1 वे स्विच",
+
+    "Intermediate Switch":
+      "इंटरमीडिएट स्विच",
+
+    "2 Pin Socket":
+      "2 पिन सॉकेट",
+
+    "3 Pin Multi Socket":
+      "3 पिन मल्टी सॉकेट",
+
+    "Standard Bell Push":
+      "स्टैंडर्ड बेल पुश",
+
+    "Bell Push with Indicator":
+      "इंडिकेटर वाला बेल पुश",
+
+    "Bell Push with Indicator / Nameplate":
+      "इंडिकेटर / नेमप्लेट वाला बेल पुश",
+
+    "Fixed":
+      "फिक्स्ड",
+
+    "Swivel / Gimbal":
+      "स्विवेल / गिम्बल",
+
+    "Swivel/Gimbal":
+      "स्विवेल/गिम्बल",
+
+    "Warm White":
+      "वार्म व्हाइट",
+
+    "Cool White":
+      "कूल व्हाइट",
+
+    "Natural White":
+      "नेचुरल व्हाइट",
+
+    "Round":
+      "राउंड",
+
+    "Square":
+      "स्क्वायर",
+
+    "Recessed":
+      "रिसेस्ड",
+
+    "Concealed":
+      "कंसील्ड",
+
+    "Surface Mount":
+      "सरफेस माउंट",
+
+    "Plain Flat Washer":
+      "प्लेन फ्लैट वॉशर",
+
+    "Spring Washer":
+      "स्प्रिंग वॉशर",
+
+    "Copper":
+      "कॉपर",
+
+    "Aluminium":
+      "एल्युमिनियम",
+
+    "Stainless Steel":
+      "स्टेनलेस स्टील",
+
+    "Brass":
+      "ब्रास",
+
+    "Self Tapping":
+      "सेल्फ टैपिंग",
+
+    "Self Drilling":
+      "सेल्फ ड्रिलिंग",
+
+
+    /* ---------- VIEW NAMES ---------- */
+
+    "Grid":
+      "ग्रिड",
+
+    "List":
+      "लिस्ट",
+
+    "Compact":
+      "कॉम्पैक्ट",
+
+    "Large":
+      "बड़ा",
+
+    "Mini":
+      "मिनी",
+
+    "2 Column":
+      "2 कॉलम",
+
+    "Horizontal":
+      "हॉरिज़ॉन्टल",
+
+    "Icon List":
+      "आइकन लिस्ट",
+
+    "Timeline":
+      "टाइमलाइन",
+
+    "Dense":
+      "डेंस"
+  };
+
+
+  /* =======================================================
+     05. TRANSLATION FUNCTION
+     ======================================================= */
+
+  function tx(value) {
+
+    const text = String(
+      value ?? ""
     );
 
-  /* =========================================================
-     MATERIAL HELPERS
-     ========================================================= */
+    if (lang === "en") {
+      return text;
+    }
 
-  function itemsOf(s) {
-
-    return [
-      ...(Array.isArray(s?.[3]) ? s[3] : []),
-      ...(Array.isArray(s?.[4])
-        ? s[4].flatMap(g =>
-            Array.isArray(g?.[1])
-              ? g[1]
-              : []
-          )
-        : [])
-    ];
-
+    return MT[text] || text;
   }
 
-  /* =========================================================
-     ESTIMATE STORAGE
-     ========================================================= */
 
-  function read() {
+  /* =======================================================
+     06. STORAGE
+     ======================================================= */
+
+  function readItems() {
 
     try {
+
       return JSON.parse(
-        localStorage.getItem(storeKey) || "[]"
+        localStorage.getItem(storeKey) ||
+        "[]"
       );
-    }
 
-    catch {
+    } catch {
+
       return [];
-    }
 
+    }
   }
 
-  function save(a) {
+
+  function writeItems(items) {
 
     localStorage.setItem(
       storeKey,
-      JSON.stringify(a)
+      JSON.stringify(items)
     );
 
   }
 
-  /* =========================================================
-     APP STATE STORAGE
-     ========================================================= */
 
   function saveState() {
 
@@ -223,501 +1160,601 @@
         stateKey,
         JSON.stringify({
           page,
-          stageIndex,
-          itemIndex,
+          currentStage,
+          currentIndex,
           view,
-          stageView,
-          draft
+          stageView
         })
       );
 
-    }
-
-    catch {}
+    } catch {}
 
   }
 
-  function restoreState() {
+
+  function loadState() {
 
     try {
 
       const saved =
         JSON.parse(
-          localStorage.getItem(stateKey) || "null"
+          localStorage.getItem(stateKey) ||
+          "null"
         );
 
       if (!saved) return;
 
       if (
-        ["home", "stage", "item", "estimate", "calculator", "settings"]
-          .includes(saved.page)
+        typeof saved.page === "string"
       ) {
         page = saved.page;
       }
 
-      if (Number.isInteger(saved.stageIndex)) {
-        stageIndex = saved.stageIndex;
-      }
-
-      if (Number.isInteger(saved.itemIndex)) {
-        itemIndex = saved.itemIndex;
-      }
-
-      if (typeof saved.view === "string") {
-        view = saved.view;
-      }
-
-      if (typeof saved.stageView === "string") {
-        stageView = saved.stageView;
+      if (
+        Number.isInteger(
+          saved.currentStage
+        )
+      ) {
+        currentStage =
+          saved.currentStage;
       }
 
       if (
-        saved.draft &&
-        typeof saved.draft === "object"
+        Number.isInteger(
+          saved.currentIndex
+        )
       ) {
-        draft = saved.draft;
+        currentIndex =
+          saved.currentIndex;
+      }
+
+      if (
+        typeof saved.view === "string"
+      ) {
+        view = saved.view;
+      }
+
+      if (
+        typeof saved.stageView === "string"
+      ) {
+        stageView =
+          saved.stageView;
+      }
+
+    } catch {}
+
+  }
+
+
+  /* =======================================================
+     07. ESCAPE HTML
+     ======================================================= */
+
+  function esc(value) {
+
+    return String(
+      value ?? ""
+    ).replace(
+      /[&<>"']/g,
+      char =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        })[char]
+    );
+
+  }
+
+
+  /* =======================================================
+     08. MATERIAL HELPERS
+     ======================================================= */
+
+  function stageItems(stage) {
+
+    if (!stage) return [];
+
+    const direct =
+      Array.isArray(stage[3])
+        ? stage[3]
+        : [];
+
+    const groups =
+      Array.isArray(stage[4])
+        ? stage[4]
+        : [];
+
+    return [
+      ...direct,
+
+      ...groups.flatMap(group =>
+        Array.isArray(group?.[1])
+          ? group[1]
+          : []
+      )
+    ];
+  }
+
+
+  function allItems() {
+
+    return M.flatMap(
+      (stage, stageIndex) =>
+        stageItems(stage).map(
+          (item, itemIndex) => ({
+            stage:
+              stage[0],
+
+            stageName:
+              stage[1],
+
+            item,
+
+            stageIndex,
+
+            itemIndex
+          })
+        )
+    );
+
+  }
+
+
+  /* =======================================================
+     09. CONFIG / COMMON UI
+     ======================================================= */
+
+  function applyConfig() {
+
+    const u =
+      C.ui || {};
+
+    const menuBtn =
+      $("#menuBtn");
+
+    const drawer =
+      $("#drawer");
+
+    const langBtn =
+      $("#langBtn");
+
+    const bottomNav =
+      $("#bottomNav");
+
+
+    if (menuBtn) {
+
+      menuBtn.style.display =
+        u.menu === false
+          ? "none"
+          : "";
+
+    }
+
+
+    if (drawer) {
+
+      drawer.style.display =
+        u.menu === false
+          ? "none"
+          : "";
+
+    }
+
+
+    if (langBtn) {
+
+      langBtn.style.display =
+        u.languageButton === false
+          ? "none"
+          : "";
+
+      langBtn.textContent =
+        lang === "hi"
+          ? "EN"
+          : "हि";
+
+      langBtn.setAttribute(
+        "aria-label",
+        lang === "hi"
+          ? "Switch to English"
+          : "हिंदी में बदलें"
+      );
+
+    }
+
+
+    if (bottomNav) {
+
+      bottomNav.style.display =
+        u.bottomNav === false
+          ? "none"
+          : "";
+
+    }
+
+
+    /* ---------- DRAWER LANGUAGE ---------- */
+
+    $$("#drawer [data-page]")
+      .forEach(button => {
+
+        const span =
+          button.querySelector("span");
+
+        if (!span) return;
+
+        span.textContent =
+          t(button.dataset.page);
+
+      });
+
+
+    /* ---------- BOTTOM NAV LANGUAGE ---------- */
+
+    $$("#bottomNav [data-page]")
+      .forEach(button => {
+
+        const span =
+          button.querySelector("span");
+
+        if (!span) return;
+
+        span.textContent =
+          t(button.dataset.page);
+
+      });
+
+
+    /* ---------- THEME ---------- */
+
+    document.body.dataset.theme =
+      localStorage.getItem(
+        themeKey
+      ) || "dark";
+
+
+    /* ---------- SPLASH ---------- */
+
+    const splash =
+      $("#splash");
+
+    if (splash) {
+
+      if (u.splash === false) {
+
+        splash.remove();
+
       }
 
     }
 
-    catch {}
-
   }
 
-  /* =========================================================
-     TOAST
-     ========================================================= */
 
-  function toast(x) {
+  /* =======================================================
+     10. RENDER
+     ======================================================= */
 
-    const e =
-      document.createElement("div");
+  function render() {
 
-    e.className = "toast";
-    e.textContent = x;
+    applyConfig();
 
-    document.body.appendChild(e);
+    const main =
+      $("#main");
 
-    setTimeout(
-      () => e.remove(),
-      1600
-    );
+    if (!main) return;
 
-  }
 
-  /* =========================================================
-     THEME
-     ========================================================= */
+    if (page === "home") {
 
-  function theme() {
+      main.innerHTML =
+        home();
 
-    document.body.dataset.theme =
-      localStorage.getItem(themeKey) ||
-      C.theme?.default ||
-      "dark";
+    }
 
-  }
+    else if (page === "stage") {
 
-  /* =========================================================
-     COMMON UI
-     ========================================================= */
+      renderStage();
 
-  function applyCommon() {
+    }
 
-    theme();
+    else if (page === "item") {
 
-    const u = C.ui || {};
+      renderItem();
 
-    [
-      [$("#menuBtn"), u.menu],
-      [$("#langBtn"), u.languageButton],
-      [$("#bottomNav"), u.bottomNav]
-    ].forEach(([e, on]) => {
+    }
 
-      if (e) {
-        e.style.display =
-          on === false ? "none" : "";
-      }
+    else if (page === "estimate") {
 
-    });
+      main.innerHTML =
+        C.ui?.estimate === false
+          ? home()
+          : estimate();
 
-    $$("#bottomNav [data-page]")
-      .forEach(b => {
+    }
 
-        b.classList.toggle(
-          "active",
-          b.dataset.page === page
-        );
+    else if (page === "calculator") {
 
-      });
+      main.innerHTML =
+        C.ui?.calculator === false
+          ? home()
+          : calculator();
 
-  }
+    }
 
-  /* =========================================================
-     NAVIGATION
-     ========================================================= */
+    else {
 
-  function navigate(nextPage, nextStage = stageIndex, nextItem = itemIndex) {
+      main.innerHTML =
+        C.ui?.settings === false
+          ? home()
+          : settings();
 
-    page = nextPage;
-    stageIndex = nextStage;
-    itemIndex = nextItem;
+    }
+
+
+    bindCommon();
 
     saveState();
 
-    history.pushState(
-      {
-        page,
-        stageIndex,
-        itemIndex
-      },
-      "",
-      location.href
-    );
-
-    render();
-
   }
 
-  function nav() {
+
+  /* =======================================================
+     11. COMMON NAVIGATION
+     ======================================================= */
+
+  function bindCommon() {
+
+    /* ---------- PAGE BUTTONS ---------- */
 
     $$("[data-page]")
-      .forEach(b => {
+      .forEach(button => {
 
-        b.onclick = () => {
+        button.onclick = () => {
 
           const target =
-            b.dataset.page;
+            button.dataset.page;
+
+          if (
+            target === "estimate" &&
+            C.ui?.estimate === false
+          ) {
+            return;
+          }
+
+          if (
+            target === "calculator" &&
+            C.ui?.calculator === false
+          ) {
+            return;
+          }
+
+          if (
+            target === "settings" &&
+            C.ui?.settings === false
+          ) {
+            return;
+          }
+
+          page = target;
 
           closeDrawer();
 
-          navigate(
-            target,
-            target === "home" ? -1 : stageIndex,
-            target === "home" ? -1 : itemIndex
-          );
+          render();
 
         };
 
       });
 
-    $("#menuBtn")
-      ?.addEventListener(
-        "click",
-        openDrawer
-      );
 
-    $("#closeMenu")
-      ?.addEventListener(
-        "click",
-        closeDrawer
-      );
+    /* ---------- LANGUAGE ---------- */
 
-    $("#drawerOverlay")
-      ?.addEventListener(
-        "click",
-        closeDrawer
-      );
+    const langBtn =
+      $("#langBtn");
 
-    $("#langBtn")
-      ?.addEventListener(
-        "click",
-        () => {
+    if (
+      langBtn &&
+      C.ui?.languageButton !== false
+    ) {
 
-          lang =
-            lang === "hi"
-              ? "en"
-              : "hi";
+      langBtn.onclick = () => {
 
-          localStorage.setItem(
-            langKey,
-            lang
-          );
+        lang =
+          lang === "hi"
+            ? "en"
+            : "hi";
 
-          saveState();
+        localStorage.setItem(
+          langKey,
+          lang
+        );
+
+        render();
+
+      };
+
+    }
+
+
+    /* ---------- MENU ---------- */
+
+    const menu =
+      $("#menuBtn");
+
+    if (
+      menu &&
+      C.ui?.menu !== false
+    ) {
+
+      menu.onclick =
+        openDrawer;
+
+    }
+
+
+    /* ---------- CLOSE MENU ---------- */
+
+    const close =
+      $("#closeMenu");
+
+    if (close) {
+
+      close.onclick =
+        closeDrawer;
+
+    }
+
+
+    /* ---------- DRAWER ---------- */
+
+    $("#drawer")
+      ?.querySelectorAll(
+        "[data-page]"
+      )
+      .forEach(button => {
+
+        button.onclick = () => {
+
+          page =
+            button.dataset.page;
+
+          closeDrawer();
+
           render();
 
-        }
-      );
+        };
+
+      });
 
   }
+
 
   function openDrawer() {
 
-    $("#drawer")
-      ?.classList.add("open");
+    const drawer =
+      $("#drawer");
 
-    $("#drawerOverlay")
-      ?.classList.add("show");
+    if (!drawer) return;
 
-    $("#drawer")
-      ?.setAttribute(
-        "aria-hidden",
-        "false"
-      );
+    drawer.classList.add(
+      "open"
+    );
 
-  }
-
-  function closeDrawer() {
-
-    $("#drawer")
-      ?.classList.remove("open");
-
-    $("#drawerOverlay")
-      ?.classList.remove("show");
-
-    $("#drawer")
-      ?.setAttribute(
-        "aria-hidden",
-        "true"
-      );
-
-  }
-
-  /* =========================================================
-     VIEW MODES
-     ========================================================= */
-
-  function views() {
-
-    const map = [
-
-      ["grid", "▦", "Grid"],
-      ["list", "☰", "List"],
-      ["compact", "≡", "Compact"],
-      ["large", "▣", "Large"],
-      ["mini", "☷", "Mini"],
-      ["two-column", "▤", "2 Column"],
-      ["horizontal", "↔", "Horizontal"],
-      ["icon-list", "◉", "Icon List"],
-      ["timeline", "⌁", "Timeline"],
-      ["dense", "▤", "Dense"]
-
-    ];
-
-    return map
-      .filter(x => {
-
-        const key =
-          x[0].replace(/-/g, "");
-
-        return C.views?.[key] !== false;
-
-      })
-      .map(x => ({
-
-        id: x[0],
-        icon: x[1],
-        name: x[2]
-
-      }));
-
-  }
-
-  function currentViewSymbol(type = "material") {
-
-    const current =
-      type === "stage"
-        ? stageView
-        : view;
-
-    return (
-      views().find(
-        v => v.id === current
-      )?.icon || "▦"
+    drawer.setAttribute(
+      "aria-hidden",
+      "false"
     );
 
   }
 
-  /* =========================================================
-     HOME / STAGE LIST
-     ========================================================= */
+
+  function closeDrawer() {
+
+    const drawer =
+      $("#drawer");
+
+    if (!drawer) return;
+
+    drawer.classList.remove(
+      "open"
+    );
+
+    drawer.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  /* =======================================================
+     12. HOME
+     ======================================================= */
 
   function home() {
+
+    const appTitle =
+      lang === "hi"
+        ? (
+            C.appNameHi ||
+            C.appName ||
+            "एस्टिमेट लिस्ट"
+          )
+        : (
+            C.appName ||
+            "Estimate List"
+          );
+
 
     return `
       <section class="page">
 
         <div class="hero">
 
-          <div class="heroLogo">
-  <img
-  src="logo.png"
-  class="heroLogo"
-  alt="Sandeep ElectroFix Logo"
->
-</div>
+          <img
+            src="logo.png"
+            class="heroLogo"
+            alt="Sandeep ElectroFix Logo"
+          >
+
+          <span>
+            POWERING YOUR TRUST
+          </span>
 
           <h1>
-            ${esc(
-              C.businessName ||
-              "Sandeep ElectroFix"
-            )}
+            ${esc(appTitle)}
           </h1>
 
-          <div class="tagline">
-            ${esc(
-              C.tagline ||
-              "Powering Your Trust"
-            )}
-          </div>
-
           <p>
+            ${allItems().length}
             ${esc(
-              C.appName ||
-              "Estimate List"
+              lang === "hi"
+                ? "मटेरियल एंट्री"
+                : "configured material entries"
             )}
-            •
-            ${M.reduce(
-              (n, s) =>
-                n + itemsOf(s).length,
-              0
-            )}
-            ${t("items")}
           </p>
 
         </div>
 
-        ${
-          C.ui?.search !== false
-            ? `
-              <div class="searchBox">
 
-                ⌕
+        <div class="stageGrid">
 
-                <input
-                  id="search"
-                  placeholder="${esc(
-                    t("search")
-                  )}"
-                  autocomplete="off"
-                >
+          ${M.map(
+            (stage, index) => {
 
+              return `
                 <button
-                  id="clearSearch"
+                  class="stageCard"
+                  data-stage="${index}"
                   type="button"
                 >
-                  ×
-                </button>
 
-              </div>
-            `
-            : ""
-        }
+                  <small>
+                    ${esc(
+                      tx(stage[0])
+                    )}
+                  </small>
 
-        ${
-          C.ui?.viewSwitch !== false
-            ? `
-              <div
-                class="viewSelector stageViewSelector"
-                id="stageViewSelector"
-              >
+                  <b>
+                    ${esc(
+                      tx(stage[1])
+                    )}
+                  </b>
 
-                <button
-                  class="viewSelectorHead"
-                  id="stageViewBtn"
-                  type="button"
-                  aria-expanded="false"
-                  aria-label="Change stage view"
-                >
-
-                  <span
-                    class="viewOnlySymbol"
-                  >
-                    ${currentViewSymbol("stage")}
+                  <span>
+                    ${stageItems(stage).length}
+                    ${esc(t("items"))}
                   </span>
 
                 </button>
+              `;
 
-                <div
-                  class="viewOptions"
-                  id="stageViewOptions"
-                  hidden
-                >
-
-                  ${views()
-                    .map(v => `
-                      <button
-                        class="
-                          viewOption
-                          ${
-                            stageView === v.id
-                              ? "active"
-                              : ""
-                          }
-                        "
-                        data-stage-view="${esc(
-                          v.id
-                        )}"
-                        type="button"
-                      >
-
-                        <span
-                          class="viewOptionIcon"
-                        >
-                          ${v.icon}
-                        </span>
-
-                        <span>
-                          ${esc(v.name)}
-                        </span>
-
-                        ${
-                          stageView === v.id
-                            ? `
-                              <span
-                                class="viewCheck"
-                              >
-                                ✓
-                              </span>
-                            `
-                            : ""
-                        }
-
-                      </button>
-                    `)
-                    .join("")}
-
-                </div>
-
-              </div>
-            `
-            : ""
-        }
-
-        <div
-          id="stageGrid"
-          class="stageGrid ${esc(stageView)}"
-        >
-
-          ${M.map((s, i) => `
-
-            <button
-              class="stageCard"
-              data-stage="${i}"
-              type="button"
-            >
-
-              <span class="stageNo">
-                ${esc(s[0])}
-              </span>
-
-              <b>
-                ${esc(s[1])}
-              </b>
-
-              <small>
-                ${esc(s[2] || "")}
-              </small>
-
-              <span>
-                ${itemsOf(s).length}
-                ${t("items")}
-              </span>
-
-            </button>
-
-          `).join("")}
+            }
+          ).join("")}
 
         </div>
 
@@ -726,382 +1763,278 @@
 
   }
 
-  function renderHome() {
 
-    $("#main").innerHTML = home();
+  /* =======================================================
+     13. VIEW MODES
+     ======================================================= */
 
-    $$("[data-stage]")
-      .forEach(b => {
+  function getViewModes() {
 
-        b.onclick = () => {
+    return [
 
-          stageIndex =
-            +b.dataset.stage;
+      [
+        "grid",
+        "▦",
+        t("grid")
+      ],
 
-          itemIndex = -1;
-          draft = {};
+      [
+        "list",
+        "☰",
+        t("list")
+      ],
 
-          navigate(
-            "stage",
-            stageIndex,
-            -1
-          );
+      [
+        "compact",
+        "≡",
+        t("compact")
+      ],
 
-        };
+      [
+        "large",
+        "▣",
+        t("large")
+      ],
 
-      });
+      [
+        "mini",
+        "☷",
+        t("mini")
+      ],
 
-    const q = $("#search");
+      [
+        "two-column",
+        "▤",
+        t("twoColumn")
+      ],
 
-    q?.addEventListener(
-      "input",
-      () => filterStages(q.value)
-    );
+      [
+        "horizontal",
+        "↔",
+        t("horizontal")
+      ],
 
-    $("#clearSearch")
-      ?.addEventListener(
-        "click",
-        () => {
+      [
+        "icon-list",
+        "◉",
+        t("iconList")
+      ],
 
-          q.value = "";
-          filterStages("");
+      [
+        "timeline",
+        "⌁",
+        t("timeline")
+      ],
 
-        }
-      );
+      [
+        "dense",
+        "▤",
+        t("dense")
+      ]
 
-    /* Stage View Selector */
-
-    const btn =
-      $("#stageViewBtn");
-
-    const options =
-      $("#stageViewOptions");
-
-    const selector =
-      $("#stageViewSelector");
-
-    btn?.addEventListener(
-      "click",
-      () => {
-
-        if (!options) return;
-
-        const open =
-          !options.hidden;
-
-        options.hidden = open;
-
-        btn.setAttribute(
-          "aria-expanded",
-          String(!open)
-        );
-
-        selector?.classList.toggle(
-          "open",
-          !open
-        );
-
-      }
-    );
-
-    $$("[data-stage-view]")
-      .forEach(b => {
-
-        b.onclick = () => {
-
-          stageView =
-            b.dataset.stageView;
-
-          localStorage.setItem(
-            stageViewKey,
-            stageView
-          );
-
-          saveState();
-          renderHome();
-
-        };
-
-      });
+    ];
 
   }
 
-  function filterStages(q) {
 
-    q =
-      q.trim().toLowerCase();
+  function viewOptions() {
 
-    $$(".stageCard")
-      .forEach(b => {
+    return `
+      <div
+        class="viewOptions"
+        role="menu"
+      >
 
-        b.style.display =
-          !q ||
-          b.textContent
-            .toLowerCase()
-            .includes(q)
-            ? ""
-            : "none";
+        ${getViewModes()
+          .map(
+            ([value, icon, name]) => `
+              <button
+                type="button"
+                data-view="${esc(value)}"
+                class="${view === value ? "active" : ""}"
+              >
+                ${icon}
+                <span>
+                  ${esc(name)}
+                </span>
+              </button>
+            `
+          )
+          .join("")}
 
-      });
+      </div>
+    `;
 
   }
 
-  /* =========================================================
-     MATERIAL STAGE
-     ========================================================= */
 
-  function stage() {
+  /* =======================================================
+     14. STAGE PAGE
+     ======================================================= */
 
-    const s =
-      M[stageIndex];
+  function renderStage() {
 
-    if (!s) {
+    const stage =
+      M[currentStage];
+
+    if (!stage) {
 
       page = "home";
-      stageIndex = -1;
-      itemIndex = -1;
 
-      saveState();
       return render();
 
     }
 
-    const its =
-      itemsOf(s);
 
-    const selected =
-      views().find(
-        v => v.id === view
-      ) || views()[0];
+    const items =
+      stageItems(stage);
 
-    $("#main").innerHTML = `
+
+    const main =
+      $("#main");
+
+    if (!main) return;
+
+
+    main.innerHTML = `
 
       <section class="page">
 
         <button
           class="back"
           id="backStage"
+          type="button"
         >
-          ← ${t("back")}
+          ← ${esc(t("back"))}
         </button>
 
-        <div class="stageHead">
 
-          <div>
+        <div class="hero compact">
 
-            <h1>
-              ${esc(s[1])}
-            </h1>
+          <small>
+            ${esc(
+              tx(stage[0])
+            )}
+          </small>
 
-            <p>
-              ${esc(s[0])}
-              •
-              ${its.length}
-              ${t("items")}
-            </p>
+          <h1>
+            ${esc(
+              tx(stage[1])
+            )}
+          </h1>
 
-          </div>
+          <p>
+            ${items.length}
+            ${esc(t("items"))}
+          </p>
 
         </div>
+
 
         ${
           C.ui?.viewSwitch !== false
             ? `
               <div
                 class="viewSelector"
-                id="viewSelector"
+                id="stageViewSelector"
               >
 
                 <button
-                  class="viewSelectorHead"
-                  id="viewSelectorBtn"
+                  id="stageViewBtn"
+                  class="viewMainBtn"
                   type="button"
-                  aria-expanded="false"
-                  aria-label="Change material view"
                 >
-
-                  <span
-                    class="viewOnlySymbol"
-                  >
-                    ${selected.icon}
-                  </span>
-
+                  ☷
+                  ${esc(t("items"))}
+                  <span>⌄</span>
                 </button>
 
-                <div
-                  class="viewOptions"
-                  id="viewOptions"
-                  hidden
-                >
-
-                  ${views()
-                    .map(v => `
-
-                      <button
-                        class="
-                          viewOption
-                          ${
-                            view === v.id
-                              ? "active"
-                              : ""
-                          }
-                        "
-                        data-view="${esc(
-                          v.id
-                        )}"
-                        type="button"
-                      >
-
-                        <span
-                          class="viewOptionIcon"
-                        >
-                          ${v.icon}
-                        </span>
-
-                        <span>
-                          ${esc(v.name)}
-                        </span>
-
-                        ${
-                          view === v.id
-                            ? `
-                              <span
-                                class="viewCheck"
-                              >
-                                ✓
-                              </span>
-                            `
-                            : ""
-                        }
-
-                      </button>
-
-                    `)
-                    .join("")}
-
-                </div>
+                ${viewOptions()}
 
               </div>
             `
             : ""
         }
 
+
         <div
           class="itemGrid ${esc(view)}"
         >
 
-          ${its.map((it, i) => `
+          ${items
+            .map(
+              (item, index) => {
 
-            <button
-              class="itemCard"
-              data-item="${i}"
-              type="button"
-            >
+                const name =
+                  Array.isArray(item)
+                    ? item[0]
+                    : item;
 
-              <b>
-                ${esc(it[0])}
-              </b>
+                return `
+                  <button
+                    class="itemCard"
+                    data-item-index="${index}"
+                    type="button"
+                  >
 
-              <span>
-                ${t("open")}
-              </span>
+                    <div
+                      class="itemImage"
+                      aria-hidden="true"
+                    ></div>
 
-            </button>
+                    <b>
+                      ${esc(
+                        tx(name)
+                      )}
+                    </b>
 
-          `).join("")}
+                    <span>
+                      ${esc(
+                        t("open")
+                      )}
+                    </span>
+
+                  </button>
+                `;
+
+              }
+            )
+            .join("")}
 
         </div>
 
       </section>
-
     `;
 
-    /* Back */
+
+    /* ---------- BACK ---------- */
 
     $("#backStage").onclick = () => {
 
-      draft = {};
+      page = "home";
 
-      navigate(
-        "home",
-        -1,
-        -1
-      );
+      currentStage = -1;
+
+      currentIndex = -1;
+
+      render();
 
     };
 
-    /* Open Item */
 
-    $$("[data-item]")
-      .forEach(b => {
+    /* ---------- ITEM ---------- */
 
-        b.onclick = () => {
+    $$(".itemCard")
+      .forEach(button => {
 
-          itemIndex =
-            +b.dataset.item;
+        button.onclick = () => {
 
-          draft = {};
+          currentIndex =
+            Number(
+              button.dataset.itemIndex
+            );
 
-          navigate(
-            "item",
-            stageIndex,
-            itemIndex
-          );
-
-        };
-
-      });
-
-    /* Material View Selector */
-
-    const viewBtn =
-      $("#viewSelectorBtn");
-
-    const viewOptions =
-      $("#viewOptions");
-
-    const viewSelector =
-      $("#viewSelector");
-
-    viewBtn?.addEventListener(
-      "click",
-      () => {
-
-        if (!viewOptions) return;
-
-        const isOpen =
-          !viewOptions.hidden;
-
-        viewOptions.hidden =
-          isOpen;
-
-        viewBtn.setAttribute(
-          "aria-expanded",
-          String(!isOpen)
-        );
-
-        viewSelector?.classList.toggle(
-          "open",
-          !isOpen
-        );
-
-      }
-    );
-
-    $$("[data-view]")
-      .forEach(b => {
-
-        b.onclick = () => {
-
-          view =
-            b.dataset.view;
-
-          localStorage.setItem(
-            viewKey,
-            view
-          );
-
-          saveState();
+          page = "item";
 
           render();
 
@@ -1109,23 +2042,84 @@
 
       });
 
+
+    /* ---------- VIEW BUTTON ---------- */
+
+    $("#stageViewBtn")
+      ?.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+          const options =
+            $("#stageViewSelector .viewOptions");
+
+          if (!options) return;
+
+          options.hidden =
+            !options.hidden;
+
+        }
+      );
+
+
+    /* ---------- VIEW OPTIONS ---------- */
+
+    $$("#stageViewSelector [data-view]")
+      .forEach(button => {
+
+        button.onclick = event => {
+
+          event.stopPropagation();
+
+          view =
+            button.dataset.view;
+
+          localStorage.setItem(
+            viewKey,
+            view
+          );
+
+          renderStage();
+
+        };
+
+      });
+
   }
 
-  /* =========================================================
-     FIELD
-     ========================================================= */
 
-  function field(label, opts) {
+  /* =======================================================
+     15. FIELD HTML
+     ======================================================= */
 
-    opts =
-      Array.isArray(opts)
-        ? opts
+  function fieldHtml(
+    field,
+    index
+  ) {
+
+    const label =
+      Array.isArray(field)
+        ? field[0]
+        : "";
+
+    const options =
+      Array.isArray(field?.[1])
+        ? field[1]
         : [];
 
+
+    const displayLabel =
+      tx(label);
+
+
+    /* ---------- USER INPUT ---------- */
+
     if (
-      opts.length === 1 &&
+      options.length === 1 &&
       /^User Input/i.test(
-        String(opts[0])
+        String(options[0])
       )
     ) {
 
@@ -1133,14 +2127,16 @@
         <label class="field">
 
           <span>
-            ${esc(label)}
+            ${esc(displayLabel)}
           </span>
 
           <input
-            data-input="${esc(label)}"
-            placeholder="${esc(opts[0])}"
-            value="${esc(
-              draft[label] || ""
+            data-field="${index}"
+            data-label="${esc(label)}"
+            placeholder="${esc(
+              lang === "hi"
+                ? "यहाँ भरें"
+                : options[0]
             )}"
           >
 
@@ -1149,34 +2145,36 @@
 
     }
 
+
+    /* ---------- CHOICE FIELD ---------- */
+
     return `
       <div class="field">
 
         <span>
-          ${esc(label)}
+          ${esc(displayLabel)}
         </span>
 
         <div class="choices">
 
-          ${opts.map(o => `
+          ${options
+            .map(
+              option => `
 
-            <button
-              class="
-                choice
-                ${
-                  draft[label] === o
-                    ? "selected"
-                    : ""
-                }
-              "
-              data-label="${esc(label)}"
-              data-value="${esc(o)}"
-              type="button"
-            >
-              ${esc(o)}
-            </button>
+                <button
+                  type="button"
+                  class="choice"
+                  data-label="${esc(label)}"
+                  data-value="${esc(option)}"
+                >
+                  ${esc(
+                    tx(option)
+                  )}
+                </button>
 
-          `).join("")}
+              `
+            )
+            .join("")}
 
         </div>
 
@@ -1185,38 +2183,58 @@
 
   }
 
-  /* =========================================================
-     ITEM PAGE
-     ========================================================= */
 
-  function item() {
+  /* =======================================================
+     16. ITEM PAGE
+     ======================================================= */
 
-    const s =
-      M[stageIndex];
+  function renderItem() {
 
-    const it =
-      itemsOf(s)[itemIndex];
+    const stage =
+      M[currentStage];
 
-    if (!it) {
+    const items =
+      stageItems(stage);
+
+    const item =
+      items[currentIndex];
+
+
+    if (!item) {
 
       page = "stage";
-      saveState();
 
       return render();
 
     }
 
+
     const name =
-      it[0];
+      item[0];
 
     const fields =
-      it[1] || [];
+      Array.isArray(item[1])
+        ? item[1]
+        : [];
 
     const units =
-      it[2] || [];
+      Array.isArray(item[2])
+        ? item[2]
+        : [];
 
     const brands =
-      it[3] || [];
+      Array.isArray(item[3])
+        ? item[3]
+        : [];
+
+
+    const key =
+      `${stage[0]}::${name}`;
+
+
+    const previous =
+      lastValues[key] || {};
+
 
     $("#main").innerHTML = `
 
@@ -1225,150 +2243,115 @@
         <button
           class="back"
           id="backItem"
+          type="button"
         >
-          ← ${t("back")}
+          ← ${esc(t("back"))}
         </button>
 
+
         <div class="itemHead">
+
+          <div
+            class="itemImage big"
+            aria-hidden="true"
+          ></div>
 
           <div>
 
             <small>
-              ${esc(s[0])}
+              ${esc(
+                tx(stage[0])
+              )}
             </small>
 
             <h1>
-              ${esc(name)}
+              ${esc(
+                tx(name)
+              )}
             </h1>
 
           </div>
 
         </div>
 
+
         <div class="formCard">
 
-          ${fields
-            .map(f =>
-              field(
-                f[0],
-                f[1]
-              )
-            )
-            .join("")}
+          ${
+            fields
+              .map(fieldHtml)
+              .join("")
+          }
 
-          <div class="field">
 
-            <span>
-              ${t("quantity")} *
-            </span>
-
-            <div class="qtyRow">
-
-              <button
-                id="qtyMinus"
-                type="button"
-              >
-                −
-              </button>
-
-              <input
-                id="qty"
-                type="number"
-                min="1"
-                step="1"
-                inputmode="numeric"
-                value="${esc(
-                  draft.qty || ""
-                )}"
-                placeholder="${esc(
-                  t("quantity")
-                )}"
-              >
-
-              <button
-                id="qtyPlus"
-                type="button"
-              >
-                +
-              </button>
-
-            </div>
-
-            <div class="qtyQuick">
-
-              <button
-                data-q="10"
-                type="button"
-              >
-                10
-              </button>
-
-              <button
-                data-q="20"
-                type="button"
-              >
-                20
-              </button>
-
-              <button
-                data-q="30"
-                type="button"
-              >
-                30
-              </button>
-
-              <button
-                data-q="50"
-                type="button"
-              >
-                50
-              </button>
-
-              <button
-                data-q="100"
-                type="button"
-              >
-                100
-              </button>
-
-            </div>
-
-          </div>
+          <!-- QUANTITY -->
 
           <label class="field">
 
             <span>
-              ${t("unit")}
+              ${esc(
+                t("quantity")
+              )}
+              *
+            </span>
+
+            <input
+              id="qty"
+              type="number"
+              min="0.01"
+              step="any"
+              inputmode="decimal"
+              placeholder="${esc(
+                t("quantity")
+              )}"
+            >
+
+          </label>
+
+
+          <!-- UNIT -->
+
+          <label class="field">
+
+            <span>
+              ${esc(
+                t("unit")
+              )}
             </span>
 
             <select id="unit">
 
               <option value="">
-                — ${t("optional")} —
+                — ${esc(
+                  t("optional")
+                )} —
               </option>
 
-              ${units.map(x => `
-
-                <option
-                  ${
-                    draft.unit === x
-                      ? "selected"
-                      : ""
-                  }
-                  value="${esc(x)}"
-                >
-                  ${esc(x)}
-                </option>
-
-              `).join("")}
+              ${units
+                .map(
+                  unit => `
+                    <option
+                      value="${esc(unit)}"
+                    >
+                      ${esc(
+                        tx(unit)
+                      )}
+                    </option>
+                  `
+                )
+                .join("")}
 
             </select>
 
           </label>
 
+
+          <!-- PRICE -->
+
           ${
-            C.ui?.price !== false
+            C.ui?.priceField !== false
               ? `
+
                 <div class="priceWrap">
 
                   <button
@@ -1376,8 +2359,12 @@
                     class="priceToggle"
                     type="button"
                   >
-                    ＋ Add Price
+                    ＋
+                    ${esc(
+                      t("addPrice")
+                    )}
                   </button>
+
 
                   <div
                     id="priceBox"
@@ -1388,8 +2375,14 @@
                     <label class="field">
 
                       <span>
-                        Price
-                        (${t("optional")})
+                        ${esc(
+                          t("price")
+                        )}
+                        (
+                        ${esc(
+                          t("optional")
+                        )}
+                        )
                       </span>
 
                       <input
@@ -1397,33 +2390,59 @@
                         type="number"
                         min="0"
                         step="0.01"
-                        value="${esc(
-                          draft.price || ""
-                        )}"
+                        inputmode="decimal"
+                        placeholder="0.00"
                       >
 
                     </label>
 
+
+                    <button
+                      id="priceHide"
+                      class="miniBtn"
+                      type="button"
+                    >
+                      ${esc(
+                        t("hidePrice")
+                      )}
+                    </button>
+
                   </div>
 
                 </div>
+
               `
               : ""
           }
 
+
+          <!-- BRAND -->
+
           <label class="field">
 
             <span>
-              ${t("brand")}
+
+              ${esc(
+                t("brand")
+              )}
+
               <em>
-                (${t("optional")})
+                (
+                ${esc(
+                  t("optional")
+                )}
+                )
               </em>
+
             </span>
+
 
             <select id="brand">
 
               <option value="">
-                — ${t("optional")} —
+                — ${esc(
+                  t("optional")
+                )} —
               </option>
 
               ${
@@ -1435,20 +2454,17 @@
                       ]
                     : brands
                 )
-                  .map(x => `
-
-                    <option
-                      ${
-                        draft.brand === x
-                          ? "selected"
-                          : ""
-                      }
-                      value="${esc(x)}"
-                    >
-                      ${esc(x)}
-                    </option>
-
-                  `)
+                  .map(
+                    brand => `
+                      <option
+                        value="${esc(brand)}"
+                      >
+                        ${esc(
+                          tx(brand)
+                        )}
+                      </option>
+                    `
+                  )
                   .join("")
               }
 
@@ -1456,49 +2472,31 @@
 
           </label>
 
-          <div class="itemActions">
 
-            <button
-              class="secondary"
-              id="clearDraftBtn"
-              type="button"
-            >
-              × ${t("clearItem")}
-            </button>
+          <!-- ADD -->
 
-            <button
-              class="secondary"
-              id="prevBtn"
-              type="button"
-            >
-              ← ${t("prev")}
-            </button>
+          <button
+            id="add"
+            class="primary"
+            type="button"
+          >
+            ✓
+            ${esc(
+              t("add")
+            )}
+          </button>
 
-            <button
-              class="secondary"
-              id="nextBtn"
-              type="button"
-            >
-              ${t("next")} →
-            </button>
-
-            <button
-              class="primary"
-              id="addBtn"
-              type="button"
-            >
-              ✓ ${t("add")}
-            </button>
-
-          </div>
 
           <p class="hint">
-            ${t("required")}.
-            ${
-              lang === "hi"
-                ? "बाकी सभी फ़ील्ड वैकल्पिक हैं"
-                : "All other fields are optional"
-            }.
+
+            ${esc(
+              t("required")
+            )}.
+
+            ${esc(
+              t("other")
+            )}.
+
           </p>
 
         </div>
@@ -1507,602 +2505,178 @@
 
     `;
 
-    bindItem(
-      s,
-      name
-    );
 
-  }
+    /* =====================================================
+       RESTORE LAST SELECTIONS
+       ===================================================== */
 
-  /* =========================================================
-     ITEM BINDINGS
-     ========================================================= */
+    $$(
+      ".choice"
+    ).forEach(button => {
 
-  function bindItem(s, name) {
+      if (
+        previous[
+          button.dataset.label
+        ] ===
+        button.dataset.value
+      ) {
 
-    /* Choices */
+        button.classList.add(
+          "selected"
+        );
+
+      }
+
+    });
+
+
+    $$(
+      "[data-field]"
+    ).forEach(input => {
+
+      if (
+        previous[
+          input.dataset.label
+        ]
+      ) {
+
+        input.value =
+          previous[
+            input.dataset.label
+          ];
+
+      }
+
+    });
+
+
+    if (previous.unit) {
+
+      $("#unit").value =
+        previous.unit;
+
+    }
+
+
+    if (previous.brand) {
+
+      $("#brand").value =
+        previous.brand;
+
+    }
+
+
+    /* =====================================================
+       CHOICE CLICK
+       ===================================================== */
 
     $$(".choice")
-      .forEach(b => {
+      .forEach(button => {
 
-        b.onclick = () => {
+        button.onclick = () => {
 
-          b.parentElement
-            .querySelectorAll(
+          const parent =
+            button.parentElement;
+
+          parent
+            ?.querySelectorAll(
               ".choice"
             )
-            .forEach(x =>
-              x.classList.remove(
-                "selected"
-              )
+            .forEach(
+              other =>
+                other.classList.remove(
+                  "selected"
+                )
             );
 
-          b.classList.add(
+          button.classList.add(
             "selected"
           );
 
-          draft[
-            b.dataset.label
-          ] =
-            b.dataset.value;
-
-          saveState();
-
         };
 
       });
 
-    /* User inputs */
 
-    $$("[data-input]")
-      .forEach(e => {
+    /* =====================================================
+       BACK
+       ===================================================== */
 
-        e.oninput = () => {
+    $("#backItem").onclick = () => {
 
-          draft[
-            e.dataset.input
-          ] = e.value;
+      if (
+        currentIndex > 0
+      ) {
 
-          saveState();
+        currentIndex--;
 
-        };
+        render();
 
-      });
+      } else {
 
-    const q = $("#qty");
+        page = "stage";
 
-    /* Quantity */
+        render();
 
-    $("#qtyMinus").onclick = () => {
-
-      q.value =
-        Math.max(
-          1,
-          (Number(q.value) || 1) - 1
-        );
-
-      draft.qty = q.value;
-      saveState();
+      }
 
     };
 
-    $("#qtyPlus").onclick = () => {
 
-      q.value =
-        (Number(q.value) || 0) + 1;
+    /* =====================================================
+       ADD
+       ===================================================== */
 
-      draft.qty = q.value;
-      saveState();
+    $("#add").onclick =
+      addCurrent;
 
-    };
 
-    q.oninput = () => {
-
-      draft.qty =
-        q.value;
-
-      saveState();
-
-    };
-
-    $$("[data-q]")
-      .forEach(b => {
-
-        b.onclick = () => {
-
-          q.value =
-            b.dataset.q;
-
-          draft.qty =
-            q.value;
-
-          saveState();
-
-        };
-
-      });
-
-    /* Unit */
-
-    $("#unit").onchange = () => {
-
-      draft.unit =
-        $("#unit").value;
-
-      saveState();
-
-    };
-
-    /* Brand */
-
-    $("#brand").onchange = () => {
-
-      draft.brand =
-        $("#brand").value;
-
-      saveState();
-
-    };
-
-    /* Price */
-
-    $("#price")
-      ?.addEventListener(
-        "input",
-        e => {
-
-          draft.price =
-            e.target.value;
-
-          saveState();
-
-        }
-      );
-
-    /* Price box */
+    /* =====================================================
+       PRICE
+       ===================================================== */
 
     $("#priceToggle")
       ?.addEventListener(
         "click",
         () => {
 
-          $("#priceBox").hidden =
-            false;
+          const box =
+            $("#priceBox");
 
-          $("#priceToggle").hidden =
-            true;
+          const toggle =
+            $("#priceToggle");
+
+          if (!box) return;
+
+          box.hidden = false;
+
+          if (toggle) {
+            toggle.hidden = true;
+          }
+
+          $("#price")?.focus();
 
         }
       );
 
-    /* Clear current item */
 
-    $("#clearDraftBtn")
+    $("#priceHide")
       ?.addEventListener(
         "click",
         () => {
 
-          draft = {};
+          const box =
+            $("#priceBox");
 
-          saveState();
+          const toggle =
+            $("#priceToggle");
 
-          render();
+          if (!box) return;
 
-          toast(
-            lang === "hi"
-              ? "Current item clear हो गया"
-              : "Current item cleared"
-          );
+          box.hidden = true;
 
-        }
-      );
-
-    /* Back */
-
-    $("#backItem")
-      .onclick = () => {
-
-        syncDraft();
-
-        navigate(
-          "stage",
-          stageIndex,
-          -1
-        );
-
-      };
-
-    /* Previous */
-
-    $("#prevBtn")
-      .onclick = () => {
-
-        if (itemIndex > 0) {
-
-          syncDraft();
-
-          itemIndex--;
-
-          draft = {};
-
-          navigate(
-            "item",
-            stageIndex,
-            itemIndex
-          );
-
-          scrollTop();
-
-        }
-
-      };
-
-    /* Next */
-
-    $("#nextBtn")
-      .onclick = () => {
-
-        if (
-          itemIndex <
-          itemsOf(s).length - 1
-        ) {
-
-          syncDraft();
-
-          itemIndex++;
-
-          draft = {};
-
-          navigate(
-            "item",
-            stageIndex,
-            itemIndex
-          );
-
-          scrollTop();
-
-        }
-
-      };
-
-    /* Add */
-
-    $("#addBtn")
-      .onclick = () =>
-        add(s, name);
-
-  }
-
-  /* =========================================================
-     SYNC DRAFT
-     ========================================================= */
-
-  function syncDraft() {
-
-    draft.qty =
-      $("#qty")?.value ||
-      draft.qty ||
-      "";
-
-    draft.unit =
-      $("#unit")?.value ||
-      draft.unit ||
-      "";
-
-    draft.brand =
-      $("#brand")?.value ||
-      draft.brand ||
-      "";
-
-    draft.price =
-      $("#price")?.value ||
-      draft.price ||
-      "";
-
-    $$("[data-input]")
-      .forEach(e => {
-
-        draft[
-          e.dataset.input
-        ] = e.value;
-
-      });
-
-    $(".choice.selected")
-      ?.parentElement
-      ?.querySelectorAll(
-        ".choice.selected"
-      );
-
-    $$(".choice.selected")
-      .forEach(e => {
-
-        draft[
-          e.dataset.label
-        ] =
-          e.dataset.value;
-
-      });
-
-    saveState();
-
-  }
-
-  /* =========================================================
-     ADD TO ESTIMATE
-     ========================================================= */
-
-  function add(s, name) {
-
-    syncDraft();
-
-    if (
-      C.rules?.quantityRequired !== false &&
-      (
-        !draft.qty ||
-        Number(draft.qty) <= 0
-      )
-    ) {
-
-      toast(
-        t("required")
-      );
-
-      $("#qty")?.focus();
-
-      return;
-
-    }
-
-    const options = {
-      ...draft
-    };
-
-    delete options.qty;
-    delete options.unit;
-    delete options.brand;
-    delete options.price;
-
-    const a = read();
-
-    a.push({
-
-      id: Date.now(),
-
-      stage: s[0],
-
-      stageName: s[1],
-
-      item: name,
-
-      qty: String(
-        draft.qty
-      ),
-
-      unit:
-        draft.unit || "",
-
-      brand:
-        draft.brand || "",
-
-      price:
-        draft.price || "",
-
-      options,
-
-      createdAt:
-        new Date().toISOString()
-
-    });
-
-    save(a);
-
-    toast(
-      t("added")
-    );
-
-    if (
-      C.navigation?.autoNextAfterAdd !== false &&
-      itemIndex <
-        itemsOf(s).length - 1
-    ) {
-
-      itemIndex++;
-
-      draft = {};
-
-      saveState();
-
-      setTimeout(
-        () => {
-
-          render();
-          scrollTop();
-
-        },
-        180
-      );
-
-    }
-
-    else {
-
-      page = "stage";
-      itemIndex = -1;
-      draft = {};
-
-      saveState();
-
-      setTimeout(
-        render,
-        180
-      );
-
-    }
-
-  }
-
-  /* =========================================================
-     ESTIMATE
-     ========================================================= */
-
-  function estimate() {
-
-    const a = read();
-
-    $("#main").innerHTML = `
-
-      <section class="page">
-
-        <div class="hero">
-
-          <h1>
-            ${t("estimate")}
-          </h1>
-
-          <p>
-            ${a.length}
-            ${t("items")}
-          </p>
-
-        </div>
-
-        ${
-          a.length
-            ? `
-
-              <div class="estimateList">
-
-                ${a.map((x, i) => `
-
-                  <article
-                    class="estimateItem"
-                  >
-
-                    <div
-                      class="estimateTop"
-                    >
-
-                      <b>
-                        ${esc(x.item)}
-                      </b>
-
-                      <span>
-                        ${esc(x.stage)}
-                      </span>
-
-                    </div>
-
-                    <div
-                      class="estimateMeta"
-                    >
-
-                      ${esc(x.qty)}
-                      ${esc(x.unit || "")}
-
-                      ${
-                        x.brand
-                          ? " • " +
-                            esc(x.brand)
-                          : ""
-                      }
-
-                      ${
-                        x.price
-                          ? " • ₹ " +
-                            esc(x.price)
-                          : ""
-                      }
-
-                    </div>
-
-                    <div
-                      class="estimateActions"
-                    >
-
-                      <button
-                        data-edit="${i}"
-                      >
-                        ${t("edit")}
-                      </button>
-
-                      <button
-                        data-del="${i}"
-                      >
-                        ${t("delete")}
-                      </button>
-
-                    </div>
-
-                  </article>
-
-                `).join("")}
-
-              </div>
-
-              <button
-                class="danger"
-                id="clearEstimate"
-              >
-                ${t("clear")}
-              </button>
-
-            `
-            : `
-              <div class="empty">
-                ${t("empty")}
-              </div>
-            `
-        }
-
-      </section>
-
-    `;
-
-    $$("[data-del]")
-      .forEach(b => {
-
-        b.onclick = () => {
-
-          const x =
-            read();
-
-          x.splice(
-            +b.dataset.del,
-            1
-          );
-
-          save(x);
-
-          render();
-
-        };
-
-      });
-
-    $$("[data-edit]")
-      .forEach(b =>
-        b.onclick = () =>
-          editEstimate(
-            +b.dataset.edit
-          )
-      );
-
-    $("#clearEstimate")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            confirm(
-              "Clear estimate?"
-            )
-          ) {
-
-            save([]);
-
-            render();
-
+          if (toggle) {
+            toggle.hidden = false;
           }
 
         }
@@ -2110,129 +2684,514 @@
 
   }
 
-  /* =========================================================
-     EDIT ESTIMATE
-     ========================================================= */
 
-  function editEstimate(i) {
+  /* =======================================================
+     17. SYNC DRAFT
+     ======================================================= */
 
-    const x =
-      read()[i];
+  function syncDraft() {
 
-    const si =
-      M.findIndex(
-        s => s[0] === x.stage
-      );
+    draft = {};
 
-    const ii =
-      itemsOf(
-        M[si] || []
-      ).findIndex(
-        it => it[0] === x.item
-      );
 
-    if (
-      si < 0 ||
-      ii < 0
-    ) return;
+    $$(".choice.selected")
+      .forEach(element => {
 
-    stageIndex = si;
-    itemIndex = ii;
+        draft[
+          element.dataset.label
+        ] =
+          element.dataset.value;
 
-    draft = {
-      ...x,
-      ...x.options
-    };
+      });
 
-    navigate(
-      "item",
-      si,
-      ii
-    );
+
+    $$("[data-field]")
+      .forEach(element => {
+
+        draft[
+          element.dataset.label
+        ] =
+          element.value.trim();
+
+      });
+
+
+    const unit =
+      $("#unit")?.value || "";
+
+    const brand =
+      $("#brand")?.value || "";
+
+
+    if (unit) {
+
+      draft.unit =
+        unit;
+
+    }
+
+
+    if (brand) {
+
+      draft.brand =
+        brand;
+
+    }
 
   }
 
-  /* =========================================================
-     CALCULATOR
-     ========================================================= */
 
-  function calculator() {
+  /* =======================================================
+     18. ADD CURRENT ITEM
+     ======================================================= */
 
-    $("#main").innerHTML = `
+  function addCurrent() {
+
+    const quantity =
+      $("#qty")
+        ?.value
+        .trim();
+
+
+    if (
+      C.rules?.quantityRequired !== false &&
+      (
+        !quantity ||
+        Number(quantity) <= 0
+      )
+    ) {
+
+      $("#qty")
+        ?.classList
+        .add("error");
+
+      $("#qty")
+        ?.focus();
+
+      toast(
+        t("required")
+      );
+
+      return;
+
+    }
+
+
+    syncDraft();
+
+
+    const stage =
+      M[currentStage];
+
+    const items =
+      stageItems(stage);
+
+    const item =
+      items[currentIndex];
+
+
+    if (!stage || !item) {
+
+      return;
+
+    }
+
+
+    const name =
+      item[0];
+
+
+    const options = {};
+
+
+    $$(".choice.selected")
+      .forEach(element => {
+
+        options[
+          element.dataset.label
+        ] =
+          element.dataset.value;
+
+      });
+
+
+    $$("[data-field]")
+      .forEach(element => {
+
+        options[
+          element.dataset.label
+        ] =
+          element.value.trim();
+
+      });
+
+
+    const unit =
+      $("#unit")
+        ?.value || "";
+
+
+    const brand =
+      $("#brand")
+        ?.value || "";
+
+
+    const price =
+      $("#price")
+        ?.value
+        ?.trim() || "";
+
+
+    /* ---------- SAVE LAST VALUES ---------- */
+
+    lastValues[
+      `${stage[0]}::${name}`
+    ] = {
+
+      ...options,
+
+      unit,
+
+      brand
+
+    };
+
+
+    /* ---------- SAVE ITEM ---------- */
+
+    const data = {
+
+      id: Date.now(),
+
+      stage:
+        stage[0],
+
+      stageName:
+        stage[1],
+
+      item:
+        name,
+
+      qty:
+        String(
+          quantity || ""
+        ),
+
+      unit,
+
+      brand,
+
+      price,
+
+      options,
+
+      createdAt:
+        new Date()
+          .toISOString()
+
+    };
+
+
+    const saved =
+      readItems();
+
+
+    saved.push(
+      data
+    );
+
+
+    writeItems(
+      saved
+    );
+
+
+    toast(
+      t("added")
+    );
+
+
+    /* =====================================================
+       AUTO NEXT
+       ===================================================== */
+
+    if (
+      C.navigation?.autoNextAfterAdd !== false &&
+      currentIndex <
+        items.length - 1
+    ) {
+
+      currentIndex++;
+
+      setTimeout(
+        () => {
+
+          render();
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          });
+
+        },
+        220
+      );
+
+    }
+
+    else {
+
+      page =
+        "stage";
+
+      currentIndex =
+        -1;
+
+      setTimeout(
+        () => {
+
+          render();
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+          });
+
+        },
+        220
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     19. ESTIMATE PAGE
+     ======================================================= */
+
+  function estimate() {
+
+    const items =
+      readItems();
+
+
+    return `
 
       <section class="page">
 
-        <div class="hero">
+        <div class="hero compact">
 
           <h1>
-            ${t("calculator")}
+            ${esc(
+              t("estimate")
+            )}
           </h1>
 
           <p>
-            Electrical formulas
+            ${items.length}
+            ${esc(
+              t("saved")
+            )}
           </p>
 
         </div>
 
-        <div class="formCard">
 
-          <div class="calcGrid">
+        ${
+          items.length
 
-            <label class="field">
+            ? `
 
-              <span>
-                ${t("power")}
-              </span>
+              <div class="estimateList">
 
-              <input
-                id="calcP"
-                type="number"
+                ${items
+                  .map(
+                    (item, index) => `
+
+                      <article
+                        data-estimate-index="${index}"
+                      >
+
+                        <div>
+
+                          <b>
+                            ${esc(
+                              tx(
+                                item.item
+                              )
+                            )}
+                          </b>
+
+                          <span>
+
+                            ${esc(
+                              item.qty
+                            )}
+
+                            ${
+                              item.unit
+                                ? " " +
+                                  esc(
+                                    tx(
+                                      item.unit
+                                    )
+                                  )
+                                : ""
+                            }
+
+                            ${
+                              item.brand
+                                ? " • " +
+                                  esc(
+                                    tx(
+                                      item.brand
+                                    )
+                                  )
+                                : ""
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        ${
+                          item.price !== ""
+
+                            ? `
+                              <strong>
+                                ₹
+                                ${esc(
+                                  item.price
+                                )}
+                              </strong>
+                            `
+
+                            : ""
+                        }
+
+                      </article>
+
+                    `
+                  )
+                  .join("")}
+
+              </div>
+
+
+              <button
+                class="danger"
+                id="clear"
+                type="button"
               >
+                ${esc(
+                  t("clear")
+                )}
+              </button>
 
-            </label>
+            `
 
-            <label class="field">
+            : `
 
-              <span>
-                ${t("voltage")}
-              </span>
+              <div class="empty">
 
-              <input
-                id="calcV"
-                type="number"
-                value="230"
-              >
+                ${esc(
+                  t("noItems")
+                )}
 
-            </label>
+              </div>
 
-          </div>
+            `
+        }
+
+      </section>
+
+    `;
+
+  }
+
+
+  /* =======================================================
+     20. CALCULATOR
+     ======================================================= */
+
+  function calculator() {
+
+    return `
+
+      <section class="page">
+
+        <div class="hero compact">
+
+          <h1>
+            ${esc(
+              t("calculator")
+            )}
+          </h1>
+
+          <p>
+            ${esc(
+              t(
+                "electricalFormulas"
+              )
+            )}
+          </p>
+
+        </div>
+
+
+        <div class="calcCard">
+
+          <label>
+
+            ${esc(
+              t("power")
+            )}
+
+            <input
+              id="pw"
+              type="number"
+              inputmode="decimal"
+            >
+
+          </label>
+
+
+          <label>
+
+            ${esc(
+              t("voltage")
+            )}
+
+            <input
+              id="vo"
+              type="number"
+              inputmode="decimal"
+            >
+
+          </label>
+
 
           <button
             class="primary"
-            id="calcBtn"
+            id="calc"
+            type="button"
           >
-            ${t("calculate")}
+
+            ${esc(
+              t("calculate")
+            )}
+
           </button>
 
+
           <div
-            class="calcResult"
-            id="calcResult"
+            id="ans"
+            class="answer"
           >
-            I = P ÷ V
-          </div>
-
-          <div class="formula">
-
-            P = V × I
-            <br>
 
             I = P ÷ V
-            <br>
-
-            V = P ÷ I
-            <br>
-
-            R = V ÷ I
 
           </div>
 
@@ -2242,116 +3201,139 @@
 
     `;
 
-    $("#calcBtn")
-      .onclick = () => {
-
-        const p =
-          +$("#calcP").value;
-
-        const v =
-          +$("#calcV").value;
-
-        $("#calcResult")
-          .textContent =
-          p > 0 && v > 0
-            ? `${t("current")} = ${(p / v).toFixed(2)} A`
-            : "Enter Power and Voltage";
-
-      };
-
   }
 
-  /* =========================================================
-     SETTINGS
-     ========================================================= */
+
+  /* =======================================================
+     21. SETTINGS
+     ======================================================= */
 
   function settings() {
 
-    $("#main").innerHTML = `
+    const dark =
+      (
+        localStorage.getItem(
+          themeKey
+        ) || "dark"
+      ) === "dark";
+
+
+    const enabledViews =
+      getViewModes().length;
+
+
+    return `
 
       <section class="page">
 
-        <div class="hero">
+        <div class="hero compact">
 
           <h1>
-            ${t("settings")}
+            ${esc(
+              t("settings")
+            )}
           </h1>
 
         </div>
 
-        <div class="settingsList">
 
-          <div
-            class="settingRow toggleRow"
-          >
+        <div class="settingsCard">
 
-            <div>
 
-              <b>
-                Theme
-              </b>
-
-              <small>
-                ${t("dark")}
-                /
-                ${t("light")}
-              </small>
-
-            </div>
-
-            <button
-              id="themeBtn"
-              class="secondary"
-              style="width:auto"
-            >
-              ${
-                (
-                  localStorage.getItem(
-                    themeKey
-                  ) || "dark"
-                ) === "dark"
-                  ? t("dark")
-                  : t("light")
-              }
-            </button>
-
-          </div>
+          <!-- THEME -->
 
           <div class="settingRow">
 
-            <b>
-              Language / भाषा
-            </b>
+            <span>
+              ${esc(
+                t("theme")
+              )}
+            </span>
 
-            <small>
+            <label class="toggle">
+
+              <input
+                id="themeToggle"
+                type="checkbox"
+                ${
+                  dark
+                    ? "checked"
+                    : ""
+                }
+              >
+
+              <span>
+                ${
+                  dark
+                    ? esc(
+                        t("dark")
+                      )
+                    : esc(
+                        t("light")
+                      )
+                }
+              </span>
+
+            </label>
+
+          </div>
+
+
+          <!-- LANGUAGE -->
+
+          <div class="settingRow">
+
+            <span>
+              ${esc(
+                t("language")
+              )}
+            </span>
+
+            <strong>
               ${
                 lang === "hi"
                   ? "हिंदी"
                   : "English"
               }
-            </small>
+            </strong>
 
           </div>
+
+
+          <!-- VIEWS -->
 
           <div class="settingRow">
 
-            <b>
-              Material Views
-            </b>
+            <span>
+              ${esc(
+                t("materialViews")
+              )}
+            </span>
 
-            <small>
-              ${views().length}
-              views enabled
-            </small>
+            <strong>
+              ${enabledViews}
+              ${esc(
+                t("viewsEnabled")
+              )}
+            </strong>
 
           </div>
 
+
+          <!-- RESET -->
+
           <button
-            class="danger"
-            id="resetApp"
+            class="secondary"
+            id="reset"
+            type="button"
           >
-            ${t("reset")}
+
+            ${esc(
+              t("reset")
+            )}
+
           </button>
+
 
         </div>
 
@@ -2359,30 +3341,121 @@
 
     `;
 
-    $("#themeBtn")
-      .onclick = () => {
+  }
 
-        localStorage.setItem(
-          themeKey,
-          (
-            localStorage.getItem(
-              themeKey
-            ) || "dark"
-          ) === "dark"
-            ? "light"
-            : "dark"
+
+  /* =======================================================
+     22. TOAST
+     ======================================================= */
+
+  function toast(message) {
+
+    const element =
+      document.createElement(
+        "div"
+      );
+
+    element.className =
+      "toast";
+
+    element.textContent =
+      message;
+
+    document.body.appendChild(
+      element
+    );
+
+
+    setTimeout(
+      () => {
+
+        element.remove();
+
+      },
+      1400
+    );
+
+  }
+
+
+  /* =======================================================
+     23. GLOBAL CLICK HANDLER
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      const target =
+        event.target;
+
+
+      /* ---------- STAGE ---------- */
+
+      const stageButton =
+        target.closest(
+          "[data-stage]"
         );
+
+      if (
+        stageButton &&
+        !target.closest(
+          "#drawer"
+        )
+      ) {
+
+        currentStage =
+          Number(
+            stageButton.dataset.stage
+          );
+
+        currentIndex =
+          -1;
+
+        page =
+          "stage";
 
         render();
 
-      };
+        return;
 
-    $("#resetApp")
-      .onclick = () => {
+      }
+
+
+      /* ---------- CLEAR ESTIMATE ---------- */
+
+      if (
+        target.id === "clear"
+      ) {
 
         if (
           confirm(
-            "Reset saved estimate and preferences?"
+            t("confirmClear")
+          )
+        ) {
+
+          localStorage.removeItem(
+            storeKey
+          );
+
+          render();
+
+        }
+
+        return;
+
+      }
+
+
+      /* ---------- RESET ---------- */
+
+      if (
+        target.id === "reset"
+      ) {
+
+        if (
+          confirm(
+            t("confirmReset")
           )
         ) {
 
@@ -2391,252 +3464,362 @@
           );
 
           localStorage.removeItem(
-            langKey
-          );
-
-          localStorage.removeItem(
-            viewKey
-          );
-
-          localStorage.removeItem(
-            stageViewKey
-          );
-
-          localStorage.removeItem(
-            themeKey
-          );
-
-          localStorage.removeItem(
             stateKey
           );
 
-          location.reload();
+          render();
 
         }
 
-      };
-
-  }
-
-  /* =========================================================
-     EXIT WARNING
-     ---------------------------------------------------------
-     Browser normally controls actual tab/app closing.
-     We intercept Back navigation at the root level.
-     ========================================================= */
-
-  function showExitWarning() {
-
-    return window.confirm(
-      `${t("exitTitle")}\n\n${t("exitText")}`
-    );
-
-  }
-
-  function goBackOneStep() {
-
-    if (page === "item") {
-
-      syncDraft();
-
-      page = "stage";
-      itemIndex = -1;
-      draft = {};
-
-      saveState();
-      render();
-
-      return;
-
-    }
-
-    if (page === "stage") {
-
-      page = "home";
-      stageIndex = -1;
-      itemIndex = -1;
-      draft = {};
-
-      saveState();
-      render();
-
-      return;
-
-    }
-
-    if (page !== "home") {
-
-      page = "home";
-      stageIndex = -1;
-      itemIndex = -1;
-      draft = {};
-
-      saveState();
-      render();
-
-      return;
-
-    }
-
-    if (showExitWarning()) {
-
-      /*
-       * Browser / Android controls the
-       * actual page closing.
-       *
-       * We do not force window.close().
-       */
-
-      history.back();
-
-    }
-
-  }
-
-  /* =========================================================
-     BROWSER / ANDROID BACK
-     ========================================================= */
-
-  function setupBackProtection() {
-
-    history.replaceState(
-      {
-        appRoot: true
-      },
-      "",
-      location.href
-    );
-
-    window.addEventListener(
-      "popstate",
-      () => {
-
-        if (
-          internalNavigation
-        ) {
-
-          internalNavigation =
-            false;
-
-          return;
-
-        }
-
-        goBackOneStep();
-
-        history.pushState(
-          {
-            appRoot: false
-          },
-          "",
-          location.href
-        );
+        return;
 
       }
+
+
+      /* ---------- CALCULATOR ---------- */
+
+      if (
+        target.id === "calc"
+      ) {
+
+        const power =
+          Number(
+            $("#pw")?.value
+          );
+
+        const voltage =
+          Number(
+            $("#vo")?.value
+          );
+
+
+        if (
+          power > 0 &&
+          voltage > 0
+        ) {
+
+          const current =
+            power /
+            voltage;
+
+
+          $("#ans").textContent =
+            `${t("current")} = ${current.toFixed(2)} A`;
+
+        }
+
+        else {
+
+          $("#ans").textContent =
+            t("calcHint");
+
+        }
+
+        return;
+
+      }
+
+
+      /* ---------- THEME ---------- */
+
+      if (
+        target.id ===
+        "themeToggle"
+      ) {
+
+        const dark =
+          target.checked;
+
+
+        localStorage.setItem(
+          themeKey,
+          dark
+            ? "dark"
+            : "light"
+        );
+
+
+        applyConfig();
+
+        return;
+
+      }
+
+    }
+  );
+
+
+  /* =======================================================
+     24. CLOSE VIEW POPUPS
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      [
+        "#viewSelector",
+        "#stageViewSelector"
+      ].forEach(
+        selector => {
+
+          const box =
+            document.querySelector(
+              selector
+            );
+
+          if (!box) return;
+
+          const options =
+            box.querySelector(
+              ".viewOptions"
+            );
+
+          if (
+            !options ||
+            options.hidden
+          ) {
+            return;
+          }
+
+          if (
+            !box.contains(
+              event.target
+            )
+          ) {
+
+            options.hidden =
+              true;
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+  /* =======================================================
+     25. ESC KEY
+     ======================================================= */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Escape"
+      ) {
+
+        closeDrawer();
+
+        $$(".viewOptions")
+          .forEach(
+            box =>
+              box.hidden = true
+          );
+
+      }
+
+    }
+  );
+
+
+  /* =======================================================
+     26. SAVE / RESTORE LAST VALUES
+     ======================================================= */
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        "sandeepEstimateLastValues"
+      );
+
+    if (saved) {
+
+      lastValues =
+        JSON.parse(
+          saved
+        ) || {};
+
+    }
+
+  } catch {
+
+    lastValues = {};
+
+  }
+
+
+  function saveLastValues() {
+
+    try {
+
+      localStorage.setItem(
+        "sandeepEstimateLastValues",
+        JSON.stringify(
+          lastValues
+        )
+      );
+
+    } catch {}
+
+  }
+
+
+  /* Save whenever page is hidden */
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+
+      if (
+        document.visibilityState ===
+        "hidden"
+      ) {
+
+        saveLastValues();
+
+        saveState();
+
+      }
+
+    }
+  );
+
+
+  /* =======================================================
+     27. LANGUAGE CHANGE HELPER
+     ======================================================= */
+
+  function setLanguage(
+    newLanguage
+  ) {
+
+    if (
+      newLanguage !== "hi" &&
+      newLanguage !== "en"
+    ) {
+
+      return;
+
+    }
+
+
+    lang =
+      newLanguage;
+
+
+    localStorage.setItem(
+      langKey,
+      lang
+    );
+
+
+    render();
+
+  }
+
+
+  window.setElectroFixLanguage =
+    setLanguage;
+
+
+  /* =======================================================
+     28. INITIAL STATE
+     ======================================================= */
+
+  loadState();
+
+
+  /* Safety */
+
+  if (
+    ![
+      "home",
+      "stage",
+      "item",
+      "estimate",
+      "calculator",
+      "settings"
+    ].includes(page)
+  ) {
+
+    page = "home";
+
+  }
+
+
+  if (
+    currentStage < 0 ||
+    currentStage >= M.length
+  ) {
+
+    if (
+      page === "stage" ||
+      page === "item"
+    ) {
+
+      page = "home";
+
+    }
+
+  }
+
+
+  /* =======================================================
+     29. BOOT
+     ======================================================= */
+
+  function boot() {
+
+    applyConfig();
+
+    render();
+
+
+    /*
+      Loader is NOT required.
+      If old splash exists, remove it safely
+      after actual app render.
+    */
+
+    const splash =
+      $("#splash");
+
+
+    if (splash) {
+
+      splash.classList.add(
+        "hide"
+      );
+
+
+      setTimeout(
+        () => {
+
+          splash.remove();
+
+        },
+        350
+      );
+
+    }
+
+
+    window.scrollTo(
+      0,
+      0
     );
 
   }
 
-  /* =========================================================
-     SCROLL TOP
-     ========================================================= */
 
-  function scrollTop() {
+  window.render =
+    render;
 
-    window.scrollTo({
-      top: 0,
-      behavior: "instant"
-    });
-
-  }
-
-  /* =========================================================
-     RENDER
-     ========================================================= */
-
-  function render() {
-
-    saveState();
-
-    applyCommon();
-
-    if (page === "home") {
-
-      renderHome();
-
-    }
-
-    else if (page === "stage") {
-
-      stage();
-
-    }
-
-    else if (page === "item") {
-
-      item();
-
-    }
-
-    else if (page === "estimate") {
-
-      estimate();
-
-    }
-
-    else if (page === "calculator") {
-
-      calculator();
-
-    }
-
-    else {
-
-      settings();
-
-    }
-
-    nav();
-
-  }
-
-  /* =========================================================
-     STARTUP
-     ========================================================= */
-
-  restoreState();
-
-  if (
-    stageIndex >= M.length
-  ) {
-
-    page = "home";
-    stageIndex = -1;
-    itemIndex = -1;
-
-  }
-
-  if (
-    page === "item" &&
-    (
-      stageIndex < 0 ||
-      !M[stageIndex] ||
-      itemIndex < 0 ||
-      itemIndex >=
-        itemsOf(
-          M[stageIndex]
-        ).length
-    )
-  ) {
-
-    page = "home";
-    stageIndex = -1;
-    itemIndex = -1;
-    draft = {};
-
-  }
-
-  setupBackProtection();
 
   if (
     document.readyState ===
@@ -2645,37 +3828,13 @@
 
     document.addEventListener(
       "DOMContentLoaded",
-      render
+      boot
     );
 
-  }
+  } else {
 
-  else {
-
-    render();
+    boot();
 
   }
 
-  document.addEventListener("click", (e) => {
-  const selectors = [
-    "#viewSelector",
-    "#stageViewSelector"
-  ];
-
-  selectors.forEach(selector => {
-    const box = document.querySelector(selector);
-
-    if (!box) return;
-
-    const options = box.querySelector(".viewOptions");
-
-    if (!options || options.hidden) return;
-
-    if (!box.contains(e.target)) {
-      options.hidden = true;
-    }
-  });
-});
 })();
-
-

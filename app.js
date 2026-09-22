@@ -542,9 +542,10 @@
 
           <div class="heroLogo">
   <img
-    src="logo.png"
-    alt="Sandeep ElectroFix Logo"
-  >
+  src="logo.png"
+  class="heroLogo"
+  alt="Sandeep ElectroFix Logo"
+>
 </div>
 
           <h1>

@@ -197,6 +197,7 @@ button:disabled {
   color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-align: center;
 }
 
 .drawer > button[data-page] {
@@ -238,6 +239,7 @@ button:disabled {
   color: #7f91a8;
   border-radius: 12px;
   font-size: 20px;
+  text-align: center;
 }
 
 .bottomNav button span {
@@ -260,6 +262,7 @@ button:disabled {
   width: min(100%, 1000px);
   margin: auto;
   padding: 18px 14px;
+  text-align: center;
 }
 
 /* =========================================================
@@ -305,8 +308,10 @@ button:disabled {
 .searchBox {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin: 8px 0 18px;
+  width: min(100%, 700px);
+  margin: 8px auto 18px;
   background: #020611;
   border: 1px solid #0ea5e955;
   border-radius: 16px;
@@ -321,6 +326,7 @@ button:disabled {
   background: transparent;
   color: #fff;
   padding: 12px;
+  text-align: center;
 }
 
 .searchBox button {
@@ -331,6 +337,88 @@ button:disabled {
 }
 
 /* =========================================================
+   STAGE VIEW MODE
+   ========================================================= */
+
+.stageViewSelector {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto 14px;
+  text-align: center;
+}
+
+.stageViewBtn {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin: auto;
+  border: 1px solid #0ea5e966;
+  border-radius: 13px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      #0ea5e933,
+      #07182e 65%
+    );
+  color: var(--blue2);
+  font-size: 23px;
+  font-weight: 900;
+  box-shadow:
+    0 0 12px #0ea5e933,
+    inset 0 0 12px #facc1510;
+  transition: .2s;
+}
+
+.stageViewBtn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow:
+    0 0 18px #facc1533,
+    inset 0 0 14px #0ea5e91c;
+}
+
+.stageViewBtn:active {
+  transform: scale(.92);
+}
+
+.stageViewOptions {
+  position: absolute;
+  z-index: 80;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(330px, 90vw);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  background: #030b18;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: 0 12px 35px #0009;
+}
+
+.stageViewOptions[hidden] {
+  display: none;
+}
+
+.stageViewOption {
+  min-height: 44px;
+  border: 1px solid #ffffff12;
+  border-radius: 10px;
+  background: #07182e;
+  color: var(--blue2);
+  font-size: 18px;
+}
+
+.stageViewOption.active {
+  color: var(--gold);
+  border-color: var(--blue);
+  box-shadow: 0 0 12px #0ea5e933;
+}
+
+/* =========================================================
    STAGE GRID
    ========================================================= */
 
@@ -338,6 +426,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  text-align: center;
 }
 
 .stageCard {
@@ -357,7 +446,7 @@ button:disabled {
     );
   animation: spinBorder 5s linear infinite;
   overflow: hidden;
-  text-align: left;
+  text-align: center;
   color: #fff;
 }
 
@@ -408,16 +497,110 @@ button:disabled {
 }
 
 /* =========================================================
+   STAGE VIEW MODES
+   ========================================================= */
+
+.stageGrid.list,
+.stageGrid.compact,
+.stageGrid.large,
+.stageGrid.horizontal,
+.stageGrid.icon-list,
+.stageGrid.timeline,
+.stageGrid.dense {
+  grid-template-columns: 1fr;
+}
+
+.stageGrid.large .stageCard {
+  min-height: 220px;
+  padding: 24px;
+}
+
+.stageGrid.compact .stageCard {
+  min-height: 130px;
+  padding: 13px;
+}
+
+.stageGrid.compact .stageCard b {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.stageGrid.mini {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.stageGrid.mini .stageCard {
+  min-height: 105px;
+  padding: 10px;
+}
+
+.stageGrid.mini .stageCard b {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.stageGrid.mini .stageCard span,
+.stageGrid.mini .stageCard small {
+  font-size: 9px;
+}
+
+.stageGrid.two-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stageGrid.horizontal {
+  grid-auto-flow: column;
+  grid-auto-columns: 78%;
+  overflow-x: auto;
+  grid-template-columns: none;
+  padding-bottom: 6px;
+}
+
+.stageGrid.horizontal .stageCard {
+  min-height: 165px;
+}
+
+.stageGrid.icon-list .stageCard {
+  min-height: 92px;
+  padding: 12px;
+}
+
+.stageGrid.icon-list .stageCard b {
+  margin-top: 10px;
+}
+
+.stageGrid.timeline .stageCard {
+  border-left: 4px solid var(--gold);
+  border-radius: 5px 18px 18px 5px;
+}
+
+.stageGrid.dense {
+  gap: 6px;
+}
+
+.stageGrid.dense .stageCard {
+  min-height: 115px;
+  padding: 10px;
+}
+
+.stageGrid.dense .stageCard b {
+  margin-top: 12px;
+  font-size: 15px;
+}
+
+/* =========================================================
    BACK BUTTON
    ========================================================= */
 
 .back {
+  display: block;
+  margin: 0 auto 12px;
   border: 1px solid var(--border);
   background: #07182e;
   color: #fff;
   border-radius: 12px;
   padding: 10px 14px;
-  margin-bottom: 12px;
 }
 
 /* =========================================================
@@ -427,8 +610,9 @@ button:disabled {
 .stageHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
+  text-align: center;
 }
 
 .stageHead h1 {
@@ -442,108 +626,96 @@ button:disabled {
 }
 
 /* =========================================================
-   MATERIAL VIEW MODE SELECTOR
-   =========================================================
-   Normally collapsed.
-   Arrow opens the available view modes.
-   Selecting a mode closes it automatically.
+   MATERIAL VIEW MODE
    ========================================================= */
 
 .viewSelector {
   position: relative;
-  margin: 12px 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #07182e;
-  overflow: hidden;
-}
-
-/* Main collapsed row */
-
-.viewSelectorHead {
-  width: 100%;
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  width: fit-content;
+  margin: 12px auto 14px;
   border: 0;
   background: transparent;
-  color: #fff;
-  padding: 9px 12px;
-  text-align: left;
+  overflow: visible;
 }
 
-/* Left side */
+/* Only colourful symbol */
 
-.viewSelectorHead > span:first-child {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-/* Current mode icon */
-
-.viewSelectorIcon {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+.viewSelectorHead {
+  width: 46px;
+  height: 46px;
+  min-height: 46px;
   display: grid;
   place-items: center;
-  border: 1px solid #0ea5e955;
-  border-radius: 9px;
-  background: #020817;
+  margin: auto;
+  padding: 0;
+  border: 1px solid #0ea5e966;
+  border-radius: 13px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      #0ea5e933,
+      #07182e 65%
+    );
   color: var(--blue2);
-  font-size: 19px;
-}
-
-/* Current mode text */
-
-.viewSelectorHead b {
-  display: block;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.viewSelectorHead small {
-  display: block;
-  color: var(--muted);
-  font-size: 10px;
-  margin-top: 3px;
-}
-
-/* Arrow */
-
-.viewArrow {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #ffffff18;
-  border-radius: 9px;
-  color: var(--gold);
-  font-size: 22px;
-  line-height: 1;
+  box-shadow:
+    0 0 12px #0ea5e933,
+    inset 0 0 12px #facc1510;
   transition: .2s;
 }
 
-/* Arrow rotates when opened */
+.viewSelectorHead:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  box-shadow:
+    0 0 18px #facc1533,
+    inset 0 0 14px #0ea5e91c;
+}
 
-.viewSelector.open .viewArrow {
-  transform: rotate(90deg);
-  color: var(--blue2);
+.viewSelectorHead > span:first-child {
+  display: grid;
+  place-items: center;
+}
+
+.viewSelectorIcon {
+  width: auto;
+  height: auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 23px;
+  box-shadow: none;
+}
+
+/* Hide old text */
+
+.viewSelectorHead b,
+.viewSelectorHead small,
+.viewArrow {
+  display: none !important;
 }
 
 /* =========================================================
-   VIEW OPTIONS
+   MATERIAL VIEW OPTIONS
    ========================================================= */
 
 .viewOptions {
-  border-top: 1px solid #ffffff12;
-  padding: 7px;
+  position: absolute;
+  z-index: 80;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(350px, 92vw);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
   background: #030b18;
+  box-shadow: 0 12px 35px #0009;
 }
 
 .viewOptions[hidden] {
@@ -551,59 +723,52 @@ button:disabled {
 }
 
 .viewOption {
-  width: 100%;
-  min-height: 43px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid transparent;
+  min-height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ffffff12;
   border-radius: 10px;
-  background: transparent;
-  color: #cbd5e1;
-  padding: 8px 10px;
-  text-align: left;
+  background: #07182e;
+  color: var(--blue2);
+  padding: 5px;
+  text-align: center;
 }
 
 .viewOption:hover {
-  background: #0ea5e90d;
+  background: #0ea5e91a;
 }
 
 .viewOption:active {
-  transform: scale(.99);
+  transform: scale(.96);
 }
 
 .viewOptionIcon {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
+  border: 0;
   border-radius: 8px;
-  background: #07182e;
-  color: var(--blue2);
-  border: 1px solid #ffffff12;
-  font-size: 16px;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
 }
 
 .viewOption.active {
-  background: #0ea5e912;
-  border-color: #0ea5e955;
-  color: #fff;
-}
-
-.viewOption.active .viewOptionIcon {
+  background: #0ea5e914;
   border-color: var(--blue);
   color: var(--gold);
   box-shadow: 0 0 12px #0ea5e933;
 }
 
-/* Selected check */
+.viewOption.active .viewOptionIcon {
+  border: 0;
+  color: var(--gold);
+  box-shadow: none;
+}
 
 .viewCheck {
-  margin-left: auto;
-  color: var(--gold);
-  font-weight: 900;
-  font-size: 16px;
+  display: none;
 }
 
 /* =========================================================
@@ -614,6 +779,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  text-align: center;
 }
 
 .itemCard {
@@ -623,7 +789,7 @@ button:disabled {
   color: #fff;
   border-radius: 16px;
   padding: 14px;
-  text-align: left;
+  text-align: center;
   transition: .18s;
 }
 
@@ -708,7 +874,9 @@ button:disabled {
   display: flex;
   gap: 12px;
   align-items: center;
+  justify-content: center;
   margin: 10px 0 15px;
+  text-align: center;
 }
 
 .itemHead h1 {
@@ -720,19 +888,52 @@ button:disabled {
 }
 
 /* =========================================================
+   CURRENT ITEM ACTIONS
+   ========================================================= */
+
+.itemActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 0 12px;
+}
+
+.clearItemBtn {
+  width: auto;
+  min-width: 90px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  border: 1px solid #ef444455;
+  background: #2a0c12;
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.clearItemBtn:hover {
+  border-color: var(--danger);
+  color: #fff;
+  box-shadow: 0 0 12px #ef444433;
+}
+
+/* =========================================================
    FORM
    ========================================================= */
 
 .formCard {
+  width: min(100%, 700px);
+  margin: auto;
   background: #07182e;
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 14px;
+  text-align: center;
 }
 
 .field {
   display: block;
   margin: 13px 0;
+  text-align: center;
 }
 
 .field > span {
@@ -740,6 +941,7 @@ button:disabled {
   font-size: 13px;
   color: #dbeafe;
   margin-bottom: 7px;
+  text-align: center;
 }
 
 .field em {
@@ -751,6 +953,7 @@ button:disabled {
 .choices {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 7px;
 }
 
@@ -779,6 +982,7 @@ button:disabled {
   color: #fff;
   padding: 10px;
   outline: none;
+  text-align: center;
 }
 
 .field input:focus,
@@ -804,9 +1008,14 @@ button:disabled {
   font-size: 20px;
 }
 
+.qtyRow input {
+  text-align: center;
+}
+
 .qtyQuick {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 7px;
   margin-top: 7px;
 }
@@ -832,6 +1041,7 @@ button:disabled {
   border: 1px solid transparent;
   font-weight: 800;
   margin-top: 10px;
+  text-align: center;
 }
 
 .primary {
@@ -867,6 +1077,7 @@ button:disabled {
 
 .priceWrap {
   margin: 12px 0;
+  text-align: center;
 }
 
 .priceToggle {
@@ -889,6 +1100,7 @@ button:disabled {
 .estimateList {
   display: grid;
   gap: 10px;
+  text-align: center;
 }
 
 .estimateItem {
@@ -896,12 +1108,15 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 13px;
+  text-align: center;
 }
 
 .estimateTop {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
+  text-align: center;
 }
 
 .estimateItem b {
@@ -916,6 +1131,7 @@ button:disabled {
 
 .estimateActions {
   display: flex;
+  justify-content: center;
   gap: 7px;
   margin-top: 10px;
 }
@@ -945,6 +1161,11 @@ button:disabled {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  text-align: center;
+}
+
+.calcGrid .field {
+  text-align: center;
 }
 
 .calcResult {
@@ -965,6 +1186,7 @@ button:disabled {
   border-radius: 12px;
   color: #cbd5e1;
   margin-top: 10px;
+  text-align: center;
 }
 
 /* =========================================================
@@ -974,6 +1196,7 @@ button:disabled {
 .settingsList {
   display: grid;
   gap: 10px;
+  text-align: center;
 }
 
 .settingRow {
@@ -981,6 +1204,7 @@ button:disabled {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 14px;
+  text-align: center;
 }
 
 .settingRow b {
@@ -995,8 +1219,11 @@ button:disabled {
 
 .toggleRow {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
 }
 
 /* =========================================================
@@ -1033,6 +1260,15 @@ button:disabled {
   .itemGrid,
   .itemGrid.two-column {
     grid-template-columns: 1fr;
+  }
+
+  .stageGrid.mini {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .viewOptions,
+  .stageViewOptions {
+    grid-template-columns: repeat(3, 1fr);
   }
 
 }
@@ -1106,32 +1342,57 @@ body[data-theme="light"] .searchBox {
 }
 
 /* =========================================================
-   VIEW SELECTOR - LIGHT THEME
+   LIGHT THEME - VIEW MODE
    ========================================================= */
 
-body[data-theme="light"] .viewSelector {
-  background: #fff;
+body[data-theme="light"] .viewSelectorHead,
+body[data-theme="light"] .stageViewBtn {
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      #0ea5e922,
+      #eef4fb 70%
+    );
 }
 
-body[data-theme="light"] .viewSelectorHead {
+body[data-theme="light"] .viewSelectorIcon {
+  color: var(--blue);
+}
+
+body[data-theme="light"] .viewOptions,
+body[data-theme="light"] .stageViewOptions {
+  background: #f8fbff;
+  border-color: var(--border);
+}
+
+body[data-theme="light"] .viewOption,
+body[data-theme="light"] .stageViewOption {
+  background: #fff;
+  color: #0284c7;
+  border-color: #0ea5e922;
+}
+
+body[data-theme="light"] .viewOption.active,
+body[data-theme="light"] .stageViewOption.active {
+  background: #0ea5e912;
+  color: #d97706;
+  border-color: var(--blue);
+}
+
+body[data-theme="light"] .clearItemBtn {
+  background: #fff1f2;
+  color: #dc2626;
+  border-color: #ef444455;
+}
+
+body[data-theme="light"] .back,
+body[data-theme="light"] .secondary {
+  background: #fff;
   color: #0f172a;
 }
 
-body[data-theme="light"] .viewSelectorIcon,
-body[data-theme="light"] .viewOptionIcon {
+body[data-theme="light"] .formula,
+body[data-theme="light"] .calcResult {
   background: #eef4fb;
-}
-
-body[data-theme="light"] .viewOptions {
-  background: #f8fbff;
-  border-top-color: #0f172a12;
-}
-
-body[data-theme="light"] .viewOption {
-  color: #334155;
-}
-
-body[data-theme="light"] .viewOption.active {
-  background: #0ea5e912;
   color: #0f172a;
 }

@@ -2652,6 +2652,26 @@
 
   }
 
+  document.addEventListener("click", (e) => {
+  const selectors = [
+    "#viewSelector",
+    "#stageViewSelector"
+  ];
+
+  selectors.forEach(selector => {
+    const box = document.querySelector(selector);
+
+    if (!box) return;
+
+    const options = box.querySelector(".viewOptions");
+
+    if (!options || options.hidden) return;
+
+    if (!box.contains(e.target)) {
+      options.hidden = true;
+    }
+  });
+});
 })();
 
 

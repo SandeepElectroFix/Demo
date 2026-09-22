@@ -1,3 +1,6 @@
+(() => {
+  "use strict";
+
 /* =========================================================
      Sandeep ElectroFix - Estimate List
      app.js

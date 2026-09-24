@@ -1,4450 +1,5065 @@
 /* =========================================================
-   Sandeep ElectroFix - Estimate List
-   FINAL app.js
-   ---------------------------------------------------------
-   Includes:
-   • Android / Browser Back navigation
-   • Separate Stage View + Material View (10 modes each)
-   • Hindi / English language persistence
-   • Refresh / reload state persistence
-   • Estimate persistence
-   • Last entered field/unit/brand persistence
-   • Quantity required / other fields optional
-   • Explicit Add button + optional auto-next
-   • Dark / Light theme
-   • Calculator
-   • Settings / Reset
-   • Loader safely removed after render
-   ---------------------------------------------------------
-   DO NOT EDIT material.js for these features.
-   ========================================================= */
+Sandeep ElectroFix - Estimate List
+app.js
+
+Structure:
+index.html  -> UI
+style.css   -> Design
+config.js   -> UI/config control
+material.js -> Master Material Data
+app.js      -> Logic / Storage / Interaction
+
+LOADER SCREEN REMOVED
+========================================================= */
 
 (() => {
-  "use strict";
-
-  const C = window.APP_CONFIG || {};
-  const M = Array.isArray(window.MATERIALS) ? window.MATERIALS : [];
-
-  const $ = (s, root = document) => root.querySelector(s);
-  const $$ = (s, root = document) => [...root.querySelectorAll(s)];
-
-  const storeKey = C.storageKey || "sandeepEstimateItems";
-  const langKey = C.languageKey || "sandeepMaterialLang";
-  const viewKey = C.viewKey || "sandeepMaterialView";
-  const themeKey = C.themeKey || "sandeepTheme";
-  const stateKey = "sandeepEstimateAppState";
-  const lastKey = "sandeepEstimateLastValues";
-  const stageViewKey = "sandeepStageView";
-
-  const VIEW_MODES = [
-    ["grid", "▦"],
-    ["list", "☷"],
-    ["compact", "▪"],
-    ["large", "▣"],
-    ["mini", "▫"],
-    ["two-column", "▥"],
-    ["horizontal", "⇄"],
-    ["icon-list", "☰"],
-    ["timeline", "◉"],
-    ["dense", "▤"]
-  ];
-
-  let lang = localStorage.getItem(langKey) || C.defaultLanguage || "hi";
-  let page = "home";
-  let currentStage = -1;
-  let currentIndex = -1;
-  let view = localStorage.getItem(viewKey) || "grid";
-  let stageView = localStorage.getItem(stageViewKey) || "grid";
-  let lastValues = readJson(lastKey, {});
-  let editingId = null;
-  let restoring = false;
-  let toastTimer = null;
-
-  /* =======================================================
-     UI TEXT
-     ======================================================= */
-
-  const TEXT = {
-    hi: {
-      home: "होम",
-      estimate: "एस्टिमेट",
-      calculator: "कैलकुलेटर",
-      settings: "सेटिंग्स",
-      menu: "मेन्यू",
-      items: "आइटम",
-      material: "सामग्री",
-      open: "खोलें",
-      back: "वापस",
-      next: "अगला",
-      quantity: "मात्रा",
-      unit: "यूनिट",
-      brand: "ब्रांड",
-      optional: "वैकल्पिक",
-      add: "एस्टिमेट में जोड़ें",
-      added: "एस्टिमेट में जोड़ दिया गया",
-      required: "मात्रा भरना जरूरी है",
-      other: "बाकी सभी फ़ील्ड वैकल्पिक हैं",
-      price: "कीमत",
-      addPrice: "कीमत जोड़ें",
-      hidePrice: "कीमत छुपाएँ",
-      noItems: "अभी कोई आइटम नहीं जोड़ा गया",
-      clear: "एस्टिमेट साफ करें",
-      saved: "सेव आइटम",
-      dark: "डार्क थीम",
-      light: "लाइट थीम",
-      language: "भाषा",
-      theme: "थीम",
-      reset: "सेव डेटा रीसेट करें",
-      resetDone: "सेव डेटा रीसेट हो गया",
-      grid: "ग्रिड",
-      list: "लिस्ट",
-      compact: "कॉम्पैक्ट",
-      large: "लार्ज",
-      mini: "मिनी",
-      twoColumn: "2 कॉलम",
-      horizontal: "हॉरिजॉन्टल",
-      iconList: "आइकन लिस्ट",
-      timeline: "टाइमलाइन",
-      dense: "डेंस",
-      view: "व्यू",
-      stageView: "स्टेज व्यू",
-      materialView: "मटेरियल व्यू",
-      selected: "चुना गया",
-      savedState: "पेज सेव है",
-      current: "करंट",
-      power: "पावर (W)",
-      voltage: "वोल्टेज (V)",
-      resistance: "रेजिस्टेंस (Ω)",
-      calcHint: "जरूरी वैल्यू भरें",
-      calculate: "कैलकुलेट करें",
-      formula: "फॉर्मूला",
-      clearCalculator: "कैलकुलेटर साफ करें",
-      confirmReset: "क्या आप सेव एस्टिमेट और ऐप स्टेट रीसेट करना चाहते हैं?",
-      firstStage: "यह पहला स्टेज है",
-      firstItem: "यह पहला आइटम है",
-      lastItem: "यह आखिरी आइटम है",
-      savedAfterRefresh: "रिफ्रेश के बाद यही पेज खुलेगा",
-      imageHint: "डिटेल खोलने के लिए टैप करें",
-      noData: "डेटा उपलब्ध नहीं है",
-      welcome: "स्वागत है",
-      selectStage: "स्टेज चुनें और एस्टिमेट शुरू करें",
-      powerVoltage: "Power और Voltage भरें",
-      formulaCurrent: "I = P ÷ V",
-      formulaPower: "P = V × I",
-      formulaVoltage: "V = P ÷ I",
-      formulaResistance: "R = V ÷ I"
-    },
-
-    en: {
-      home: "Home",
-      estimate: "Estimate",
-      calculator: "Calculator",
-      settings: "Settings",
-      menu: "Menu",
-      items: "Items",
-      material: "Material",
-      open: "Open",
-      back: "Back",
-      next: "Next",
-      quantity: "Quantity",
-      unit: "Unit",
-      brand: "Brand",
-      optional: "optional",
-      add: "Add to Estimate",
-      added: "Added to Estimate",
-      required: "Quantity is required",
-      other: "All other fields are optional",
-      price: "Price",
-      addPrice: "Add Price",
-      hidePrice: "Hide Price",
-      noItems: "No items added yet",
-      clear: "Clear Estimate",
-      saved: "saved items",
-      dark: "Dark Theme",
-      light: "Light Theme",
-      language: "Language",
-      theme: "Theme",
-      reset: "Reset Saved Data",
-      resetDone: "Saved data has been reset",
-      grid: "Grid",
-      list: "List",
-      compact: "Compact",
-      large: "Large",
-      mini: "Mini",
-      twoColumn: "2 Column",
-      horizontal: "Horizontal",
-      iconList: "Icon List",
-      timeline: "Timeline",
-      dense: "Dense",
-      view: "View",
-      stageView: "Stage View",
-      materialView: "Material View",
-      selected: "Selected",
-      savedState: "Page saved",
-      current: "Current",
-      power: "Power (W)",
-      voltage: "Voltage (V)",
-      resistance: "Resistance (Ω)",
-      calcHint: "Enter the required values",
-      calculate: "Calculate",
-      formula: "Formula",
-      clearCalculator: "Clear Calculator",
-      confirmReset: "Reset saved estimate and app state?",
-      firstStage: "This is the first stage",
-      firstItem: "This is the first item",
-      lastItem: "This is the last item",
-      savedAfterRefresh: "This page will reopen after refresh",
-      imageHint: "Tap to open details",
-      noData: "No data available",
-      welcome: "Welcome",
-      selectStage: "Select a stage and start estimating",
-      powerVoltage: "Enter Power and Voltage",
-      formulaCurrent: "I = P ÷ V",
-      formulaPower: "P = V × I",
-      formulaVoltage: "V = P ÷ I",
-      formulaResistance: "R = V ÷ I"
-    }
-  };
-
-  const t = key =>
-    (TEXT[lang] || TEXT.en)[key] || key;
-
-  /* =======================================================
-     MATERIAL / FIELD TRANSLATION
-     Technical values remain English intentionally.
-     ======================================================= */
-
-  const MT = {
-    "STAGE 1": "स्टेज 1",
-    "STAGE 2": "स्टेज 2",
-    "STAGE 3": "स्टेज 3",
-    "STAGE 4": "स्टेज 4",
-    "STAGE 5": "स्टेज 5",
-
-    "Slab Conduit Installation": "स्लैब कन्ड्युट इंस्टॉलेशन",
-    "Wall Conduit Installation": "वॉल कन्ड्युट इंस्टॉलेशन",
-    "Wiring Installation": "वायरिंग इंस्टॉलेशन",
-    "Final Electrical Fittings": "फाइनल इलेक्ट्रिकल फिटिंग्स",
-    "False Ceiling Wiring Material": "फॉल्स सीलिंग वायरिंग मटेरियल",
-
-    "Conduit & Box": "कन्ड्युट और बॉक्स",
-    "Wiring Material": "वायरिंग सामग्री",
-    "Wiring & Conduit": "वायरिंग और कन्ड्युट",
-    "Switch & Socket": "स्विच और सॉकेट",
-
-    "Pipe": "पाइप",
-    "Bend": "बेंड",
-    "Junction Box": "जंक्शन बॉक्स",
-    "Fan Box": "फैन बॉक्स",
-    "Concealed Light Box": "कन्सील्ड लाइट बॉक्स",
-
-    "Modular Board (Concealed Metal/PVC Box)":
-      "मॉड्यूलर बोर्ड (कन्सील्ड मेटल/PVC बॉक्स)",
-
-    "MCB Box (Distribution Board)":
-      "MCB बॉक्स (डिस्ट्रीब्यूशन बोर्ड)",
-
-    "Wire": "वायर",
-    "Flexible Pipe": "फ्लेक्सिबल पाइप",
-    "Electrical Tape": "इलेक्ट्रिकल टेप",
-    "Fastener": "फास्टनर",
-
-    "Steel Wire / Spring Wire (Fish Tape)":
-      "स्टील वायर / स्प्रिंग वायर (फिश टेप)",
-
-    "Switch Plate": "स्विच प्लेट",
-    "Switch Board (Surface Gang Box)":
-      "स्विच बोर्ड (सरफेस गैंग बॉक्स)",
-
-    "Switch": "स्विच",
-    "Socket": "सॉकेट",
-    "Fan Regulator": "फैन रेगुलेटर",
-    "2 Way Switch": "2 वे स्विच",
-    "Bell Push": "बेल पुश",
-    "Neon Indicator": "नियॉन इंडिकेटर",
-    "Blank Plate / Dummy Switch":
-      "ब्लैंक प्लेट / डमी स्विच",
-
-    "DP Switch (Double Pole Switch)":
-      "DP स्विच (डबल पोल)",
-
-    "Mini MCB": "मिनी MCB",
-    "SP MCB (Single Pole)": "SP MCB (सिंगल पोल)",
-    "DP MCB (Double Pole)": "DP MCB (डबल पोल)",
-
-    "TPN MCB (Three Pole with Neutral)":
-      "TPN MCB (थ्री पोल विद न्यूट्रल)",
-
-    "MCB Changeover": "MCB चेंजओवर",
-    "DP Isolator": "DP आइसोलेटर",
-
-    "TPN Isolator (3P / 4P)":
-      "TPN आइसोलेटर (3P / 4P)",
-
-    "RCCB / RCD": "RCCB / RCD",
-    "MCB Box": "MCB बॉक्स",
-    "Kit Kat Fuse": "किट कैट फ्यूज",
-
-    "Fan Sheet": "फैन शीट",
-    "Round Sheet": "राउंड शीट",
-    "Fan Rod": "फैन रॉड",
-    "Fan Clamp": "फैन क्लैम्प",
-
-    "Holder": "होल्डर",
-    "Ceiling Rose": "सीलिंग रोज़",
-    "Chain": "चेन",
-
-    "LED Bulb": "LED बल्ब",
-    "LED Tube Light": "LED ट्यूब लाइट",
-    "Foot Light": "फुट लाइट",
-    "Up Down Light": "अप डाउन लाइट",
-    "Panel Light": "पैनल लाइट",
-    "Surface Light": "सरफेस लाइट",
-    "COB Light": "COB लाइट",
-    "COB Spot Light": "COB स्पॉट लाइट",
-    "Down Light": "डाउन लाइट",
-    "Strip Light": "स्ट्रिप लाइट",
-    "Rope Light": "रोप लाइट",
-    "LED Profile Channel": "LED प्रोफाइल चैनल",
-    "LED Strip Driver (SMPS)":
-      "LED स्ट्रिप ड्राइवर (SMPS)",
-
-    "Door Bell": "डोर बेल",
-    "Tape (Mounting / Double Sided)":
-      "माउंटिंग / डबल साइडेड टेप",
-
-    "Instant Glue": "इंस्टेंट ग्लू",
-    "Araldite Glue (Epoxy)": "अराल्डाइट ग्लू (एपॉक्सी)",
-    "POP (Plaster of Paris)": "POP (प्लास्टर ऑफ पेरिस)",
-    "Putty Blade / Patta": "पुट्टी ब्लेड / पट्टा",
-
-    "Screw": "स्क्रू",
-    "Lug (Cable Terminal Lug)": "लग (केबल टर्मिनल लग)",
-    "Washer": "वॉशर",
-    "Cable Tie / Zip Tie": "केबल टाई / ज़िप टाई",
-    "Cable Clip": "केबल क्लिप",
-    "Saddle (Pipe Clamp)": "सैडल (पाइप क्लैम्प)",
-
-    "PVC Wall Plug / Gulli / Gitti":
-      "PVC वॉल प्लग / गुल्ली / गिट्टी",
-
-    "Tape (Shuttering & Joint Sealing)":
-      "टेप (शटरिंग और जॉइंट सीलिंग)",
-
-    "Solvent Cement": "सॉल्वेंट सीमेंट",
-    "Neel Powder (Marking Powder)":
-      "नील पाउडर (मार्किंग पाउडर)",
-
-    "Binding Wire": "बाइंडिंग वायर",
-
-    "Tape (Masking & Plaster Protection)":
-      "टेप (मास्किंग और प्लास्टर प्रोटेक्शन)",
-
-    "Installation Material": "इंस्टॉलेशन सामग्री",
-    "Installation & Fastening": "इंस्टॉलेशन और फास्टनिंग",
-    "Fan & Ceiling": "फैन और सीलिंग",
-    "Lighting": "लाइटिंग",
-    "MCB & Protection": "MCB और प्रोटेक्शन",
-    "Pulling Material": "पुलिंग सामग्री",
-    "Installation & Finishing":
-      "इंस्टॉलेशन और फिनिशिंग",
-
-    "Size": "साइज",
-    "Conduit Size": "कन्ड्युट साइज",
-    "Type": "टाइप",
-    "Sub Type": "सब टाइप",
-    "Shape / Ways": "शेप / वेज़",
-    "Material": "मटेरियल",
-    "Material Type": "मटेरियल टाइप",
-    "Module": "मॉड्यूल",
-    "Phase Selection": "फेज़ सिलेक्शन",
-    "Door Type": "डोर टाइप",
-    "Depth": "डेप्थ",
-    "Ways": "वेज़",
-    "Hook Rod": "हुक रॉड",
-    "Diameter": "डायमीटर",
-    "Pack Size": "पैक साइज",
-    "Pack Size (Weight)": "पैक साइज (वजन)",
-    "Size (Length)": "साइज (लंबाई)",
-    "Size (Width)": "साइज (चौड़ाई)",
-    "Size (Width × Length)":
-      "साइज (चौड़ाई × लंबाई)",
-    "Size (Diameter × Length)":
-      "साइज (डायमीटर × लंबाई)",
-    "Gauge / Size": "गेज / साइज",
-    "Colour": "कलर",
-    "Color": "कलर",
-    "Amp": "एम्प",
-    "Curve": "कर्व",
-    "Sensitivity": "सेंसिटिविटी",
-    "Door": "डोर",
-    "Voltage": "वोल्टेज",
-    "Wattage": "वॉटेज",
-    "Base": "बेस",
-    "Colour Temp": "कलर टेम्परेचर",
-    "Mounting": "माउंटिंग",
-    "Shape": "शेप",
-    "Density": "डेंसिटी",
-    "Length": "लंबाई",
-    "Supply Voltage": "सप्लाई वोल्टेज",
-    "Dimensions (W × D)":
-      "डायमेंशन (W × D)",
-    "Diffuser": "डिफ्यूज़र",
-    "Output Voltage": "आउटपुट वोल्टेज",
-    "Beam Angle": "बीम एंगल",
-    "Body Finish": "बॉडी फिनिश",
-    "Movement": "मूवमेंट",
-    "Size / Diameter": "साइज / डायमीटर",
-    "Weight": "वजन"
-  };
-
-  function tx(value) {
-    const raw = String(value ?? "");
-
-    if (lang === "en") {
-      return raw;
-    }
-
-    return MT[raw] || raw;
-  }
-
-  /* =======================================================
-     STORAGE HELPERS
-     ======================================================= */
-
-  function readJson(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-
-      return raw == null
-        ? fallback
-        : JSON.parse(raw);
-
-    } catch (_) {
-      return fallback;
-    }
-  }
-
-  function writeJson(key, value) {
-    try {
-      localStorage.setItem(
-        key,
-        JSON.stringify(value)
-      );
-
-    } catch (error) {
-      console.warn(
-        "Storage write failed:",
-        error
-      );
-    }
-  }
-
-  function readItems() {
-    const data = readJson(
-      storeKey,
-      []
-    );
-
-    return Array.isArray(data)
-      ? data
-      : [];
-  }
-
-  function writeItems(items) {
-    writeJson(
-      storeKey,
-      items
-    );
-  }
-
-  function saveLastValues() {
-    writeJson(
-      lastKey,
-      lastValues
-    );
-  }
-
-  function saveAppState(replace = true) {
-    const state = {
-      electroFix: true,
-      page,
-      currentStage,
-      currentIndex,
-      view,
-      stageView,
-      lang,
-      theme:
-        localStorage.getItem(themeKey) ||
-        C.theme?.default ||
-        "dark",
-      savedAt: Date.now()
-    };
-
-    writeJson(
-      stateKey,
-      state
-    );
-
-    try {
-
-      if (replace) {
-        history.replaceState(
-          state,
-          "",
-          location.href
-        );
-      } else {
-        history.pushState(
-          state,
-          "",
-          location.href
-        );
-      }
-
-    } catch (error) {
-      console.warn(
-        "History state error:",
-        error
-      );
-    }
-  }
-
-  function loadSavedState() {
-
-    const state =
-      readJson(
-        stateKey,
-        null
-      );
-
-    if (
-      !state ||
-      state.electroFix !== true
-    ) {
-      return;
-    }
-
-    const validPages = [
-      "home",
-      "stage",
-      "item",
-      "estimate",
-      "calculator",
-      "settings"
-    ];
-
-    if (
-      validPages.includes(
-        state.page
-      )
-    ) {
-      page = state.page;
-    }
-
-    currentStage =
-      Number.isInteger(
-        state.currentStage
-      )
-        ? state.currentStage
-        : -1;
-
-    currentIndex =
-      Number.isInteger(
-        state.currentIndex
-      )
-        ? state.currentIndex
-        : -1;
-
-    const validViews =
-      VIEW_MODES.map(
-        x => x[0]
-      );
-
-    if (
-      validViews.includes(
-        state.view
-      )
-    ) {
-      view = state.view;
-    }
-
-    if (
-      validViews.includes(
-        state.stageView
-      )
-    ) {
-      stageView =
-        state.stageView;
-    }
-
-    if (
-      state.lang === "hi" ||
-      state.lang === "en"
-    ) {
-      lang = state.lang;
-    }
-
-    validateNavigationState();
-  }
-
-  function validateNavigationState() {
-
-    if (
-      page === "stage" ||
-      page === "item"
-    ) {
-
-      if (!M[currentStage]) {
-
-        page = "home";
-        currentStage = -1;
-        currentIndex = -1;
-
-        return;
-      }
-    }
-
-    if (page === "item") {
-
-      const items =
-        stageItems(
-          M[currentStage]
-        );
-
-      if (!items[currentIndex]) {
-
-        page = "stage";
-        currentIndex = -1;
-      }
-    }
-  }
-
-  /* =======================================================
-     MASTER DATA HELPERS
-     ======================================================= */
-
-  function stageItems(stage) {
-
-    if (!Array.isArray(stage)) {
-      return [];
-    }
-
-    const direct =
-      Array.isArray(stage[3])
-        ? stage[3]
-        : [];
-
-    const groups =
-      Array.isArray(stage[4])
-        ? stage[4]
-        : [];
-
-    const grouped =
-      groups.flatMap(group => {
-
-        if (!Array.isArray(group)) {
-          return [];
-        }
-
-        return Array.isArray(group[1])
-          ? group[1]
-          : [];
-      });
-
-    return [
-      ...direct,
-      ...grouped
-    ];
-  }
-
-  function allItems() {
-
-    return M.flatMap(
-      (stage, stageIndex) =>
-
-        stageItems(stage).map(
-          (item, itemIndex) => ({
-            stage: stage[0],
-            stageName: stage[1],
-            item,
-            stageIndex,
-            itemIndex
-          })
-        )
-    );
-  }
-
-  function itemParts(item) {
-
-    return [
-      item?.[0] || "",
-
-      Array.isArray(item?.[1])
-        ? item[1]
-        : [],
-
-      Array.isArray(item?.[2])
-        ? item[2]
-        : [],
-
-      Array.isArray(item?.[3])
-        ? item[3]
-        : []
-    ];
-  }
-
-  /* =======================================================
-     HTML HELPERS
-     ======================================================= */
-
-  function esc(value) {
-
-    return String(value ?? "")
-      .replace(
-        /[&<>"']/g,
-        char => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        })[char]
-      );
-  }
-
-  function viewLabel(mode) {
-
-    const map = {
-      grid: "grid",
-      list: "list",
-      compact: "compact",
-      large: "large",
-      mini: "mini",
-      "two-column": "twoColumn",
-      horizontal: "horizontal",
-      "icon-list": "iconList",
-      timeline: "timeline",
-      dense: "dense"
-    };
-
-    return t(
-      map[mode] || mode
-    );
-  }
-
-  function viewButton(
-    mode,
-    current,
-    prefix = "material"
-  ) {
-
-    const found =
-      VIEW_MODES.find(
-        x => x[0] === mode
-      ) ||
-      VIEW_MODES[0];
-
-    const attr =
-      prefix === "stage"
-        ? "data-stage-view"
-        : "data-material-view";
-
-    return `
-      <button
-        type="button"
-        class="${
-          prefix === "stage"
-            ? "stageViewOption"
-            : "viewOption"
-        } ${
-          current === mode
-            ? "active"
-            : ""
-        }"
-        ${attr}="${esc(mode)}"
-        aria-label="${esc(
-          viewLabel(mode)
-        )}"
-      >
-        <span class="viewOptionIcon">
-          ${found[1]}
-        </span>
-
-        <span>
-          ${esc(
-            viewLabel(mode)
-          )}
-        </span>
-      </button>
-    `;
-  }
-
-  function viewSelector(
-    current,
-    prefix
-  ) {
-
-    const isStage =
-      prefix === "stage";
-
-    const title =
-      isStage
-        ? t("stageView")
-        : t("materialView");
-
-    const icon =
-      isStage
-        ? "▦"
-        : "◈";
-
-    const wrapper =
-      isStage
-        ? "stageViewSelector"
-        : "viewSelector";
-
-    const buttonClass =
-      isStage
-        ? "stageViewBtn"
-        : "viewSelectorHead";
-
-    const iconClass =
-      isStage
-        ? ""
-        : "viewSelectorIcon";
-
-    const optionsClass =
-      isStage
-        ? "stageViewOptions"
-        : "viewOptions";
-
-    return `
-      <div
-        class="${wrapper}"
-        data-view-wrapper="${prefix}"
-      >
-
-        <button
-          type="button"
-          class="${buttonClass}"
-          data-open-view="${prefix}"
-          aria-label="${esc(title)}"
-          aria-expanded="false"
-        >
-          <span class="${iconClass}">
-            ${icon}
-          </span>
-
-          <i>⌄</i>
-        </button>
-
-        <div
-          class="${optionsClass}"
-          data-view-popup="${prefix}"
-          hidden
-        >
-          ${VIEW_MODES
-            .map(mode =>
-              viewButton(
-                mode[0],
-                current,
-                prefix
-              )
-            )
-            .join("")}
-        </div>
-
-      </div>
-    `;
-  }
-
-  function applyViewClass(
-    element,
-    mode
-  ) {
-
-    if (!element) {
-      return;
-    }
-
-    VIEW_MODES.forEach(
-      x =>
-        element.classList.remove(
-          x[0]
-        )
-    );
-
-    element.classList.add(
-      mode
-    );
-
-    element.dataset.view =
-      mode;
-  }
-
-  /* =======================================================
-     COMMON DATA HELPERS
-     ======================================================= */
-
-  function stageTitle(stage) {
-
-    if (!stage) {
-      return t("noData");
-    }
-
-    return tx(
-      stage[1] ||
-      stage[0] ||
-      ""
-    );
-  }
-
-  function materialTitle(item) {
-
-    const parts =
-      itemParts(item);
-
-    return tx(
-      parts[0]
-    );
-  }
-
-  function materialImage(item) {
-
-    const parts =
-      itemParts(item);
-
-    const possible =
-      parts[1];
-
-    if (
-      Array.isArray(possible)
-    ) {
-
-      for (
-        const value of possible
-      ) {
-
-        if (
-          typeof value ===
-            "string" &&
-          (
-            value.startsWith(
-              "http"
-            ) ||
-            value.includes(
-              ".png"
-            ) ||
-            value.includes(
-              ".jpg"
-            ) ||
-            value.includes(
-              ".jpeg"
-            ) ||
-            value.includes(
-              ".webp"
-            ) ||
-            value.includes(
-              ".svg"
-            )
-          )
-        ) {
-          return value;
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function normalizeField(field) {
-
-    if (
-      !Array.isArray(field)
-    ) {
-      return null;
-    }
-
-    return {
-      key:
-        field[0] ??
-        field.name ??
-        "",
-
-      label:
-        field[1] ??
-        field.label ??
-        field[0] ??
-        "",
-
-      options:
-        Array.isArray(field[2])
-          ? field[2]
-          : [],
-
-      extra:
-        field[3] ?? null
-    };
-  }
-
-  function getFields(item) {
-
-    const parts =
-      itemParts(item);
-
-    const raw =
-      parts[2];
-
-    if (
-      !Array.isArray(raw)
-    ) {
-      return [];
-    }
-
-    return raw
-      .map(normalizeField)
-      .filter(Boolean);
-  }
-
-  function getUnits(item) {
-
-    const parts =
-      itemParts(item);
-
-    const raw =
-      parts[3];
-
-    if (
-      !Array.isArray(raw)
-    ) {
-      return [];
-    }
-
-    return raw;
-  }
-
-  function isPipeLike(item) {
-
-    const name =
-      materialTitle(item)
-        .toLowerCase();
-
-    return (
-      name ===
-        tx("Pipe").toLowerCase() ||
-      name ===
-        tx("Bend").toLowerCase() ||
-      name ===
-        tx("Junction Box").toLowerCase()
-    );
-  }
-
-  function fieldKey(field) {
-
-    return String(
-      field?.key ??
-      field?.label ??
-      ""
-    )
-      .trim()
-      .toLowerCase()
-      .replace(
-        /\s+/g,
-        "_"
-      );
-  }
-
-  function findQuantityField(fields) {
-
-    return (
-      fields.find(
-        f => {
-
-          const k =
-            fieldKey(f);
-
-          return (
-            k === "quantity" ||
-            k === "qty" ||
-            k.includes("quantity") ||
-            k.includes("qty")
-          );
-        }
-      ) ||
-      null
-    );
-  }
-
-  function findUnitField(fields) {
-
-    return (
-      fields.find(
-        f => {
-
-          const k =
-            fieldKey(f);
-
-          return (
-            k === "unit" ||
-            k.includes("unit")
-          );
-        }
-      ) ||
-      null
-    );
-  }
-
-  function findBrandField(fields) {
-
-    return (
-      fields.find(
-        f => {
-
-          const k =
-            fieldKey(f);
-
-          return (
-            k === "brand" ||
-            k.includes("brand")
-          );
-        }
-      ) ||
-      null
-    );
-  }
-
-  /* =======================================================
-     LAST-VALUE HELPERS
-     ======================================================= */
-
-  function itemMemoryKey(
-    stageIndex,
-    itemIndex
-  ) {
-
-    return (
-      `${stageIndex}_${itemIndex}`
-    );
-  }
-
-  function getItemLastValues(
-    stageIndex,
-    itemIndex
-  ) {
-
-    const key =
-      itemMemoryKey(
-        stageIndex,
-        itemIndex
-      );
-
-    const data =
-      lastValues[key];
-
-    return (
-      data &&
-      typeof data === "object"
-    )
-      ? data
-      : {};
-  }
-
-  function setItemLastValue(
-    stageIndex,
-    itemIndex,
-    key,
-    value
-  ) {
-
-    const memoryKey =
-      itemMemoryKey(
-        stageIndex,
-        itemIndex
-      );
-
-    if (
-      !lastValues[memoryKey] ||
-      typeof lastValues[memoryKey] !==
-        "object"
-    ) {
-      lastValues[memoryKey] = {};
-    }
-
-    lastValues[memoryKey][key] =
-      value;
-
-    saveLastValues();
-  }
-
-  function getSavedFieldValue(
-    stageIndex,
-    itemIndex,
-    key
-  ) {
-
-    const values =
-      getItemLastValues(
-        stageIndex,
-        itemIndex
-      );
-
-    return values[key] ?? "";
-  }
-
-  /* =======================================================
-     THEME
-     ======================================================= */
-
-  function getTheme() {
-
-    return (
-      localStorage.getItem(
-        themeKey
-      ) ||
-      C.theme?.default ||
-      "dark"
-    );
-  }
-
-  function applyTheme() {
-
-    const theme =
-      getTheme();
-
-    document.documentElement
-      .setAttribute(
-        "data-theme",
-        theme
-      );
-
-    document.body?.setAttribute(
-      "data-theme",
-      theme
-    );
-  }
-
-  function setTheme(theme) {
-
-    const value =
-      theme === "light"
-        ? "light"
-        : "dark";
-
-    localStorage.setItem(
-      themeKey,
-      value
-    );
-
-    applyTheme();
-
-    saveAppState();
-
-    render();
-  }
-
-  /* =======================================================
-     LANGUAGE
-     ======================================================= */
-
-  function setLanguage(value) {
-
-    lang =
-      value === "en"
-        ? "en"
-        : "hi";
-
-    localStorage.setItem(
-      langKey,
-      lang
-    );
-
-    saveAppState();
-
-    render();
-  }
-
-  /* =======================================================
-     TOAST
-     ======================================================= */
-
-  function toast(
-    message,
-    duration = 1500
-  ) {
-
-    let element =
-      $("#electroToast");
-
-    if (!element) {
-
-      element =
-        document.createElement(
-          "div"
-        );
-
-      element.id =
-        "electroToast";
-
-      element.className =
-        "electroToast";
-
-      document.body.appendChild(
-        element
-      );
-    }
-
-    element.textContent =
-      message;
-
-    element.classList.add(
-      "show"
-    );
-
-    clearTimeout(
-      toastTimer
-    );
-
-    toastTimer =
-      setTimeout(
-        () => {
-
-          element.classList.remove(
-            "show"
-          );
-
-        },
-        duration
-      );
-  }
-
-  /* =======================================================
-     DRAWER
-     ======================================================= */
-
-  function drawerElement() {
-
-    return (
-      $("#drawer") ||
-      $("#sideDrawer") ||
-      $(".drawer")
-    );
-  }
-
-  function setDrawer(open) {
-
-    const drawer =
-      drawerElement();
-
-    if (!drawer) {
-      return;
-    }
-
-    drawer.classList.toggle(
-      "open",
-      !!open
-    );
-
-    drawer.classList.toggle(
-      "active",
-      !!open
-    );
-
-    drawer.setAttribute(
-      "aria-hidden",
-      open
-        ? "false"
-        : "true"
-    );
-
-    const menuBtn =
-      $("#menuBtn");
-
-    if (menuBtn) {
-
-      menuBtn.classList.toggle(
-        "active",
-        !!open
-      );
-
-      menuBtn.setAttribute(
-        "aria-expanded",
-        open
-          ? "true"
-          : "false"
-      );
-    }
-  }
-
-  function isDrawerOpen() {
-
-    const drawer =
-      drawerElement();
-
-    if (!drawer) {
-      return false;
-    }
-
-    return (
-      drawer.classList.contains(
-        "open"
-      ) ||
-      drawer.classList.contains(
-        "active"
-      )
-    );
-  }
-
-  /* =======================================================
-     VIEW POPUP
-     ======================================================= */
-
-  function closeViewPopups() {
-
-    $$(
-      "[data-view-popup]"
-    ).forEach(
-      popup => {
-
-        popup.hidden = true;
-
-        const wrapper =
-          popup.closest(
-            "[data-view-wrapper]"
-          );
-
-        const button =
-          wrapper?.querySelector(
-            "[data-open-view]"
-          );
-
-        button?.setAttribute(
-          "aria-expanded",
-          "false"
-        );
-      }
-    );
-  }
-
-  function toggleViewPopup(
-    prefix
-  ) {
-
-    const popup =
-      document.querySelector(
-        `[data-view-popup="${prefix}"]`
-      );
-
-    if (!popup) {
-      return;
-    }
-
-    const wasHidden =
-      popup.hidden;
-
-    closeViewPopups();
-
-    if (wasHidden) {
-
-      popup.hidden =
-        false;
-
-      const button =
-        document.querySelector(
-          `[data-open-view="${prefix}"]`
-        );
-
-      button?.setAttribute(
-        "aria-expanded",
-        "true"
-      );
-    }
-  }
-
-  /* =======================================================
-     IMAGE SAFE LOADER
-     ======================================================= */
-
-  function imageHtml(
-    item,
-    className = ""
-  ) {
-
-    const src =
-      materialImage(item);
-
-    if (!src) {
-      return "";
-    }
-
-    return `
-      <img
-        class="${esc(className)}"
-        src="${esc(src)}"
-        alt="${esc(
-          materialTitle(item)
-        )}"
-        loading="lazy"
-        decoding="async"
-      >
-    `;
-  }
-
-  /* =======================================================
-     ITEM ID
-     ======================================================= */
-
-  function makeEstimateId() {
-
-    return (
-      "ef_" +
-      Date.now().toString(36) +
-      "_" +
-      Math.random()
-        .toString(36)
-        .slice(2, 8)
-    );
-  }
-
-  /* =======================================================
-     ESTIMATE DATA
-     ======================================================= */
-
-  function estimateValueFromElement(
-    element
-  ) {
-
-    if (!element) {
-      return "";
-    }
-
-    if (
-      element.type ===
-        "checkbox"
-    ) {
-      return element.checked
-        ? "true"
-        : "false";
-    }
-
-    return element.value ?? "";
-  }
-
-  function collectEditorValues() {
-
-    const editor =
-      $("#itemEditor");
-
-    if (!editor) {
-      return {};
-    }
-
-    const values = {};
-
-    $$(
-      "[data-field-key]",
-      editor
-    ).forEach(
-      element => {
-
-        const key =
-          element.dataset.fieldKey;
-
-        if (!key) {
-          return;
-        }
-
-        values[key] =
-          estimateValueFromElement(
-            element
-          );
-      }
-    );
-
-    const quantity =
-      editor.querySelector(
-        "[data-quantity]"
-      );
-
-    if (quantity) {
-
-      values.quantity =
-        quantity.value ?? "";
-    }
-
-    const unit =
-      editor.querySelector(
-        "[data-unit]"
-      );
-
-    if (unit) {
-
-      values.unit =
-        unit.value ?? "";
-    }
-
-    const brand =
-      editor.querySelector(
-        "[data-brand]"
-      );
-
-    if (brand) {
-
-      values.brand =
-        brand.value ?? "";
-    }
-
-    const price =
-      editor.querySelector(
-        "[data-price]"
-      );
-
-    if (price) {
-
-      values.price =
-        price.value ?? "";
-    }
-
-    return values;
-  }
-
-  function rememberEditorValues() {
-
-    if (
-      currentStage < 0 ||
-      currentIndex < 0
-    ) {
-      return;
-    }
-
-    const values =
-      collectEditorValues();
-
-    if (
-      !Object.keys(values).length
-    ) {
-      return;
-    }
-
-    const key =
-      itemMemoryKey(
-        currentStage,
-        currentIndex
-      );
-
-    lastValues[key] = {
-      ...getItemLastValues(
-        currentStage,
-        currentIndex
-      ),
-      ...values
-    };
-
-    saveLastValues();
-  }
-
-  /* =======================================================
-     EDITOR FIELD ORDER
-     ======================================================= */
-
-  function orderedFields(
-    item
-  ) {
-
-    const fields =
-      getFields(item);
-
-    if (!isPipeLike(item)) {
-      return fields;
-    }
-
-    const order = [
-      "size",
-      "conduit_size",
-      "type",
-      "sub_type",
-      "shape",
-      "shape_/_ways",
-      "ways",
-      "quantity",
-      "qty",
-      "unit",
-      "brand"
-    ];
-
-    const result = [];
-
-    order.forEach(
-      wanted => {
-
-        const found =
-          fields.find(
-            field =>
-              fieldKey(field) ===
-              wanted
-          );
-
-        if (
-          found &&
-          !result.includes(found)
-        ) {
-          result.push(found);
-        }
-      }
-    );
-
-    fields.forEach(
-      field => {
-
-        if (
-          !result.includes(field)
-        ) {
-          result.push(field);
-        }
-      }
-    );
-
-    return result;
-  }
-
-  /* =======================================================
-     OPTION HTML
-     ======================================================= */
-
-  function optionHtml(
-    value,
-    selected
-  ) {
-
-    const raw =
-      String(value ?? "");
-
-    return `
-      <option
-        value="${esc(raw)}"
-        ${String(selected ?? "") === raw
-          ? "selected"
-          : ""}
-      >
-        ${esc(tx(raw))}
-      </option>
-    `;
-  }
-
-  function optionsHtml(
-    options,
-    selected,
-    includeBlank = true
-  ) {
-
-    const list =
-      Array.isArray(options)
-        ? options
-        : [];
-
-    let html =
-      includeBlank
-        ? `<option value="">—</option>`
-        : "";
-
-    html += list
-      .map(
-        value =>
-          optionHtml(
-            value,
-            selected
-          )
-      )
-      .join("");
-
-    return html;
-  }
-
-  /* =======================================================
-     FIELD HTML
-     ======================================================= */
-
-  function fieldHtml(
-    field,
-    stageIndex,
-    itemIndex,
-    saved
-  ) {
-
-    const key =
-      fieldKey(field);
-
-    const label =
-      tx(
-        field.label ||
-        field.key
-      );
-
-    const options =
-      Array.isArray(
-        field.options
-      )
-        ? field.options
-        : [];
-
-    const savedValue =
-      saved[key] ??
-      saved[field.key] ??
-      "";
-
-    const quantityLike =
-      key === "quantity" ||
-      key === "qty" ||
-      key.includes("quantity") ||
-      key.includes("qty");
-
-    const unitLike =
-      key === "unit" ||
-      key.includes("unit");
-
-    const brandLike =
-      key === "brand" ||
-      key.includes("brand");
-
-    if (
-      quantityLike
-    ) {
-
-      const value =
-        savedValue === ""
-          ? "1"
-          : savedValue;
-
-      return `
-        <div
-          class="fieldGroup quantityField"
-          data-field-wrap="${esc(key)}"
-        >
-
-          <label>
-            ${esc(label)}
-          </label>
-
-          <div class="quantityControl">
-
-            <button
-              type="button"
-              class="qtyBtn"
-              data-qty-minus
-              aria-label="−"
-            >
-              −
-            </button>
-
-            <input
-              type="number"
-              min="0"
-              step="any"
-              inputmode="decimal"
-              class="fieldInput"
-              data-field-key="${esc(key)}"
-              data-quantity
-              value="${esc(value)}"
-            >
-
-            <button
-              type="button"
-              class="qtyBtn"
-              data-qty-plus
-              aria-label="+"
-            >
-              +
-            </button>
-
-          </div>
-
-          <button
-            type="button"
-            class="fieldClear"
-            data-clear-field="${esc(key)}"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </div>
-      `;
-    }
-
-    if (
-      unitLike
-    ) {
-
-      const currentUnit =
-        savedValue ||
-        getItemLastValues(
-          stageIndex,
-          itemIndex
-        ).unit ||
-        options[0] ||
-        "";
-
-      return `
-        <div
-          class="fieldGroup"
-          data-field-wrap="${esc(key)}"
-        >
-
-          <label>
-            ${esc(label)}
-          </label>
-
-          <select
-            class="fieldInput"
-            data-field-key="${esc(key)}"
-            data-unit
-          >
-            ${optionsHtml(
-              options,
-              currentUnit,
-              false
-            )}
-          </select>
-
-          <button
-            type="button"
-            class="fieldClear"
-            data-clear-field="${esc(key)}"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </div>
-      `;
-    }
-
-    if (
-      brandLike
-    ) {
-
-      return `
-        <div
-          class="fieldGroup"
-          data-field-wrap="${esc(key)}"
-        >
-
-          <label>
-            ${esc(label)}
-            <small>
-              (${esc(t("optional"))})
-            </small>
-          </label>
-
-          <select
-            class="fieldInput"
-            data-field-key="${esc(key)}"
-            data-brand
-          >
-            ${optionsHtml(
-              options,
-              savedValue,
-              true
-            )}
-          </select>
-
-          <button
-            type="button"
-            class="fieldClear"
-            data-clear-field="${esc(key)}"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </div>
-      `;
-    }
-
-    return `
-      <div
-        class="fieldGroup"
-        data-field-wrap="${esc(key)}"
-      >
-
-        <label>
-          ${esc(label)}
-        </label>
-
-        <select
-          class="fieldInput"
-          data-field-key="${esc(key)}"
-        >
-          ${optionsHtml(
-            options,
-            savedValue,
-            true
-          )}
-        </select>
-
-        <button
-          type="button"
-          class="fieldClear"
-          data-clear-field="${esc(key)}"
-          aria-label="Clear"
-        >
-          ×
-        </button>
-
-      </div>
-    `;
-  }
-
-  /* =======================================================
-     PRICE FIELD
-     ======================================================= */
-
-  function priceHtml(
-    saved
-  ) {
-
-    const enabled =
-      saved.price !== undefined &&
-      saved.price !== "";
-
-    return `
-      <div
-        class="priceSection ${
-          enabled
-            ? "priceVisible"
-            : ""
-        }"
-      >
-
-        <button
-          type="button"
-          class="priceToggle"
-          data-price-toggle
-        >
-          ${
-            enabled
-              ? t("hidePrice")
-              : t("addPrice")
-          }
-        </button>
-
-        <div
-          class="priceWrap"
-          ${enabled
-            ? ""
-            : "hidden"}
-        >
-
-          <label>
-            ${esc(t("price"))}
-          </label>
-
-          <input
-            type="number"
-            min="0"
-            step="any"
-            inputmode="decimal"
-            class="fieldInput"
-            data-price
-            value="${esc(
-              saved.price || ""
-            )}"
-          >
-
-          <button
-            type="button"
-            class="fieldClear"
-            data-clear-field="price"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-    /* =======================================================
-     HOME / STAGE LIST
-     ======================================================= */
-
-  function home() {
-    const total = allItems().length;
-
-    return `
-      <section class="page homePage">
-        <div class="hero">
-          <img src="logo.png" class="heroLogo" alt="Sandeep ElectroFix Logo">
-          <span>POWERING YOUR TRUST</span>
-          <h1>${esc(lang === "hi" ? "मटेरियल एस्टिमेट" : "Material Estimate")}</h1>
-          <p>${total} ${esc(t("items"))}</p>
-        </div>
-
-        <div class="stageToolbar">
-          ${viewSelector(stageView, "stage")}
-        </div>
-
-        <div class="stageGrid ${esc(stageView)}">
-          ${M.map((stage, index) => {
-            const count = stageItems(stage).length;
-
-            return `
-              <button
-                class="stageCard ${esc(stageView)}"
-                data-stage="${index}"
-                type="button"
-              >
-                <span class="stageNo">
-                  ${String(index + 1).padStart(2, "0")}
-                </span>
-
-                <small>
-                  ${esc(tx(stage[0]))}
-                </small>
-
-                <b>
-                  ${esc(tx(stage[1]))}
-                </b>
-
-                <span>
-                  ${count} ${esc(t("items"))}
-                </span>
-
-                <i>›</i>
-              </button>
-            `;
-          }).join("")}
-        </div>
-      </section>
-    `;
-  }
-
-  function renderHomeStageBindings() {
-    $$('[data-stage]').forEach(button => {
-      button.onclick = () => {
-        navigateTo(
-          "stage",
-          Number(button.dataset.stage),
-          -1
-        );
-      };
-    });
-
-    bindViewSelectors();
-  }
-
-  /* =======================================================
-     STAGE PAGE
-     ======================================================= */
-
-  function renderStage() {
-
-    const stage = M[currentStage];
-
-    if (!stage) {
-      page = "home";
-      currentStage = -1;
-      currentIndex = -1;
-      return render();
-    }
-
-    const items = stageItems(stage);
-    const main = $("#main");
-
-    if (!main) return;
-
-    main.innerHTML = `
-      <section class="page stagePage">
-
-        <button
-          class="back"
-          id="backStage"
-          type="button"
-        >
-          ← ${esc(t("back"))}
-        </button>
-
-        <div class="hero compact">
-
-          <small>
-            ${esc(tx(stage[0]))}
-          </small>
-
-          <h1>
-            ${esc(tx(stage[1]))}
-          </h1>
-
-          <p>
-            ${items.length} ${esc(t("items"))}
-          </p>
-
-        </div>
-
-        <div class="stageTools">
-
-          ${
-            C.ui?.viewSwitch !== false
-              ? viewSelector(view, "material")
-              : ""
-          }
-
-        </div>
-
-        <div class="itemGrid ${esc(view)}">
-
-          ${items.map((item, index) => {
-
-            const [name] =
-              itemParts(item);
-
-            return `
-              <button
-                class="itemCard ${esc(view)}"
-                data-item-index="${index}"
-                type="button"
-              >
-
-                ${materialImageHtml(item, false)}
-
-                <b>
-                  ${esc(tx(name))}
-                </b>
-
-                <span>
-                  ${esc(t("open"))}
-                </span>
-
-              </button>
-            `;
-
-          }).join("")}
-
-        </div>
-
-      </section>
-    `;
-
-    $("#backStage")
-      ?.addEventListener(
-        "click",
-        appBack
-      );
-
-    $$(".itemCard").forEach(button => {
-
-      button.onclick = () => {
-
-        navigateTo(
-          "item",
-          currentStage,
-          Number(
-            button.dataset.itemIndex
-          )
-        );
-
-      };
-
-    });
-
-    bindViewSelectors();
-  }
-
-  /* =======================================================
-     VIEW SELECTORS
-     ======================================================= */
-
-  function bindViewSelectors() {
-
-    $$('[data-open-view]').forEach(button => {
-
-      button.onclick = event => {
-
-        event.stopPropagation();
-
-        const name =
-          button.dataset.openView;
-
-        const popup =
-          $(
-            `[data-view-popup="${name}"]`
-          );
-
-        if (!popup) return;
-
-        $$('[data-view-popup]')
-          .forEach(other => {
-
-            if (other !== popup) {
-
-              other.hidden = true;
-
-              const otherButton =
-                document.querySelector(
-                  `[data-open-view="${other.dataset.viewPopup}"]`
-                );
-
-              if (otherButton) {
-
-                otherButton.setAttribute(
-                  "aria-expanded",
-                  "false"
-                );
-
-              }
-
-            }
-
-          });
-
-        popup.hidden =
-          !popup.hidden;
-
-        button.setAttribute(
-          "aria-expanded",
-          popup.hidden
-            ? "false"
-            : "true"
-        );
-
-      };
-
-    });
-
-    $$('[data-material-view]')
-      .forEach(button => {
-
-        button.onclick = event => {
-
-          event.stopPropagation();
-
-          const selected =
-            button.dataset.materialView;
-
-          if (
-            !VIEW_MODES.some(
-              x => x[0] === selected
-            )
-          ) {
-            return;
-          }
-
-          view = selected;
-
-          localStorage.setItem(
-            viewKey,
-            view
-          );
-
-          saveAppState(true);
-
-          renderStage();
-
-        };
-
-      });
-
-    $$('[data-stage-view]')
-      .forEach(button => {
-
-        button.onclick = event => {
-
-          event.stopPropagation();
-
-          const selected =
-            button.dataset.stageView;
-
-          if (
-            !VIEW_MODES.some(
-              x => x[0] === selected
-            )
-          ) {
-            return;
-          }
-
-          stageView = selected;
-
-          localStorage.setItem(
-            stageViewKey,
-            stageView
-          );
-
-          saveAppState(true);
-
-          render();
-
-        };
-
-      });
-
-  }
-
-  /* =======================================================
-     ITEM FORM
-     ======================================================= */
-
-  function materialImageHtml(
-    item,
-    big = false
-  ) {
-
-    const image =
-      item?.image ||
-      item?.img ||
-      item?.[5] ||
-      "";
-
-    if (!image) {
-
-      return `
-        <div
-          class="itemImage${big ? " big" : ""}"
-          aria-hidden="true"
-        ></div>
-      `;
-
-    }
-
-    return `
-      <img
-        class="itemImage${big ? " big" : ""}"
-        src="${esc(image)}"
-        alt=""
-        loading="lazy"
-      >
-    `;
-
-  }
-
-  function fieldHtml(
-    field,
-    index,
-    previous
-  ) {
-
-    const label =
-      String(
-        field?.[0] || ""
-      );
-
-    const options =
-      Array.isArray(field?.[1])
-        ? field[1]
-        : [];
-
-    const previousValue =
-      previous[label] || "";
-
-    if (
-      options.length === 1 &&
-      /^User Input/i.test(
-        String(options[0])
-      )
-    ) {
-
-      return `
-        <label class="field">
-
-          <span>
-            ${esc(tx(label))}
-            <em>
-              (${esc(t("optional"))})
-            </em>
-          </span>
-
-          <input
-            data-field="${index}"
-            data-label="${esc(label)}"
-            value="${esc(previousValue)}"
-            placeholder="${esc(options[0])}"
-          >
-
-          <button
-            class="fieldClear"
-            type="button"
-            data-clear-field="${index}"
-            aria-label="Clear"
-          >
-            ×
-          </button>
-
-        </label>
-      `;
-
-    }
-
-    return `
-      <div class="field">
-
-        <span>
-          ${esc(tx(label))}
-          <em>
-            (${esc(t("optional"))})
-          </em>
-        </span>
-
-        <div class="choices">
-
-          ${options.map(option => `
-
-            <button
-              type="button"
-              class="choice ${
-                previousValue === option
-                  ? "selected"
-                  : ""
-              }"
-              data-label="${esc(label)}"
-              data-value="${esc(option)}"
-            >
-              ${esc(option)}
-            </button>
-
-          `).join("")}
-
-        </div>
-
-      </div>
-    `;
-
-  }
-
-  /* =======================================================
-     RENDER ITEM
-     ======================================================= */
-
-  function renderItem() {
-
-    const stage =
-      M[currentStage];
-
-    const items =
-      stageItems(stage);
-
-    const item =
-      items[currentIndex];
-
-    if (!item) {
-
-      page = "stage";
-      currentIndex = -1;
-
-      return render();
-
-    }
-
-    const [
-      name,
-      fields,
-      units,
-      brands
-    ] = itemParts(item);
-
-    const key =
-      `${stage[0]}::${name}`;
-
-    const previous =
-      lastValues[key] || {};
-
-    const main =
-      $("#main");
-
-    if (!main) return;
-
-    main.innerHTML = `
-
-      <section class="page itemPage">
-
-        <button
-          class="back"
-          id="backItem"
-          type="button"
-        >
-          ← ${esc(t("back"))}
-        </button>
-
-        <div class="itemHead">
-
-          ${materialImageHtml(item, true)}
-
-          <div>
-
-            <small>
-              ${esc(tx(stage[0]))}
-            </small>
-
-            <h1>
-              ${esc(tx(name))}
-            </h1>
-
-            <span>
-              ${currentIndex + 1}
-              /
-              ${items.length}
-            </span>
-
-          </div>
-
-        </div>
-
-        <div class="formCard">
-
-          ${fields.map(
-            (field, index) =>
-              fieldHtml(
-                field,
-                index,
-                previous
-              )
-          ).join("")}
-
-          <label
-            class="field requiredField"
-          >
-
-            <span>
-              ${esc(t("quantity"))} *
-            </span>
-
-            <input
-              id="qty"
-              type="number"
-              min="0.01"
-              step="any"
-              inputmode="decimal"
-              value="${esc(previous.qty || "")}"
-              placeholder="${esc(t("quantity"))}"
-            >
-
-            <button
-              class="fieldClear"
-              type="button"
-              data-clear-id="qty"
-              aria-label="Clear"
-            >
-              ×
-            </button>
-
-          </label>
-
-          <label class="field">
-
-            <span>
-              ${esc(t("unit"))}
-              <em>
-                (${esc(t("optional"))})
-              </em>
-            </span>
-
-            <select id="unit">
-
-              <option value="">
-                — ${esc(t("optional"))} —
-              </option>
-
-              ${units.map(
-                unit => `
-                  <option
-                    value="${esc(unit)}"
-                  >
-                    ${esc(unit)}
-                  </option>
-                `
-              ).join("")}
-
-            </select>
-
-          </label>
-
-          ${
-            C.ui?.price !== false
-              ? `
-                <div class="priceWrap">
-
-                  <button
-                    id="priceToggle"
-                    class="priceToggle"
-                    type="button"
-                  >
-                    ＋ ${esc(t("addPrice"))}
-                  </button>
-
-                  <div
-                    id="priceBox"
-                    class="priceBox"
-                    hidden
-                  >
-
-                    <label class="field">
-
-                      <span>
-                        ${esc(t("price"))}
-                        (${esc(t("optional"))})
-                      </span>
-
-                      <input
-                        id="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        inputmode="decimal"
-                        value="${esc(previous.price || "")}"
-                        placeholder="0.00"
-                      >
-
-                      <button
-                        class="fieldClear"
-                        type="button"
-                        data-clear-id="price"
-                        aria-label="Clear"
-                      >
-                        ×
-                      </button>
-
-                    </label>
-
-                    <button
-                      id="priceHide"
-                      class="miniBtn"
-                      type="button"
-                    >
-                      ${esc(t("hidePrice"))}
-                    </button>
-
-                  </div>
-
-                </div>
-              `
-              : ""
-          }
-
-          <label class="field">
-
-            <span>
-              ${esc(t("brand"))}
-              <em>
-                (${esc(t("optional"))})
-              </em>
-            </span>
-
-            <select id="brand">
-
-              <option value="">
-                — ${esc(t("optional"))} —
-              </option>
-
-              ${brands.map(
-                brand => `
-                  <option
-                    value="${esc(brand)}"
-                  >
-                    ${esc(brand)}
-                  </option>
-                `
-              ).join("")}
-
-            </select>
-
-          </label>
-
-          <button
-            id="add"
-            class="primary"
-            type="button"
-          >
-            ✓ ${esc(t("add"))}
-          </button>
-
-          <p class="hint">
-            ${esc(t("required"))}.
-            ${esc(t("other"))}.
-          </p>
-
-        </div>
-
-      </section>
-    `;
-
-    // Unit and brand carry forward.
-    // Quantity intentionally starts empty for a new item.
-
-    if (previous.unit) {
-      $("#unit").value =
-        previous.unit;
-    }
-
-    if (previous.brand) {
-      $("#brand").value =
-        previous.brand;
-    }
-
-    const priceBox =
-      $("#priceBox");
-
-    const priceToggle =
-      $("#priceToggle");
-
-    if (
-      previous.price &&
-      priceBox &&
-      priceToggle
-    ) {
-
-      priceBox.hidden = false;
-      priceToggle.hidden = true;
-
-    }
-
-    $$(".choice").forEach(
-      choice => {
-
-        choice.onclick = () => {
-
-          choice.parentElement
-            .querySelectorAll(
-              ".choice"
-            )
-            .forEach(
-              x =>
-                x.classList.remove(
-                  "selected"
-                )
-            );
-
-          choice.classList.add(
-            "selected"
-          );
-
-        };
-
-      }
-    );
-
-    $$("[data-clear-field]")
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const input =
-            button.parentElement
-              .querySelector(
-                `[data-field="${button.dataset.clearField}"]`
-              );
-
-          if (input) {
-
-            input.value = "";
-            input.focus();
-
-          }
-
-        };
-
-      });
-
-    $$("[data-clear-id]")
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const input =
-            document.getElementById(
-              button.dataset.clearId
-            );
-
-          if (input) {
-
-            input.value = "";
-            input.focus();
-
-          }
-
-        };
-
-      });
-
-    $("#backItem")
-      ?.addEventListener(
-        "click",
-        appBack
-      );
-
-    $("#add")
-      ?.addEventListener(
-        "click",
-        addCurrent
-      );
-
-    $("#priceToggle")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            !priceBox ||
-            !priceToggle
-          ) {
-            return;
-          }
-
-          priceBox.hidden =
-            false;
-
-          priceToggle.hidden =
-            true;
-
-          $("#price")?.focus();
-
-        }
-      );
-
-    $("#priceHide")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            !priceBox ||
-            !priceToggle
-          ) {
-            return;
-          }
-
-          priceBox.hidden =
-            true;
-
-          priceToggle.hidden =
-            false;
-
-        }
-      );
-
-  }
-
-
-   /* =======================================================
-     ESTIMATE DATA COLLECTION
-     ======================================================= */
-
-  function collectOptions() {
-    const options = {};
-
-    $$(".choice.selected").forEach(choice => {
-      options[choice.dataset.label] =
-        choice.dataset.value;
-    });
-
-    $$("[data-field]").forEach(input => {
-      options[input.dataset.label] =
-        input.value.trim();
-    });
-
-    return options;
-  }
-
-  function addCurrent() {
-    const qtyInput = $("#qty");
-    const qty =
-      qtyInput?.value.trim() || "";
-
-    if (
-      C.rules?.quantityRequired !== false &&
-      (!qty || Number(qty) <= 0)
-    ) {
-      qtyInput?.classList.add("error");
-      qtyInput?.focus();
-      toast(t("required"));
-      return;
-    }
-
-    qtyInput?.classList.remove("error");
-
-    const stage = M[currentStage];
-    const item =
-      stageItems(stage)[currentIndex];
-
-    if (!stage || !item) return;
-
-    const [name] =
-      itemParts(item);
-
-    const options =
-      collectOptions();
-
-    const unit =
-      $("#unit")?.value || "";
-
-    const brand =
-      $("#brand")?.value || "";
-
-    const price =
-      $("#price")?.value.trim() || "";
-
-    const key =
-      `${stage[0]}::${name}`;
-
-    /*
-      Save current values so they can be restored
-      when this material is opened again.
-    */
-    lastValues[key] = {
-      ...options,
-      qty,
-      unit,
-      brand,
-      price
-    };
-
-    saveLastValues();
-
-    const saved =
-      readItems();
-
-    const record = {
-      id:
-        editingId ||
-        `${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}`,
-
-      stage:
-        stage[0],
-
-      stageName:
-        stage[1],
-
-      item:
-        name,
-
-      qty:
-        String(qty),
-
-      unit,
-
-      brand,
-
-      price,
-
-      options,
-
-      createdAt:
-        editingId
-          ? (
-              saved.find(
-                x =>
-                  x.id === editingId
-              )?.createdAt ||
-              new Date().toISOString()
-            )
-          : new Date().toISOString()
-    };
-
-    /*
-      EDIT existing estimate
-    */
-    if (editingId) {
-
-      const index =
-        saved.findIndex(
-          x =>
-            x.id === editingId
-        );
-
-      if (index >= 0) {
-        saved[index] =
-          record;
-      } else {
-        saved.push(record);
-      }
-
-      editingId = null;
-
-    } else {
-
-      /*
-        ADD new estimate
-      */
-      saved.push(record);
-    }
-
-    writeItems(saved);
-
-    toast(
-      t("added")
-    );
-
-    /*
-      After Add:
-      automatically open next material,
-      but NEVER automatically add it.
-    */
-    if (
-      C.navigation?.autoNextAfterAdd !== false &&
-      currentIndex <
-        stageItems(stage).length - 1
-    ) {
-
-      currentIndex++;
-
-      saveAppState(false);
-
-      setTimeout(() => {
-
-        render();
-
-        window.scrollTo({
-          top: 0,
-          behavior: "auto"
-        });
-
-      }, 220);
-
-    } else {
-
-      page = "stage";
-      currentIndex = -1;
-
-      saveAppState(false);
-
-      setTimeout(() => {
-
-        render();
-
-        window.scrollTo({
-          top: 0,
-          behavior: "auto"
-        });
-
-      }, 220);
-    }
-  }
-
-  /* =======================================================
-     ESTIMATE PAGE
-     ======================================================= */
-
-  function estimate() {
-
-    const saved =
-      readItems();
-
-    return `
-      <section class="page estimatePage">
-
-        <div class="hero compact">
-
-          <h1>
-            ${esc(t("estimate"))}
-          </h1>
-
-          <p>
-            ${saved.length}
-            ${esc(t("saved"))}
-          </p>
-
-        </div>
-
-        ${
-          saved.length
-            ? `
-
-              <div class="estimateList">
-
-                ${saved
-                  .map(
-                    (entry, index) => `
-
-                    <article
-                      class="estimateItem"
-                      data-estimate-index="${index}"
-                    >
-
-                      <div class="estimateTop">
-
-                        <div>
-
-                          <small>
-                            ${esc(
-                              tx(
-                                entry.stageName ||
-                                entry.stage ||
-                                ""
-                              )
-                            )}
-                          </small>
-
-                          <b>
-                            ${esc(
-                              tx(
-                                entry.item ||
-                                ""
-                              )
-                            )}
-                          </b>
-
-                          <span>
-                            ${esc(
-                              entry.qty ||
-                              ""
-                            )}
-
-                            ${
-                              entry.unit
-                                ? ` ${esc(
-                                    entry.unit
-                                  )}`
-                                : ""
-                            }
-
-                            ${
-                              entry.brand
-                                ? ` • ${esc(
-                                    entry.brand
-                                  )}`
-                                : ""
-                            }
-                          </span>
-
-                          ${renderOptionSummary(
-                            entry.options
-                          )}
-
-                        </div>
-
-                        ${
-                          entry.price !== "" &&
-                          entry.price != null
-                            ? `
-                              <strong>
-                                ₹ ${esc(
-                                  entry.price
-                                )}
-                              </strong>
-                            `
-                            : ""
-                        }
-
-                      </div>
-
-                      <div class="estimateActions">
-
-                        <button
-                          class="secondary"
-                          type="button"
-                          data-edit-estimate="${index}"
-                          aria-label="Edit"
-                        >
-                          ✎
-                        </button>
-
-                        <button
-                          class="danger"
-                          type="button"
-                          data-delete-estimate="${index}"
-                          aria-label="Delete"
-                        >
-                          ×
-                        </button>
-
-                      </div>
-
-                    </article>
-                  `
-                  )
-                  .join("")}
-
-              </div>
-
-              <button
-                class="danger"
-                id="clearEstimate"
-                type="button"
-              >
-                ${esc(t("clear"))}
-              </button>
-
-            `
-            : `
-              <div class="empty">
-                ${esc(t("noItems"))}
-              </div>
-            `
-        }
-
-      </section>
-    `;
-  }
-
-  function renderOptionSummary(
-    options
-  ) {
-
-    if (
-      !options ||
-      typeof options !==
-        "object"
-    ) {
-      return "";
-    }
-
-    const parts =
-      Object.entries(options)
-        .filter(
-          ([, value]) =>
-            String(
-              value || ""
-            ).trim()
-        )
-        .map(
-          ([label, value]) =>
-            `${tx(label)}: ${value}`
-        );
-
-    return parts.length
-      ? `
-        <small>
-          ${esc(
-            parts.join(" • ")
-          )}
-        </small>
-      `
-      : "";
-  }
-
-  /* =======================================================
-     CALCULATOR
-     ======================================================= */
-
-  function calculator() {
-
-    return `
-      <section
-        class="page calculatorPage"
-      >
-
-        <div class="hero compact">
-
-          <h1>
-            ${esc(t("calculator"))}
-          </h1>
-
-          <p>
-            P = V × I •
-            V = I × R •
-            I = P ÷ V •
-            R = V ÷ I
-          </p>
-
-        </div>
-
-        <div class="formCard">
-
-          <div class="calcGrid">
-
-            <label class="field">
-
-              <span>
-                ${esc(t("power"))}
-              </span>
-
-              <input
-                id="calcP"
-                type="number"
-                inputmode="decimal"
-                step="any"
-              >
-
-            </label>
-
-            <label class="field">
-
-              <span>
-                ${esc(t("voltage"))}
-              </span>
-
-              <input
-                id="calcV"
-                type="number"
-                inputmode="decimal"
-                step="any"
-              >
-
-            </label>
-
-            <label class="field">
-
-              <span>
-                ${
-                  esc(
-                    lang === "hi"
-                      ? "करंट (A)"
-                      : "Current (A)"
-                  )
-                }
-              </span>
-
-              <input
-                id="calcI"
-                type="number"
-                inputmode="decimal"
-                step="any"
-              >
-
-            </label>
-
-            <label class="field">
-
-              <span>
-                ${esc(
-                  t("resistance")
-                )}
-              </span>
-
-              <input
-                id="calcR"
-                type="number"
-                inputmode="decimal"
-                step="any"
-              >
-
-            </label>
-
-          </div>
-
-          <button
-            class="primary"
-            id="calculateBtn"
-            type="button"
-          >
-            ${esc(t("calculate"))}
-          </button>
-
-          <button
-            class="secondary"
-            id="clearCalcBtn"
-            type="button"
-          >
-            ${esc(
-              t("clearCalculator")
-            )}
-          </button>
-
-          <div
-            id="calcAnswer"
-            class="calcResult"
-          >
-            ${esc(
-              t("calcHint")
-            )}
-          </div>
-
-          <div class="formula">
-            P = V × I
-            &nbsp; | &nbsp;
-            V = I × R
-            &nbsp; | &nbsp;
-            I = P ÷ V
-            &nbsp; | &nbsp;
-            R = V ÷ I
-          </div>
-
-        </div>
-
-      </section>
-    `;
-  }
-
-  function calculateElectrical() {
-
-    const p =
-      Number(
-        $("#calcP")?.value
-      );
-
-    const v =
-      Number(
-        $("#calcV")?.value
-      );
-
-    const i =
-      Number(
-        $("#calcI")?.value
-      );
-
-    const r =
-      Number(
-        $("#calcR")?.value
-      );
-
-    const answer =
-      $("#calcAnswer");
-
-    if (!answer) return;
-
-    if (
-      p > 0 &&
-      v > 0 &&
-      !i
-    ) {
-
-      answer.textContent =
-        `I = P ÷ V = ${(p / v).toFixed(2)} A`;
-
-      return;
-    }
-
-    if (
-      v > 0 &&
-      i > 0 &&
-      !p &&
-      !r
-    ) {
-
-      answer.textContent =
-        `P = V × I = ${(v * i).toFixed(2)} W  |  R = V ÷ I = ${(v / i).toFixed(2)} Ω`;
-
-      return;
-    }
-
-    if (
-      p > 0 &&
-      i > 0 &&
-      !v
-    ) {
-
-      answer.textContent =
-        `V = P ÷ I = ${(p / i).toFixed(2)} V`;
-
-      return;
-    }
-
-    if (
-      v > 0 &&
-      r > 0 &&
-      !i
-    ) {
-
-      answer.textContent =
-        `I = V ÷ R = ${(v / r).toFixed(2)} A`;
-
-      return;
-    }
-
-    if (
-      i > 0 &&
-      r > 0 &&
-      !v
-    ) {
-
-      answer.textContent =
-        `V = I × R = ${(i * r).toFixed(2)} V`;
-
-      return;
-    }
-
-    answer.textContent =
-      t("calcHint");
-  }
-
-  function clearCalculator() {
-
-    [
-      "#calcP",
-      "#calcV",
-      "#calcI",
-      "#calcR"
-    ].forEach(id => {
-
-      const input =
-        $(id);
-
-      if (input) {
-        input.value = "";
-      }
-
-    });
-
-    const answer =
-      $("#calcAnswer");
-
-    if (answer) {
-      answer.textContent =
-        t("calcHint");
-    }
-  }
-
-  /* =======================================================
-     SETTINGS
-     ======================================================= */
-
-  function settings() {
-
-    const theme =
-      localStorage.getItem(
-        themeKey
-      ) ||
-      C.theme?.default ||
-      "dark";
-
-    const isDark =
-      theme === "dark";
-
-    return `
-      <section
-        class="page settingsPage"
-      >
-
-        <div class="hero compact">
-
-          <h1>
-            ${esc(
-              t("settings")
-            )}
-          </h1>
-
-        </div>
-
-        <div class="settingsList">
-
-          <div class="settingRow">
-
-            <span>
-              ${esc(
-                t("language")
-              )}
-            </span>
-
-            <button
-              id="settingsLang"
-              class="secondary"
-              type="button"
-            >
-              ${
-                lang === "hi"
-                  ? "हिंदी"
-                  : "English"
-              }
-            </button>
-
-          </div>
-
-          <div class="settingRow">
-
-            <span>
-              ${esc(
-                t("theme")
-              )}
-            </span>
-
-            <button
-              id="themeToggle"
-              class="secondary"
-              type="button"
-            >
-              ${
-                isDark
-                  ? esc(t("dark"))
-                  : esc(t("light"))
-              }
-            </button>
-
-          </div>
-
-          <div class="settingRow">
-
-            <span>
-              ${esc(
-                t("materialView")
-              )}
-            </span>
-
-            <button
-              id="settingsMaterialView"
-              class="secondary"
-              type="button"
-            >
-              ${esc(
-                viewLabel(view)
-              )}
-            </button>
-
-          </div>
-
-          <div class="settingRow">
-
-            <span>
-              ${esc(
-                t("stageView")
-              )}
-            </span>
-
-            <button
-              id="settingsStageView"
-              class="secondary"
-              type="button"
-            >
-              ${esc(
-                viewLabel(stageView)
-              )}
-            </button>
-
-          </div>
-
-          <button
-            class="danger"
-            id="resetApp"
-            type="button"
-          >
-            ${esc(t("reset"))}
-          </button>
-
-          <p class="hint">
-            ${esc(
-              t("savedAfterRefresh")
-            )}
-          </p>
-
-        </div>
-
-      </section>
-    `;
-  }
-
-  /* =======================================================
-     FINAL RENDER
-     ======================================================= */
-
-  function render() {
-
-    applyConfig();
-
-    const main =
-      $("#main");
-
-    if (!main) return;
-
-    validateNavigationState();
-
-    if (
-      page === "home"
-    ) {
-
-      main.innerHTML =
-        home();
-
-      renderHomeStageBindings();
-
-    } else if (
-      page === "stage"
-    ) {
-
-      renderStage();
-
-    } else if (
-      page === "item"
-    ) {
-
-      renderItem();
-
-    } else if (
-      page === "estimate"
-    ) {
-
-      main.innerHTML =
-        C.ui?.estimate === false
-          ? home()
-          : estimate();
-
-    } else if (
-      page === "calculator"
-    ) {
-
-      main.innerHTML =
-        C.ui?.calculator === false
-          ? home()
-          : calculator();
-
-    } else if (
-      page === "settings"
-    ) {
-
-      main.innerHTML =
-        C.ui?.settings === false
-          ? home()
-          : settings();
-
-    } else {
-
-      page = "home";
-
-      main.innerHTML =
-        home();
-
-      renderHomeStageBindings();
-    }
-
-    bindCommon();
-
-    /* -----------------------------------------------
-       Clear Estimate
-       ----------------------------------------------- */
-
-    $("#clearEstimate")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            !confirm(
-              t("confirmReset")
-            )
-          ) {
-            return;
-          }
-
-          localStorage.removeItem(
-            storeKey
-          );
-
-          toast(
-            t("resetDone")
-          );
-
-          render();
-        }
-      );
-
-    /* -----------------------------------------------
-       Calculator
-       ----------------------------------------------- */
-
-    $("#calculateBtn")
-      ?.addEventListener(
-        "click",
-        calculateElectrical
-      );
-
-    $("#clearCalcBtn")
-      ?.addEventListener(
-        "click",
-        clearCalculator
-      );
-
-    /* -----------------------------------------------
-       Settings Language
-       ----------------------------------------------- */
-
-    $("#settingsLang")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          lang =
-            lang === "hi"
-              ? "en"
-              : "hi";
-
-          localStorage.setItem(
-            langKey,
-            lang
-          );
-
-          saveAppState(true);
-
-          render();
-        }
-      );
-
-    /* -----------------------------------------------
-       Theme
-       ----------------------------------------------- */
-
-    $("#themeToggle")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          const current =
-            localStorage.getItem(
-              themeKey
-            ) ||
-            C.theme?.default ||
-            "dark";
-
-          localStorage.setItem(
-            themeKey,
-            current === "dark"
-              ? "light"
-              : "dark"
-          );
-
-          saveAppState(true);
-
-          render();
-        }
-      );
-
-    /* -----------------------------------------------
-       Material View
-       ----------------------------------------------- */
-
-    $("#settingsMaterialView")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          const index =
-            VIEW_MODES.findIndex(
-              x =>
-                x[0] === view
-            );
-
-          view =
-            VIEW_MODES[
-              (index + 1) %
-              VIEW_MODES.length
-            ][0];
-
-          localStorage.setItem(
-            viewKey,
-            view
-          );
-
-          saveAppState(true);
-
-          render();
-        }
-      );
-
-    /* -----------------------------------------------
-       Stage View
-       ----------------------------------------------- */
-
-    $("#settingsStageView")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          const index =
-            VIEW_MODES.findIndex(
-              x =>
-                x[0] === stageView
-            );
-
-          stageView =
-            VIEW_MODES[
-              (index + 1) %
-              VIEW_MODES.length
-            ][0];
-
-          localStorage.setItem(
-            stageViewKey,
-            stageView
-          );
-
-          saveAppState(true);
-
-          render();
-        }
-      );
-
-    /* -----------------------------------------------
-       Edit Estimate
-       ----------------------------------------------- */
-
-    $$(
-      "[data-edit-estimate]"
-    ).forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const index =
-              Number(
-                button.dataset
-                  .editEstimate
-              );
-
-            const entry =
-              readItems()[index];
-
-            if (!entry) return;
-
-            const match =
-              allItems().find(
-                x =>
-                  String(x.stage) ===
-                    String(entry.stage) &&
-                  String(
-                    x.item?.[0] || ""
-                  ) ===
-                    String(
-                      entry.item
-                    )
-              );
-
-            if (!match) return;
-
-            editingId =
-              entry.id;
-
-            navigateTo(
-              "item",
-              match.stageIndex,
-              match.itemIndex
-            );
-          }
-        );
-
-      }
-    );
-
-    /* -----------------------------------------------
-       Delete Estimate
-       ----------------------------------------------- */
-
-    $$(
-      "[data-delete-estimate]"
-    ).forEach(
-      button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const index =
-              Number(
-                button.dataset
-                  .deleteEstimate
-              );
-
-            const saved =
-              readItems();
-
-            if (!saved[index]) {
-              return;
-            }
-
-            saved.splice(
-              index,
-              1
-            );
-
-            writeItems(
-              saved
-            );
-
-            toast(
-              t("resetDone")
-            );
-
-            render();
-          }
-        );
-
-      }
-    );
-
-    /* -----------------------------------------------
-       Full App Reset
-       ----------------------------------------------- */
-
-    $("#resetApp")
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            !confirm(
-              t("confirmReset")
-            )
-          ) {
-            return;
-          }
-
-          localStorage.removeItem(
-            storeKey
-          );
-
-          localStorage.removeItem(
-            stateKey
-          );
-
-          localStorage.removeItem(
-            lastKey
-          );
-
-          toast(
-            t("resetDone")
-          );
-
-          page = "home";
-          currentStage = -1;
-          currentIndex = -1;
-
-          view =
-            localStorage.getItem(
-              viewKey
-            ) ||
-            "grid";
-
-          stageView =
-            localStorage.getItem(
-              stageViewKey
-            ) ||
-            "grid";
-
-          saveAppState(true);
-
-          setTimeout(
-            render,
-            100
-          );
-        }
-      );
-
-    updateActiveNav();
-  }
-
-  function updateActiveNav() {
-
-    $$(
-      "[data-page]"
-    ).forEach(
-      button => {
-
-        button.classList.toggle(
-          "active",
-          button.dataset.page ===
-            page
-        );
-
-      }
-    );
-  }
-
-  /* =======================================================
-     OUTSIDE CLICK
-     ======================================================= */
-
-  document.addEventListener(
-    "click",
-    event => {
-
-      const target =
-        event.target;
-
-      if (
-        target.closest(
-          ".viewSelector"
-        ) ||
-        target.closest(
-          ".stageViewSelector"
-        )
-      ) {
-        return;
-      }
-
-      $$(
-        "[data-view-popup]"
-      ).forEach(
-        popup => {
-
-          popup.hidden =
-            true;
-
-          const button =
-            document.querySelector(
-              `[data-open-view="${popup.dataset.viewPopup}"]`
-            );
-
-          if (button) {
-
-            button.setAttribute(
-              "aria-expanded",
-              "false"
-            );
-
-          }
-
-        }
-      );
-    }
+"use strict";
+
+/* =======================================================
+01. GLOBAL CONFIG / MASTER DATA
+======================================================= */
+
+const CONFIG =
+window.AppConfig ||
+window.APP_CONFIG ||
+{};
+
+const MATERIAL_DATA =
+window.MaterialData ||
+{};
+
+const MATERIALS =
+Array.isArray(MATERIAL_DATA.MATERIALS)
+? MATERIAL_DATA.MATERIALS
+: Array.isArray(window.MATERIALS)
+? window.MATERIALS
+: [];
+
+const STAGES =
+Array.isArray(MATERIAL_DATA.MATERIAL_STAGES)
+? MATERIAL_DATA.MATERIAL_STAGES
+: Array.isArray(window.MATERIAL_STAGES)
+? window.MATERIAL_STAGES
+: [];
+
+const UI_TEXT =
+MATERIAL_DATA.UI_TEXT ||
+window.UI_TEXT ||
+{};
+
+const APP_VERSION = "1.0.0";
+
+/* =======================================================
+02. STORAGE
+======================================================= */
+
+const STORAGE = {
+estimate:
+CONFIG?.storage?.estimateItems ||
+"sandeepEstimateItems",
+
+language:    
+  CONFIG?.storage?.materialLanguage ||    
+  "sandeepMaterialLang",    
+
+view:    
+  CONFIG?.storage?.materialView ||    
+  "sandeepMaterialView",    
+
+theme:    
+  CONFIG?.storage?.theme ||    
+  "sandeepTheme"
+
+};
+
+/* =======================================================
+03. STATE
+======================================================= */
+
+const state = {
+language:
+localStorage.getItem(STORAGE.language) ||
+CONFIG?.language?.default ||
+"hi",
+
+theme:    
+  localStorage.getItem(STORAGE.theme) ||    
+  CONFIG?.theme?.default ||    
+  "dark",    
+
+materialView:    
+  localStorage.getItem(STORAGE.view) ||    
+  CONFIG?.views?.default ||    
+  "grid",    
+
+currentPage: "home",    
+
+currentStageId: null,    
+
+currentItemIndex: 0,    
+
+currentItem: null,    
+
+estimateItems: loadEstimateItems(),    
+
+draftValues: {},    
+
+editingEstimateId: null,    
+
+lastUnit: "",    
+
+searchText: "",    
+
+menuOpen: false
+
+};
+
+/* =======================================================
+04. DOM CACHE
+======================================================= */
+
+const $ = (id) =>
+document.getElementById(id);
+
+const DOM = {};
+
+function cacheDOM() {
+const ids = [
+"app",
+
+"topBar",    
+  "hamburgerButton",    
+  "topBarTitle",    
+  "languageButton",    
+
+  "sideMenu",    
+  "sideMenuClose",    
+  "sideMenuNav",    
+  "menuOverlay",    
+
+  "homePage",    
+  "homeHero",    
+  "heroLogo",    
+  "businessName",    
+  "businessTagline",    
+
+  "searchContainer",    
+  "searchIcon",    
+  "materialSearch",    
+  "searchClearButton",    
+
+  "stageCardsContainer",    
+
+  "materialPage",    
+  "materialHeader",    
+  "materialBackButton",    
+  "materialStageNumber",    
+  "materialStageTitle",    
+  "materialStageTitleHi",    
+  "materialList",    
+
+  "materialEditor",    
+  "materialEditorTop",    
+  "editorBackButton",    
+  "editorItemNumber",    
+  "editorItemName",    
+  "editorItemNameHi",    
+  "editorImageContainer",    
+  "editorItemImage",    
+  "materialFields",    
+
+  "quantityField",    
+  "quantityInput",    
+  "quantityMinus",    
+  "quantityPlus",    
+
+  "unitField",    
+  "unitSelect",    
+
+  "brandField",    
+  "brandSelect",    
+
+  "priceField",    
+  "priceInput",    
+
+  "editorActions",    
+  "itemBackButton",    
+  "itemNextButton",    
+  "addToEstimateButton",    
+
+  "estimatePage",    
+  "estimateContent",    
+  "estimateEmpty",    
+  "estimateItems",    
+
+  "calculatorPage",    
+
+  "voltageCalculator",    
+  "voltageInput",    
+  "voltageResult",    
+
+  "currentCalculator",    
+  "currentInput",    
+  "currentResult",    
+
+  "powerCalculator",    
+  "powerInput",    
+  "powerResult",    
+
+  "resistanceCalculator",    
+  "resistanceInput",    
+  "resistanceResult",    
+
+  "formulaSection",    
+  "inverterExamples",    
+
+  "settingsPage",    
+
+  "settingLanguage",    
+  "settingsLanguageButton",    
+
+  "settingTheme",    
+  "themeToggleButton",    
+
+  "settingMaterialView",    
+  "materialViewButton",    
+
+  "settingBackup",    
+  "backupButton",    
+
+  "settingReset",    
+  "resetButton",    
+
+  "settingAbout",    
+  "aboutButton",    
+
+  "bottomNavigation",    
+
+  "appToast",    
+  "toastIcon",    
+  "toastMessage"    
+];    
+
+ids.forEach((id) => {    
+  DOM[id] = $(id);    
+});
+
+}
+
+/* =======================================================
+05. SAFE STORAGE
+======================================================= */
+
+function loadEstimateItems() {
+try {
+const raw =
+localStorage.getItem(
+STORAGE.estimate
+);
+
+if (!raw) return [];    
+
+  const parsed =    
+    JSON.parse(raw);    
+
+  return Array.isArray(parsed)    
+    ? parsed    
+    : [];    
+
+} catch (error) {    
+  console.error(    
+    "Estimate storage read error:",    
+    error    
+  );    
+
+  return [];    
+}
+
+}
+
+function saveEstimateItems() {
+try {
+localStorage.setItem(
+STORAGE.estimate,
+JSON.stringify(
+state.estimateItems
+)
+);
+
+return true;    
+
+} catch (error) {    
+  console.error(    
+    "Estimate storage save error:",    
+    error    
+  );    
+
+  showToast(    
+    "error",    
+    text(    
+      "Storage error",    
+      "स्टोरेज त्रुटि"    
+    )    
+  );    
+
+  return false;    
+}
+
+}
+
+function saveSetting(
+key,
+value
+) {
+try {
+localStorage.setItem(
+key,
+value
+);
+} catch (error) {
+console.error(error);
+}
+}
+
+/* =======================================================
+06. LANGUAGE
+======================================================= */
+
+function currentLanguage() {
+return state.language === "en"
+? "en"
+: "hi";
+}
+
+function text(
+en,
+hi
+) {
+return currentLanguage() === "hi"
+? (hi || en || "")
+: (en || hi || "");
+}
+
+function getObjectText(
+obj,
+fallback = ""
+) {
+if (!obj) return fallback;
+
+if (    
+  typeof obj === "string" ||    
+  typeof obj === "number"    
+) {    
+  return String(obj);    
+}    
+
+if (    
+  currentLanguage() === "hi"    
+) {    
+  return (    
+    obj.hi ??    
+    obj.en ??    
+    obj.name ??    
+    obj.label ??    
+    fallback    
+  );    
+}    
+
+return (    
+  obj.en ??    
+  obj.hi ??    
+  obj.name ??    
+  obj.label ??    
+  fallback    
+);
+
+}
+
+function setLanguage(
+language
+) {
+state.language =
+language === "en"
+? "en"
+: "hi";
+
+saveSetting(    
+  STORAGE.language,    
+  state.language    
+);    
+
+document.documentElement.lang =    
+  state.language === "hi"    
+    ? "hi"    
+    : "en";    
+
+if (    
+  typeof window.setMaterialLanguage ===    
+  "function"    
+) {    
+  try {    
+    window.setMaterialLanguage(    
+      state.language    
+    );    
+  } catch (error) {    
+    console.warn(    
+      "Material language sync:",    
+      error    
+    );    
+  }    
+}    
+
+renderAll();
+
+}
+
+function toggleLanguage() {
+setLanguage(
+state.language === "hi"
+? "en"
+: "hi"
+);
+}
+
+/* =======================================================
+07. THEME
+======================================================= */
+
+function applyTheme() {
+document.documentElement.dataset.theme =
+state.theme;
+
+document.body.classList.toggle(    
+  "light-theme",    
+  state.theme === "light"    
+);    
+
+saveSetting(    
+  STORAGE.theme,    
+  state.theme    
+);    
+
+if (    
+  DOM.themeToggleButton    
+) {    
+  DOM.themeToggleButton.textContent =    
+    state.theme === "dark"    
+      ? text(    
+          "☀ Light Mode",    
+          "☀ लाइट मोड"    
+        )    
+      : text(    
+          "☾ Dark Mode",    
+          "☾ डार्क मोड"    
+        );    
+}
+
+}
+
+function toggleTheme() {
+if (
+CONFIG?.theme &&
+CONFIG.theme.allowToggle === false
+) {
+return;
+}
+
+state.theme =    
+  state.theme === "dark"    
+    ? "light"    
+    : "dark";    
+
+applyTheme();
+
+}
+
+/* =======================================================
+08. BRANDING
+======================================================= */
+
+function applyBranding() {
+const branding =
+CONFIG?.branding || {};
+
+const businessName =    
+  branding.businessName ||    
+  CONFIG?.ui?.businessName ||    
+  "Sandeep ElectroFix";    
+
+const tagline =    
+  branding.tagline ||    
+  CONFIG?.ui?.tagline ||    
+  "Powering Your Trust";    
+
+const logo =    
+  branding.logo ||    
+  CONFIG?.ui?.logo ||    
+  "logo.png";    
+
+if (DOM.heroLogo) {    
+  DOM.heroLogo.src = logo;    
+}    
+
+if (DOM.businessName) {    
+  DOM.businessName.textContent =    
+    businessName;    
+}    
+
+if (DOM.businessTagline) {    
+  DOM.businessTagline.textContent =    
+    tagline;    
+}    
+
+if (DOM.topBarTitle) {    
+  DOM.topBarTitle.textContent =    
+    text(    
+      "Estimate List",    
+      "एस्टिमेट लिस्ट"    
+    );    
+}
+
+}
+
+/* =======================================================
+09. CONFIG HELPERS
+======================================================= */
+
+function configEnabled(
+path,
+fallback = true
+) {
+const parts =
+String(path)
+.split(".")
+.filter(Boolean);
+
+let value = CONFIG;    
+
+for (const part of parts) {    
+  if (    
+    value === null ||    
+    value === undefined ||    
+    !Object.prototype.hasOwnProperty.call(    
+      value,    
+      part    
+    )    
+  ) {    
+    return fallback;    
+  }    
+
+  value = value[part];    
+}    
+
+return value !== false;
+
+}
+
+function setVisible(
+element,
+visible
+) {
+if (!element) return;
+
+element.hidden = !visible;    
+
+element.classList.toggle(    
+  "config-hidden",    
+  !visible    
+);
+
+}
+
+function applyConfigVisibility() {
+const ui =
+CONFIG?.ui || {};
+
+const home =    
+  CONFIG?.home || {};    
+
+const materials =    
+  CONFIG?.materials || {};    
+
+const bottomNav =    
+  CONFIG?.bottomNav || {};    
+
+const calculator =    
+  CONFIG?.calculator || {};    
+
+const settings =    
+  CONFIG?.settings || {};    
+
+setVisible(    
+  DOM.hamburgerButton,    
+  ui.hamburger !== false    
+);    
+
+setVisible(    
+  DOM.languageButton,    
+  ui.languageButton !== false &&    
+  CONFIG?.language?.enabled !== false    
+);    
+
+setVisible(    
+  DOM.homeHero,    
+  home.enabled !== false &&    
+  home.showHero !== false    
+);    
+
+setVisible(    
+  DOM.stageCardsContainer,    
+  home.enabled !== false &&    
+  home.showStageCards !== false    
+);    
+
+setVisible(    
+  DOM.searchContainer,    
+  home.enabled !== false &&    
+  home.showSearch !== false &&    
+  CONFIG?.search?.enabled !== false    
+);    
+
+setVisible(    
+  DOM.materialBackButton,    
+  ui.backButton !== false    
+);    
+
+setVisible(    
+  DOM.itemBackButton,    
+  ui.backButton !== false    
+);    
+
+setVisible(    
+  DOM.itemNextButton,    
+  ui.nextButton !== false    
+);    
+
+setVisible(    
+  DOM.addToEstimateButton,    
+  ui.addToEstimateButton !== false    
+);    
+
+setVisible(    
+  DOM.bottomNavigation,    
+  bottomNav.enabled !== false &&    
+  ui.bottomNavigation !== false    
+);    
+
+setVisible(    
+  DOM.calculatorPage,    
+  calculator.enabled !== false    
+);    
+
+setVisible(    
+  DOM.settingsPage,    
+  settings.enabled !== false    
+);    
+
+setVisible(    
+  DOM.priceField,    
+  materials.showPrice === true &&    
+  CONFIG?.price?.enabled !== false    
+);
+
+}
+
+/* =======================================================
+10. MATERIAL HELPERS
+======================================================= */
+
+function getMaterialFields(
+material
+) {
+if (!material) return [];
+
+if (    
+  Array.isArray(material.fields)    
+) {    
+  return material.fields.slice();    
+}    
+
+if (    
+  typeof MATERIAL_DATA.getSelectableFields ===    
+  "function"    
+) {    
+  try {    
+    return (    
+      MATERIAL_DATA    
+        .getSelectableFields(    
+          material    
+        ) || []    
+    ).slice();    
+  } catch (error) {    
+    console.warn(error);    
+  }    
+}    
+
+return [];
+
+}
+
+function sortFields(
+fields
+) {
+return Array.isArray(fields)
+? fields.slice()
+: [];
+}
+
+function fieldKey(
+field
+) {
+if (!field) return "";
+
+return String(    
+  field.key ??    
+  field.id ??    
+  field.name ??    
+  field.field ??    
+  ""    
+);
+
+}
+
+function normalizedFieldKey(
+field
+) {
+return fieldKey(field)
+.toLowerCase()
+.replace(
+/[\s_-]/g,
+""
+);
+}
+
+function isSystemField(
+field
+) {
+const key =
+normalizedFieldKey(field);
+
+return [    
+  "quantity",    
+  "qty",    
+  "unit",    
+  "brand",    
+  "price"    
+].includes(key);
+
+}
+
+function fieldLabel(
+field
+) {
+if (!field) return "";
+
+if (    
+  typeof MATERIAL_DATA.getFieldLabel ===    
+  "function"    
+) {    
+  try {    
+    const result =    
+      MATERIAL_DATA.getFieldLabel(    
+        field    
+      );    
+
+    if (result) {    
+      return getObjectText(    
+        result,    
+        fieldKey(field)    
+      );    
+    }    
+  } catch (_) {}    
+}    
+
+return getObjectText(    
+  field.label ||    
+  field.title ||    
+  field,    
+  fieldKey(field)    
+);
+
+}
+
+function normalizeOption(
+option
+) {
+if (
+typeof option === "string" ||
+typeof option === "number"
+) {
+return {
+value: String(option),
+en: String(option),
+hi: String(option)
+};
+}
+
+if (!option) {    
+  return {    
+    value: "",    
+    en: "",    
+    hi: ""    
+  };    
+}    
+
+const value =    
+  option.value ??    
+  option.id ??    
+  option.key ??    
+  option.en ??    
+  option.hi ??    
+  option.name ??    
+  "";    
+
+return {    
+  value: String(value),    
+
+  en:    
+    option.en ??    
+    option.label ??    
+    option.name ??    
+    String(value),    
+
+  hi:    
+    option.hi ??    
+    option.labelHi ??    
+    option.nameHi ??    
+    option.en ??    
+    String(value)    
+};
+
+}
+
+function fieldOptions(
+field
+) {
+if (!field) return [];
+
+let options =    
+  field.options ??    
+  field.values ??    
+  field.choices ??    
+  [];    
+
+if (    
+  typeof options === "function"    
+) {    
+  try {    
+    options = options();    
+  } catch (_) {    
+    options = [];    
+  }    
+}    
+
+if (    
+  !Array.isArray(options)    
+) {    
+  return [];    
+}    
+
+return options.map(    
+  normalizeOption    
+);
+
+}
+
+function fieldType(
+field
+) {
+const type =
+String(
+field?.type ||
+field?.inputType ||
+""
+).toLowerCase();
+
+if (    
+  type === "number" ||    
+  type === "numeric"    
+) {    
+  return "number";    
+}    
+
+if (    
+  type === "text" ||    
+  type === "input"    
+) {    
+  return "text";    
+}    
+
+return fieldOptions(field).length    
+  ? "select"    
+  : "text";
+
+}
+
+function getMaterialById(
+id
+) {
+if (!id) return null;
+
+return (    
+  MATERIALS.find(    
+    material =>    
+      String(material.id) ===    
+      String(id)    
+  ) || null    
+);
+
+}
+
+function getStageById(
+id
+) {
+return (
+STAGES.find(
+stage =>
+String(stage.id) ===
+String(id)
+) || null
+);
+}
+
+function materialEnglishName(
+material
+) {
+if (!material) return "";
+
+return (    
+  material.name?.en ??    
+  material.title?.en ??    
+  material.en ??    
+  material.name ??    
+  ""    
+);
+
+}
+
+function materialHindiName(
+material
+) {
+if (!material) return "";
+
+return (    
+  material.name?.hi ??    
+  material.title?.hi ??    
+  material.hi ??    
+  materialEnglishName(    
+    material    
+  )    
+);
+
+}
+
+function stageEnglishName(
+stage
+) {
+if (!stage) return "";
+
+return (    
+  stage.en ??    
+  stage.name?.en ??    
+  stage.title?.en ??    
+  stage.name ??    
+  ""    
+);
+
+}
+
+function stageHindiName(
+stage
+) {
+if (!stage) return "";
+
+return (    
+  stage.hi ??    
+  stage.name?.hi ??    
+  stage.title?.hi ??    
+  stageEnglishName(    
+    stage    
+  )    
+);
+
+}
+
+/* =======================================================
+11. DRAFT VALUES
+======================================================= */
+
+function getDraftKey(
+material
+) {
+if (!material) return "";
+
+return String(    
+  material.id ||    
+  `S${material.stage}-${material.no}`    
+);
+
+}
+
+function getDraft(
+material
+) {
+const key =
+getDraftKey(material);
+
+if (    
+  !state.draftValues[key]    
+) {    
+  state.draftValues[key] = {};    
+}    
+
+return state.draftValues[key];
+
+}
+
+function getDraftValue(
+material,
+key
+) {
+const draft =
+getDraft(material);
+
+return draft[key] ?? "";
+
+}
+
+function setDraftValue(
+material,
+key,
+value
+) {
+const draft =
+getDraft(material);
+
+draft[key] = value;
+
+}
+
+function clearDraft(
+material
+) {
+if (!material) return;
+
+delete state.draftValues[    
+  getDraftKey(material)    
+];
+
+}
+
+/* =======================================================
+12. HOME
+======================================================= */
+
+function renderHome() {
+if (
+!DOM.stageCardsContainer
+) {
+return;
+}
+
+const search =    
+  String(    
+    state.searchText || ""    
+  )    
+    .trim()    
+    .toLowerCase();    
+
+let visibleMaterials =    
+  MATERIALS;    
+
+if (search) {    
+  visibleMaterials =    
+    MATERIALS.filter(    
+      material =>    
+        searchMatchesMaterial(    
+          material,    
+          search    
+        )    
+    );    
+}    
+
+const visibleStageIds =    
+  new Set(    
+    visibleMaterials.map(    
+      material =>    
+        String(    
+          material.stage    
+        )    
+    )    
+  );    
+
+DOM.stageCardsContainer.innerHTML =    
+  "";    
+
+const stages =    
+  Array.isArray(STAGES)    
+    ? STAGES    
+    : [];    
+
+stages.forEach(    
+  (stage, index) => {    
+    const stageId =    
+      String(    
+        stage.id ??    
+        stage.stage ??    
+        index + 1    
+      );    
+
+    if (    
+      search &&    
+      !visibleStageIds.has(    
+        stageId    
+      )    
+    ) {    
+      return;    
+    }    
+
+    DOM.stageCardsContainer.appendChild(    
+      createStageCard(    
+        stage,    
+        index    
+      )    
+    );    
+  }    
+);    
+
+if (    
+  search &&    
+  DOM.stageCardsContainer.children    
+    .length === 0    
+) {    
+  const empty =    
+    document.createElement(    
+      "div"    
+    );    
+
+  empty.className =    
+    "empty-state";    
+
+  empty.textContent =    
+    text(    
+      "No matching material found.",    
+      "कोई मिलती हुई सामग्री नहीं मिली।"    
+    );    
+
+  DOM.stageCardsContainer.appendChild(    
+    empty    
+  );    
+}
+
+}
+
+function createStageCard(
+stage,
+index
+) {
+const card =
+document.createElement(
+"button"
+);
+
+card.type = "button";    
+
+card.className =    
+  "stage-card";    
+
+card.dataset.stage =    
+  String(    
+    stage.id ??    
+    stage.stage ??    
+    index + 1    
+  );    
+
+if (    
+  CONFIG?.stageCards?.rotation !== false    
+) {    
+  card.style.setProperty(    
+    "--rotation-time",    
+    `${    
+      Number(    
+        CONFIG?.stageCards    
+          ?.rotationTime ||    
+        5000    
+      ) / 1000    
+    }s`    
+  );    
+}    
+
+const inner =    
+  document.createElement(    
+    "div"    
+  );    
+
+inner.className =    
+  "stage-card-inner";    
+
+if (    
+  CONFIG?.stageCards    
+    ?.showNumber !== false    
+) {    
+  const number =    
+    document.createElement(    
+      "div"    
+    );    
+
+  number.className =    
+    "stage-number";    
+
+  number.textContent =    
+    stage.no ??    
+    `STAGE ${String(    
+      index + 1    
+    ).padStart(2, "0")}`;    
+
+  inner.appendChild(    
+    number    
+  );    
+}    
+
+if (    
+  CONFIG?.stageCards    
+    ?.showIcon !== false &&    
+  stage.icon    
+) {    
+  const icon =    
+    document.createElement(    
+      "div"    
+    );    
+
+  icon.className =    
+    "stage-icon";    
+
+  icon.textContent =    
+    stage.icon;    
+
+  inner.appendChild(    
+    icon    
+  );    
+}    
+
+if (    
+  CONFIG?.stageCards    
+    ?.showEnglish !== false    
+) {    
+  const en =    
+    document.createElement(    
+      "div"    
+    );    
+
+  en.className =    
+    "stage-title";    
+
+  en.textContent =    
+    stageEnglishName(    
+      stage    
+    );    
+
+  inner.appendChild(    
+    en    
+  );    
+}    
+
+if (    
+  CONFIG?.stageCards    
+    ?.showHindi !== false    
+) {    
+  const hi =    
+    document.createElement(    
+      "div"    
+    );    
+
+  hi.className =    
+    "stage-title-hi";    
+
+  hi.textContent =    
+    stageHindiName(    
+      stage    
+    );    
+
+  inner.appendChild(    
+    hi    
+  );    
+}    
+
+if (    
+  CONFIG?.stageCards    
+    ?.showDescription !== false &&    
+  stage.description    
+) {    
+  const description =    
+    document.createElement(    
+      "div"    
+    );    
+
+  description.className =    
+    "stage-description";    
+
+  description.textContent =    
+    getObjectText(    
+      stage.description,    
+      ""    
+    );    
+
+  inner.appendChild(    
+    description    
+  );    
+}    
+
+card.appendChild(    
+  inner    
+);    
+
+card.addEventListener(    
+  "click",    
+  () => {    
+    openStage(    
+      stage.id    
+    );    
+  }    
+);    
+
+return card;
+
+}
+
+/* =======================================================
+13. SEARCH
+======================================================= */
+
+function searchMatchesMaterial(
+material,
+query
+) {
+if (!material) return false;
+
+const parts = [];    
+
+parts.push(    
+  material.id || ""    
+);    
+
+parts.push(    
+  materialEnglishName(    
+    material    
+  )    
+);    
+
+parts.push(    
+  materialHindiName(    
+    material    
+  )    
+);    
+
+const fields =    
+  getMaterialFields(    
+    material    
+  );    
+
+fields.forEach(    
+  field => {    
+    parts.push(    
+      fieldKey(field)    
+    );    
+
+    parts.push(    
+      fieldLabel(field)    
+    );    
+
+    fieldOptions(field)    
+      .forEach(    
+        option => {    
+          parts.push(    
+            option.value    
+          );    
+
+          parts.push(    
+            option.en    
+          );    
+
+          parts.push(    
+            option.hi    
+          );    
+        }    
+      );    
+  }    
+);    
+
+if (    
+  Array.isArray(    
+    material.brands    
+  )    
+) {    
+  material.brands.forEach(    
+    brand => {    
+      const option =    
+        normalizeOption(    
+          brand    
+        );    
+
+      parts.push(    
+        option.value    
+      );    
+
+      parts.push(    
+        option.en    
+      );    
+
+      parts.push(    
+        option.hi    
+      );    
+    }    
+  );    
+}    
+
+if (    
+  Array.isArray(    
+    material.units    
+  )    
+) {    
+  material.units.forEach(    
+    unit => {    
+      const option =    
+        normalizeOption(    
+          unit    
+        );    
+
+      parts.push(    
+        option.value    
+      );    
+
+      parts.push(    
+        option.en    
+      );    
+
+      parts.push(    
+        option.hi    
+      );    
+    }    
+  );    
+}    
+
+const haystack =    
+  parts    
+    .filter(Boolean)    
+    .join(" ")    
+    .toLowerCase();    
+
+return haystack.includes(    
+  query    
+);
+
+}
+
+function handleSearch(
+event
+) {
+state.searchText =
+event.target.value || "";
+
+if (    
+  DOM.searchClearButton    
+) {    
+  DOM.searchClearButton.hidden =    
+    !state.searchText;    
+}    
+
+if (    
+  state.currentPage ===    
+  "home"    
+) {    
+  renderHome();    
+}
+
+}
+
+function clearSearch() {
+state.searchText = "";
+
+if (    
+  DOM.materialSearch    
+) {    
+  DOM.materialSearch.value =    
+    "";    
+}    
+
+if (    
+  DOM.searchClearButton    
+) {    
+  DOM.searchClearButton.hidden =    
+    true;    
+}    
+
+renderHome();
+
+}
+
+/* =======================================================
+14. STAGE / MATERIAL LIST
+======================================================= */
+
+function openStage(
+stageId
+) {
+const stage =
+getStageById(stageId);
+
+if (!stage) return;    
+
+state.currentStageId =    
+  stageId;    
+
+state.currentItemIndex =    
+  0;    
+
+state.currentItem =    
+  null;    
+
+state.editingEstimateId =    
+  null;    
+
+showPage(    
+  "materials"    
+);    
+
+renderMaterialPage();    
+
+window.scrollTo({    
+  top: 0,    
+  behavior: "auto"    
+});
+
+}
+
+function getStageMaterials(
+stageId
+) {
+return MATERIALS.filter(
+material =>
+String(
+material.stage
+) ===
+String(stageId)
+);
+}
+
+function renderMaterialPage() {
+const stage =
+getStageById(
+state.currentStageId
+);
+
+if (!stage) return;    
+
+const materials =    
+  getStageMaterials(    
+    state.currentStageId    
+  );    
+
+if (    
+  DOM.materialStageNumber    
+) {    
+  DOM.materialStageNumber.textContent =    
+    stage.no ||    
+    `STAGE ${stage.id}`;    
+}    
+
+if (    
+  DOM.materialStageTitle    
+) {    
+  DOM.materialStageTitle.textContent =    
+    stageEnglishName(    
+      stage    
+    );    
+}    
+
+if (    
+  DOM.materialStageTitleHi    
+) {    
+  DOM.materialStageTitleHi.textContent =    
+    stageHindiName(    
+      stage    
+    );    
+}    
+
+if (    
+  DOM.materialList    
+) {    
+  DOM.materialList.innerHTML =    
+    "";    
+
+  materials.forEach(    
+    (material, index) => {    
+      DOM.materialList.appendChild(    
+        createMaterialCard(    
+          material,    
+          index    
+        )    
+      );    
+    }    
+  );    
+}    
+
+if (    
+  DOM.materialEditor    
+) {    
+  DOM.materialEditor.hidden =    
+    true;    
+}    
+
+if (    
+  DOM.materialList    
+) {    
+  DOM.materialList.hidden =    
+    false;    
+}    
+
+applyMaterialView();
+
+}
+
+function createMaterialCard(
+material,
+index
+) {
+const card =
+document.createElement(
+"button"
+);
+
+card.type = "button";    
+
+card.className =    
+  "material-card";    
+
+card.dataset.materialId =    
+  material.id || "";    
+
+if (    
+  CONFIG?.materials    
+    ?.showImages !== false &&    
+  material.image    
+) {    
+  const imageWrap =    
+    document.createElement(    
+      "div"    
+    );    
+
+  imageWrap.className =    
+    "material-card-image";    
+
+  const img =    
+    document.createElement(    
+      "img"    
+    );    
+
+  img.src =    
+    material.image;    
+
+  img.alt =    
+    materialEnglishName(    
+      material    
+    );    
+
+  imageWrap.appendChild(    
+    img    
+  );    
+
+  card.appendChild(    
+    imageWrap    
+  );    
+}    
+
+const content =    
+  document.createElement(    
+    "div"    
+  );    
+
+content.className =    
+  "material-card-content";    
+
+if (    
+  CONFIG?.materials    
+    ?.showItemNumber !== false    
+) {    
+  const no =    
+    document.createElement(    
+      "div"    
+    );    
+
+  no.className =    
+    "material-item-number";    
+
+  no.textContent =    
+    material.no ??    
+    index + 1;    
+
+  content.appendChild(    
+    no    
+  );    
+}    
+
+if (    
+  CONFIG?.materials    
+    ?.showItemName !== false    
+) {    
+  const en =    
+    document.createElement(    
+      "div"    
+    );    
+
+  en.className =    
+    "material-name";    
+
+  en.textContent =    
+    materialEnglishName(    
+      material    
+    );    
+
+  content.appendChild(    
+    en    
+  );    
+
+  const hi =    
+    document.createElement(    
+      "div"    
+    );    
+
+  hi.className =    
+    "material-name-hi";    
+
+  hi.textContent =    
+    materialHindiName(    
+      material    
+    );    
+
+  content.appendChild(    
+    hi    
+  );    
+}    
+
+card.appendChild(    
+  content    
+);    
+
+card.addEventListener(    
+  "click",    
+  () => {    
+    openMaterial(    
+      material.id    
+    );    
+  }    
+);    
+
+return card;
+
+}
+
+/* =======================================================
+15. OPEN MATERIAL
+======================================================= */
+
+function openMaterial(
+materialId,
+options = {}
+) {
+const material =
+getMaterialById(
+materialId
+);
+
+if (!material) return;    
+
+const stageMaterials =    
+  getStageMaterials(    
+    material.stage    
+  );    
+
+const index =    
+  stageMaterials.findIndex(    
+    item =>    
+      String(item.id) ===    
+      String(material.id)    
+  );    
+
+if (index < 0) return;    
+
+state.currentStageId =    
+  material.stage;    
+
+state.currentItemIndex =    
+  index;    
+
+state.currentItem =    
+  material;    
+
+state.editingEstimateId =    
+  options.editingEstimateId ||    
+  null;    
+
+if (    
+  options.fromEdit &&    
+  options.estimateItem    
+) {    
+  loadEstimateItemIntoDraft(    
+    material,    
+    options.estimateItem    
+  );    
+}    
+
+showPage(    
+  "materials"    
+);    
+
+if (    
+  DOM.materialList    
+) {    
+  DOM.materialList.hidden =    
+    true;    
+}    
+
+if (    
+  DOM.materialEditor    
+) {    
+  DOM.materialEditor.hidden =    
+    false;    
+}    
+
+renderMaterialEditor(    
+  material    
+);    
+
+scrollEditorToTop();
+
+}
+
+/* =======================================================
+16. MATERIAL EDITOR
+======================================================= */
+
+function renderMaterialEditor(
+material
+) {
+if (!material) return;
+
+state.currentItem =    
+  material;    
+
+if (    
+  DOM.editorItemNumber    
+) {    
+  DOM.editorItemNumber.textContent =    
+    material.no || "";    
+}    
+
+if (    
+  DOM.editorItemName    
+) {    
+  DOM.editorItemName.textContent =    
+    materialEnglishName(    
+      material    
+    );    
+}    
+
+if (    
+  DOM.editorItemNameHi    
+) {    
+  DOM.editorItemNameHi.textContent =    
+    materialHindiName(    
+      material    
+    );    
+}    
+
+renderMaterialImage(    
+  material    
+);    
+
+renderDynamicFields(    
+  material    
+);    
+
+renderQuantityField(    
+  material    
+);    
+
+renderUnitField(    
+  material    
+);    
+
+renderBrandField(    
+  material    
+);    
+
+renderPriceField(    
+  material    
+);    
+
+updateNavigationButtons();
+
+}
+
+function renderMaterialImage(
+material
+) {
+if (
+!DOM.editorImageContainer
+) {
+return;
+}
+
+const showImages =    
+  CONFIG?.materials    
+    ?.showImages !== false;    
+
+if (    
+  !showImages ||    
+  !material.image    
+) {    
+  DOM.editorImageContainer.hidden =    
+    true;    
+
+  if (    
+    DOM.editorItemImage    
+  ) {    
+    DOM.editorItemImage.removeAttribute(    
+      "src"    
+    );    
+  }    
+
+  return;    
+}    
+
+DOM.editorImageContainer.hidden =    
+  false;    
+
+if (    
+  DOM.editorItemImage    
+) {    
+  DOM.editorItemImage.src =    
+    material.image;    
+
+  DOM.editorItemImage.alt =    
+    materialEnglishName(    
+      material    
+    );    
+}
+
+}
+
+/* =======================================================
+17. DYNAMIC FIELDS
+======================================================= */
+
+function renderDynamicFields(
+material
+) {
+if (
+!DOM.materialFields
+) {
+return;
+}
+
+DOM.materialFields.innerHTML =    
+  "";    
+
+let fields =    
+  getMaterialFields(    
+    material    
+  );    
+
+fields =    
+  fields.filter(    
+    field =>    
+      !isSystemField(field)    
+  );    
+
+fields =    
+  sortFields(fields);    
+
+fields.forEach(    
+  field => {    
+    if (    
+      !shouldShowField(field)    
+    ) {    
+      return;    
+    }    
+
+    const element =    
+      createDynamicField(    
+        material,    
+        field    
+      );    
+
+    if (element) {    
+      DOM.materialFields.appendChild(    
+        element    
+      );    
+    }    
+  }    
+);
+
+}
+
+function shouldShowField(
+field
+) {
+const key =
+normalizedFieldKey(
+field
+);
+
+if (    
+  key === "size" &&    
+  CONFIG?.materials    
+    ?.showSize === false    
+) {    
+  return false;    
+}    
+
+if (    
+  key === "type" &&    
+  CONFIG?.materials    
+    ?.showType === false    
+) {    
+  return false;    
+}    
+
+if (    
+  key === "subtype" &&    
+  CONFIG?.materials    
+    ?.showSubType === false    
+) {    
+  return false;    
+}    
+
+if (    
+  (    
+    key === "colour" ||    
+    key === "color"    
+  ) &&    
+  CONFIG?.materials    
+    ?.showColour === false    
+) {    
+  return false;    
+}    
+
+if (    
+  key === "material" &&    
+  CONFIG?.materials    
+    ?.showMaterial === false    
+) {    
+  return false;    
+}    
+
+return true;
+
+}
+
+function createDynamicField(
+material,
+field
+) {
+const wrapper =
+document.createElement(
+"div"
+);
+
+wrapper.className =    
+  "option-field";    
+
+wrapper.dataset.field =    
+  fieldKey(field);    
+
+const label =    
+  document.createElement(    
+    "label"    
+  );    
+
+label.className =    
+  "field-label";    
+
+label.textContent =    
+  fieldLabel(field);    
+
+wrapper.appendChild(    
+  label    
+);    
+
+const type =    
+  fieldType(field);    
+
+const current =    
+  getDraftValue(    
+    material,    
+    fieldKey(field)    
+  );    
+
+if (    
+  type === "select"    
+) {    
+  const options =    
+    fieldOptions(field);    
+
+  const optionWrap =    
+    document.createElement(    
+      "div"    
+    );    
+
+  optionWrap.className =    
+    "option-buttons";    
+
+  options.forEach(    
+    option => {    
+      const button =    
+        document.createElement(    
+          "button"    
+        );    
+
+      button.type =    
+        "button";    
+
+      button.className =    
+        "option-button";    
+
+      button.dataset.value =    
+        option.value;    
+
+      button.textContent =    
+        currentLanguage() === "hi"    
+          ? option.hi    
+          : option.en;    
+
+      if (    
+        String(current) ===    
+        String(option.value)    
+      ) {    
+        button.classList.add(    
+          "active"    
+        );    
+      }    
+
+      button.addEventListener(    
+        "click",    
+        () => {    
+          setDraftValue(    
+            material,    
+            fieldKey(field),    
+            option.value    
+          );    
+
+          optionWrap    
+            .querySelectorAll(    
+              ".option-button"    
+            )    
+            .forEach(    
+              btn =>    
+                btn.classList.remove(    
+                  "active"    
+                )    
+            );    
+
+          button.classList.add(    
+            "active"    
+          );    
+        }    
+      );    
+
+      optionWrap.appendChild(    
+        button    
+      );    
+    }    
+  );    
+
+  wrapper.appendChild(    
+    optionWrap    
+  );    
+
+  return wrapper;    
+}    
+
+const input =    
+  document.createElement(    
+    "input"    
+  );    
+
+input.className =    
+  "field-input";    
+
+input.type =    
+  type === "number"    
+    ? "number"    
+    : "text";    
+
+input.value =    
+  current;    
+
+input.autocomplete =    
+  "off";    
+
+input.addEventListener(    
+  "input",    
+  () => {    
+    setDraftValue(    
+      material,    
+      fieldKey(field),    
+      input.value    
+    );    
+  }    
+);    
+
+wrapper.appendChild(    
+  input    
+);    
+
+return wrapper;
+
+}
+
+/* =======================================================
+18. QUANTITY
+======================================================= */
+
+function renderQuantityField(
+material
+) {
+if (
+!DOM.quantityField
+) {
+return;
+}
+
+const enabled =    
+  CONFIG?.quantity    
+    ?.enabled !== false &&    
+  CONFIG?.materials    
+    ?.showQuantity !== false;    
+
+DOM.quantityField.hidden =    
+  !enabled;    
+
+if (!enabled) return;    
+
+const draft =    
+  getDraft(material);    
+
+if (    
+  DOM.quantityInput    
+) {    
+  DOM.quantityInput.value =    
+    draft.quantity ?? "";    
+
+  DOM.quantityInput.min =    
+    String(    
+      CONFIG?.quantity?.min || 1    
+    );    
+
+  DOM.quantityInput.max =    
+    String(    
+      CONFIG?.quantity?.max ||    
+      999999    
+    );    
+}
+
+}
+
+function normalizeQuantityValue(
+value
+) {
+if (
+value === "" ||
+value === null ||
+value === undefined
+) {
+return "";
+}
+
+let number =    
+  Number(value);    
+
+if (    
+  !Number.isFinite(number)    
+) {    
+  return "";    
+}    
+
+const min =    
+  Number(    
+    CONFIG?.quantity?.min || 1    
+  );    
+
+const max =    
+  Number(    
+    CONFIG?.quantity?.max ||    
+    999999    
+  );    
+
+number =    
+  Math.max(    
+    min,    
+    Math.min(    
+      max,    
+      number    
+    )    
+  );    
+
+return String(    
+  Math.floor(number)    
+);
+
+}
+
+function changeQuantity(
+delta
+) {
+const material =
+state.currentItem;
+
+if (!material) return;    
+
+const current =    
+  getDraftValue(    
+    material,    
+    "quantity"    
+  );    
+
+let value =    
+  current === ""    
+    ? 0    
+    : Number(current);    
+
+if (    
+  !Number.isFinite(value)    
+) {    
+  value = 0;    
+}    
+
+value += delta;    
+
+const min =    
+  Number(    
+    CONFIG?.quantity?.min || 1    
+  );    
+
+const max =    
+  Number(    
+    CONFIG?.quantity?.max ||    
+    999999    
+  );    
+
+value =    
+  Math.max(    
+    min,    
+    Math.min(    
+      max,    
+      Math.floor(value)    
+    )    
+  );    
+
+setDraftValue(    
+  material,    
+  "quantity",    
+  String(value)    
+);    
+
+if (    
+  DOM.quantityInput    
+) {    
+  DOM.quantityInput.value =    
+    String(value);    
+}
+
+}
+
+/* =======================================================
+19. UNIT
+======================================================= */
+
+function getUnits(
+material
+) {
+if (!material) return [];
+
+let units =    
+  material.units || [];    
+
+if (    
+  !Array.isArray(units)    
+) {    
+  units = [];    
+}    
+
+return units.map(    
+  normalizeOption    
+);
+
+}
+
+function renderUnitField(
+material
+) {
+if (
+!DOM.unitField
+) {
+return;
+}
+
+const enabled =    
+  CONFIG?.materials    
+    ?.showUnit !== false;    
+
+DOM.unitField.hidden =    
+  !enabled;    
+
+if (!enabled) return;    
+
+const units =    
+  getUnits(material);    
+
+const draft =    
+  getDraft(material);    
+
+let current =    
+  draft.unit ?? "";    
+
+if (    
+  !current &&    
+  state.lastUnit    
+) {    
+  const valid =    
+    units.some(    
+      unit =>    
+        String(    
+          unit.value    
+        ) ===    
+        String(    
+          state.lastUnit    
+        )    
+    );    
+
+  if (valid) {    
+    current =    
+      state.lastUnit;    
+
+    draft.unit =    
+      current;    
+  }    
+}    
+
+if (    
+  current &&    
+  !units.some(    
+    unit =>    
+      String(    
+        unit.value    
+      ) ===    
+      String(current)    
+  )    
+) {    
+  current = "";    
+
+  draft.unit = "";    
+}    
+
+DOM.unitSelect.innerHTML =    
+  "";    
+
+const blank =    
+  document.createElement(    
+    "option"    
+  );    
+
+blank.value = "";    
+
+blank.textContent =    
+  text(    
+    "Select Unit",    
+    "यूनिट चुनें"    
+  );    
+
+DOM.unitSelect.appendChild(    
+  blank    
+);    
+
+units.forEach(    
+  unit => {    
+    const option =    
+      document.createElement(    
+        "option"    
+      );    
+
+    option.value =    
+      unit.value;    
+
+    option.textContent =    
+      currentLanguage() === "hi"    
+        ? unit.hi    
+        : unit.en;    
+
+    DOM.unitSelect.appendChild(    
+      option    
+    );    
+  }    
+);    
+
+DOM.unitSelect.value =    
+  current;
+
+}
+
+/* =======================================================
+20. BRAND
+======================================================= */
+
+function getBrands(
+material
+) {
+if (!material) return [];
+
+let brands =    
+  material.brands || [];    
+
+if (    
+  !Array.isArray(brands)    
+) {    
+  brands = [];    
+}    
+
+return brands.map(    
+  normalizeOption    
+);
+
+}
+
+function renderBrandField(
+material
+) {
+if (
+!DOM.brandField
+) {
+return;
+}
+
+const enabled =    
+  CONFIG?.brand    
+    ?.enabled !== false &&    
+  CONFIG?.materials    
+    ?.showBrand !== false;    
+
+DOM.brandField.hidden =    
+  !enabled;    
+
+if (!enabled) return;    
+
+const brands =    
+  getBrands(material);    
+
+const draft =    
+  getDraft(material);    
+
+const current =    
+  draft.brand ?? "";    
+
+DOM.brandSelect.innerHTML =    
+  "";    
+
+const blank =    
+  document.createElement(    
+    "option"    
+  );    
+
+blank.value = "";    
+
+blank.textContent =    
+  text(    
+    "No Brand / Optional",    
+    "ब्रांड नहीं / वैकल्पिक"    
+  );    
+
+DOM.brandSelect.appendChild(    
+  blank    
+);    
+
+brands.forEach(    
+  brand => {    
+    const combined =    
+      `${brand.value} ${brand.en} ${brand.hi}`    
+        .toLowerCase();    
+
+    if (    
+      combined.includes(    
+        "skip brand"    
+      ) ||    
+      combined.includes(    
+        "skipbrand"    
+      )    
+    ) {    
+      return;    
+    }    
+
+    const option =    
+      document.createElement(    
+        "option"    
+      );    
+
+    option.value =    
+      brand.value;    
+
+    option.textContent =    
+      currentLanguage() === "hi"    
+        ? brand.hi    
+        : brand.en;    
+
+    DOM.brandSelect.appendChild(    
+      option    
+    );    
+  }    
+);    
+
+DOM.brandSelect.value =    
+  current;
+
+}
+
+/* =======================================================
+21. PRICE
+======================================================= */
+
+function renderPriceField(
+material
+) {
+if (
+!DOM.priceField
+) {
+return;
+}
+
+const priceConfig =    
+  CONFIG?.price || {};    
+
+const materialConfig =    
+  CONFIG?.materials || {};    
+
+const enabled =    
+  priceConfig.enabled !== false;    
+
+const visible =    
+  enabled &&    
+  priceConfig.visible === true &&    
+  materialConfig.showPrice === true;    
+
+DOM.priceField.hidden =    
+  !visible;    
+
+if (!visible) return;    
+
+const draft =    
+  getDraft(material);    
+
+if (    
+  DOM.priceInput    
+) {    
+  DOM.priceInput.value =    
+    draft.price ?? "";    
+}
+
+}
+
+/* =======================================================
+22. SAVE FIELD INPUTS
+======================================================= */
+
+function syncEditorInputsToDraft() {
+const material =
+state.currentItem;
+
+if (!material) return;    
+
+if (    
+  DOM.quantityInput    
+) {    
+  setDraftValue(    
+    material,    
+    "quantity",    
+    DOM.quantityInput.value    
+  );    
+}    
+
+if (    
+  DOM.unitSelect    
+) {    
+  setDraftValue(    
+    material,    
+    "unit",    
+    DOM.unitSelect.value    
+  );    
+}    
+
+if (    
+  DOM.brandSelect    
+) {    
+  setDraftValue(    
+    material,    
+    "brand",    
+    DOM.brandSelect.value    
+  );    
+}    
+
+if (    
+  DOM.priceInput    
+) {    
+  setDraftValue(    
+    material,    
+    "price",    
+    DOM.priceInput.value    
+  );    
+}    
+
+if (    
+  DOM.materialFields    
+) {    
+  DOM.materialFields    
+    .querySelectorAll(    
+      "input, select"    
+    )    
+    .forEach(    
+      input => {    
+        const key =    
+          input.closest(    
+            ".option-field"    
+          )?.dataset?.field;    
+
+        if (key) {    
+          setDraftValue(    
+            material,    
+            key,    
+            input.value    
+          );    
+        }    
+      }    
+    );    
+}
+
+}
+
+/* =======================================================
+23. VALIDATE MATERIAL
+======================================================= */
+
+function validateCurrentMaterial() {
+const material =
+state.currentItem;
+
+if (!material) {    
+  return {    
+    valid: false,    
+
+    message: text(    
+      "No material selected.",    
+      "कोई सामग्री चयनित नहीं है।"    
+    )    
+  };    
+}    
+
+syncEditorInputsToDraft();    
+
+const draft =    
+  getDraft(material);    
+
+const quantity =    
+  normalizeQuantityValue(    
+    draft.quantity    
+  );    
+
+if (    
+  CONFIG?.quantity    
+    ?.required !== false    
+) {    
+  if (    
+    quantity === "" ||    
+    Number(quantity) < 1    
+  ) {    
+    return {    
+      valid: false,    
+
+      message: text(    
+        "Quantity is required.",    
+        "क्वांटिटी भरना जरूरी है।"    
+      )    
+    };    
+  }    
+}    
+
+if (    
+  quantity !== ""    
+) {    
+  draft.quantity =    
+    quantity;    
+}    
+
+return {    
+  valid: true,    
+  draft    
+};
+
+}
+
+/* =======================================================
+24. CREATE ESTIMATE ITEM
+======================================================= */
+
+function createEstimateItem(
+material,
+draft
+) {
+const id =
+estimate-${Date.now()}-${Math.random()     .toString(36)     .slice(2, 8)};
+
+const selections = {};    
+
+getMaterialFields(material)    
+  .filter(    
+    field =>    
+      !isSystemField(field)    
+  )    
+  .forEach(    
+    field => {    
+      const key =    
+        fieldKey(field);    
+
+      const value =    
+        draft[key];    
+
+      if (    
+        value !== undefined &&    
+        value !== ""    
+      ) {    
+        selections[key] =    
+          value;    
+      }    
+    }    
+  );    
+
+return {    
+  id,    
+
+  materialId:    
+    material.id,    
+
+  stage:    
+    material.stage,    
+
+  no:    
+    material.no,    
+
+  name: {    
+    en:    
+      materialEnglishName(    
+        material    
+      ),    
+
+    hi:    
+      materialHindiName(    
+        material    
+      )    
+  },    
+
+  selections,    
+
+  quantity:    
+    draft.quantity ?? "",    
+
+  unit:    
+    draft.unit ?? "",    
+
+  brand:    
+    draft.brand ?? "",    
+
+  price:    
+    draft.price ?? "",    
+
+  createdAt:    
+    new Date().toISOString()    
+};
+
+}
+
+/* =======================================================
+25. ADD TO ESTIMATE
+======================================================= */
+
+function addCurrentToEstimate() {
+const material =
+state.currentItem;
+
+if (!material) return;    
+
+const validation =    
+  validateCurrentMaterial();    
+
+if (!validation.valid) {    
+  showToast(    
+    "error",    
+    validation.message    
+  );    
+
+  return;    
+}    
+
+const draft =    
+  validation.draft;    
+
+if (draft.unit) {    
+  state.lastUnit =    
+    draft.unit;    
+}    
+
+if (    
+  state.editingEstimateId    
+) {    
+  const index =    
+    state.estimateItems.findIndex(    
+      item =>    
+        String(item.id) ===    
+        String(    
+          state.editingEstimateId    
+        )    
+    );    
+
+  if (index >= 0) {    
+    const old =    
+      state.estimateItems[    
+        index    
+      ];    
+
+    const updated =    
+      createEstimateItem(    
+        material,    
+        draft    
+      );    
+
+    updated.id =    
+      old.id;    
+
+    updated.createdAt =    
+      old.createdAt;    
+
+    state.estimateItems[    
+      index    
+    ] = updated;    
+
+    saveEstimateItems();    
+
+    state.editingEstimateId =    
+      null;    
+
+    showToast(    
+      "success",    
+      text(    
+        "Estimate item updated.",    
+        "एस्टिमेट आइटम अपडेट हो गया।"    
+      )    
+    );    
+
+    showEstimate();    
+
+    return;    
+  }    
+
+  state.editingEstimateId =    
+    null;    
+}    
+
+const item =    
+  createEstimateItem(    
+    material,    
+    draft    
+  );    
+
+state.estimateItems.push(    
+  item    
+);    
+
+saveEstimateItems();    
+
+showToast(    
+  "success",    
+  text(    
+    "Added to Estimate.",    
+    "एस्टिमेट में जोड़ दिया गया।"    
+  )    
+);    
+
+const autoNext =    
+  CONFIG?.navigation    
+    ?.autoNextAfterAdd !== false;    
+
+if (autoNext) {    
+  openNextItem(true);    
+} else {    
+  updateNavigationButtons();    
+}
+
+}
+
+/* =======================================================
+26. NEXT / BACK
+======================================================= */
+
+function getCurrentStageMaterials() {
+return getStageMaterials(
+state.currentStageId
+);
+}
+
+function openNextItem(
+fromAdd = false
+) {
+const materials =
+getCurrentStageMaterials();
+
+if (!materials.length) {    
+  return;    
+}    
+
+syncEditorInputsToDraft();    
+
+const nextIndex =    
+  state.currentItemIndex + 1;    
+
+if (    
+  nextIndex >=    
+  materials.length    
+) {    
+  showToast(    
+    "info",    
+    text(    
+      "This is the last item.",    
+      "यह अंतिम आइटम है।"    
+    )    
+  );    
+
+  return;    
+}    
+
+state.currentItemIndex =    
+  nextIndex;    
+
+state.currentItem =    
+  materials[nextIndex];    
+
+state.editingEstimateId =    
+  null;    
+
+renderMaterialEditor(    
+  state.currentItem    
+);    
+
+if (    
+  CONFIG?.navigation    
+    ?.scrollNextToTop !== false    
+) {    
+  scrollEditorToTop();    
+}
+
+}
+
+function openPreviousItem() {
+const materials =
+getCurrentStageMaterials();
+
+if (!materials.length) {    
+  return;    
+}    
+
+syncEditorInputsToDraft();    
+
+const previousIndex =    
+  state.currentItemIndex - 1;    
+
+if (    
+  previousIndex < 0    
+) {    
+  closeMaterialEditor();    
+
+  return;    
+}    
+
+state.currentItemIndex =    
+  previousIndex;    
+
+state.currentItem =    
+  materials[    
+    previousIndex    
+  ];    
+
+state.editingEstimateId =    
+  null;    
+
+renderMaterialEditor(    
+  state.currentItem    
+);    
+
+if (    
+  CONFIG?.navigation    
+    ?.restorePreviousItemTop !== false    
+) {    
+  scrollEditorToTop();    
+}
+
+}
+
+function updateNavigationButtons() {
+const materials =
+getCurrentStageMaterials();
+
+const index =    
+  state.currentItemIndex;    
+
+if (    
+  DOM.itemBackButton    
+) {    
+  DOM.itemBackButton.disabled =    
+    index <= 0;    
+}    
+
+if (    
+  DOM.itemNextButton    
+) {    
+  DOM.itemNextButton.disabled =    
+    index >=    
+    materials.length - 1;    
+}
+
+}
+
+function scrollEditorToTop() {
+requestAnimationFrame(
+() => {
+if (
+DOM.materialEditor
+) {
+DOM.materialEditor.scrollIntoView({
+behavior: "auto",
+block: "start"
+});
+}
+
+window.scrollTo({    
+      top: 0,    
+      behavior: "auto"    
+    });    
+  }    
+);
+
+}
+
+function closeMaterialEditor() {
+state.currentItem =
+null;
+
+state.editingEstimateId =    
+  null;    
+
+if (    
+  DOM.materialEditor    
+) {    
+  DOM.materialEditor.hidden =    
+    true;    
+}    
+
+if (    
+  DOM.materialList    
+) {    
+  DOM.materialList.hidden =    
+    false;    
+}
+
+}
+
+/* =======================================================
+27. ESTIMATE ITEM EDITING
+======================================================= */
+
+function loadEstimateItemIntoDraft(
+material,
+estimateItem
+) {
+if (
+!material ||
+!estimateItem
+) {
+return;
+}
+
+const draft = {};    
+
+Object.assign(    
+  draft,    
+  estimateItem.selections || {}    
+);    
+
+draft.quantity =    
+  estimateItem.quantity ?? "";    
+
+draft.unit =    
+  estimateItem.unit ?? "";    
+
+draft.brand =    
+  estimateItem.brand ?? "";    
+
+draft.price =    
+  estimateItem.price ?? "";    
+
+state.draftValues[    
+  getDraftKey(material)    
+] = draft;
+
+}
+
+function editEstimateItem(
+estimateItem
+) {
+if (!estimateItem) return;
+
+const material =    
+  getMaterialById(    
+    estimateItem.materialId    
+  );    
+
+if (!material) {    
+  showToast(    
+    "error",    
+    text(    
+      "Material no longer exists.",    
+      "यह सामग्री अब उपलब्ध नहीं है।"    
+    )    
+  );    
+
+  return;    
+}    
+
+state.editingEstimateId =    
+  estimateItem.id;    
+
+loadEstimateItemIntoDraft(    
+  material,    
+  estimateItem    
+);    
+
+openMaterial(    
+  material.id,    
+  {    
+    fromEdit: true,    
+    estimateItem    
+  }    
+);
+
+}
+
+function deleteEstimateItem(
+id
+) {
+const confirmed =
+window.confirm(
+text(
+"Delete this estimate item?",
+"क्या इस एस्टिमेट आइटम को हटाना है?"
+)
+);
+
+if (!confirmed) {    
+  return;    
+}    
+
+state.estimateItems =    
+  state.estimateItems.filter(    
+    item =>    
+      String(item.id) !==    
+      String(id)    
+  );    
+
+saveEstimateItems();    
+
+renderEstimate();    
+
+showToast(    
+  "success",    
+  text(    
+    "Estimate item deleted.",    
+    "एस्टिमेट आइटम हटा दिया गया।"    
+  )    
+);
+
+}
+
+/* =======================================================
+28. ESTIMATE PAGE
+======================================================= */
+
+function showEstimate() {
+showPage(
+"estimate"
+);
+
+renderEstimate();
+
+}
+
+function renderEstimate() {
+if (
+!DOM.estimateItems
+) {
+return;
+}
+
+DOM.estimateItems.innerHTML =    
+  "";    
+
+const items =    
+  state.estimateItems;    
+
+if (!items.length) {    
+  if (    
+    DOM.estimateEmpty    
+  ) {    
+    DOM.estimateEmpty.hidden =    
+      false;    
+  }    
+
+  return;    
+}    
+
+if (    
+  DOM.estimateEmpty    
+) {    
+  DOM.estimateEmpty.hidden =    
+    true;    
+}    
+
+items.forEach(    
+  item => {    
+    DOM.estimateItems.appendChild(    
+      createEstimateCard(    
+        item    
+      )    
+    );    
+  }    
+);
+
+}
+
+function createEstimateCard(
+item
+) {
+const card =
+document.createElement(
+"article"
+);
+
+card.className =    
+  "estimate-item-card";    
+
+card.dataset.id =    
+  item.id;    
+
+const material =    
+  getMaterialById(    
+    item.materialId    
+  );    
+
+const header =    
+  document.createElement(    
+    "div"    
+  );    
+
+header.className =    
+  "estimate-item-header";    
+
+const title =    
+  document.createElement(    
+    "div"    
+  );    
+
+title.className =    
+  "estimate-item-title";    
+
+title.textContent =    
+  currentLanguage() === "hi"    
+    ? (    
+        item.name?.hi ||    
+        item.name?.en ||    
+        materialEnglishName(    
+          material    
+        )    
+      )    
+    : (    
+        item.name?.en ||    
+        item.name?.hi ||    
+        materialEnglishName(    
+          material    
+        )    
+      );    
+
+header.appendChild(    
+  title    
+);    
+
+const number =    
+  document.createElement(    
+    "span"    
+  );    
+
+number.className =    
+  "estimate-item-number";    
+
+number.textContent =    
+  item.no    
+    ? `#${item.no}`    
+    : "";    
+
+header.appendChild(    
+  number    
+);    
+
+card.appendChild(    
+  header    
+);    
+
+const details =    
+  document.createElement(    
+    "div"    
+  );    
+
+details.className =    
+  "estimate-item-details";    
+
+if (material) {    
+  const fields =    
+    getMaterialFields(    
+      material    
+    ).filter(    
+      field =>    
+        !isSystemField(field)    
+    );    
+
+  fields.forEach(    
+    field => {    
+      const key =    
+        fieldKey(field);    
+
+      const value =    
+        item.selections?.[    
+          key    
+        ];    
+
+      if (    
+        value === undefined ||    
+        value === ""    
+      ) {    
+        return;    
+      }    
+
+      appendEstimateDetail(    
+        details,    
+        fieldLabel(field),    
+        resolveOptionDisplay(    
+          field,    
+          value    
+        )    
+      );    
+    }    
+  );    
+}    
+
+if (    
+  item.quantity !== ""    
+) {    
+  appendEstimateDetail(    
+    details,    
+    text(    
+      "Quantity",    
+      "क्वांटिटी"    
+    ),    
+    item.quantity    
+  );    
+}    
+
+if (    
+  item.unit !== ""    
+) {    
+  appendEstimateDetail(    
+    details,    
+    text(    
+      "Unit",    
+      "यूनिट"    
+    ),    
+    resolveUnitDisplay(    
+      material,    
+      item.unit    
+    )    
+  );    
+}    
+
+if (    
+  item.brand !== ""    
+) {    
+  appendEstimateDetail(    
+    details,    
+    text(    
+      "Brand",    
+      "ब्रांड"    
+    ),    
+    resolveBrandDisplay(    
+      material,    
+      item.brand    
+    )    
+  );    
+}    
+
+if (    
+  item.price !== "" &&    
+  CONFIG?.price?.enabled !== false &&    
+  CONFIG?.price?.visible === true &&    
+  CONFIG?.materials?.showPrice === true    
+) {    
+  appendEstimateDetail(    
+    details,    
+    text(    
+      "Price",    
+      "कीमत"    
+    ),    
+    `${    
+      CONFIG?.price?.currency ||    
+      "₹"    
+    }${item.price}`    
+  );    
+}    
+
+card.appendChild(    
+  details    
+);    
+
+const actions =    
+  document.createElement(    
+    "div"    
+  );    
+
+actions.className =    
+  "estimate-item-actions";    
+
+const edit =    
+  document.createElement(    
+    "button"    
+  );    
+
+edit.type = "button";    
+
+edit.className =    
+  "estimate-edit-button";    
+
+edit.textContent =    
+  text(    
+    "Edit",    
+    "एडिट"    
+  );    
+
+edit.addEventListener(    
+  "click",    
+  () => {    
+    editEstimateItem(    
+      item    
+    );    
+  }    
+);    
+
+actions.appendChild(    
+  edit    
+);    
+
+const remove =    
+  document.createElement(    
+    "button"    
+  );    
+
+remove.type = "button";    
+
+remove.className =    
+  "estimate-delete-button";    
+
+remove.textContent =    
+  text(    
+    "Delete",    
+    "डिलीट"    
+  );    
+
+remove.addEventListener(    
+  "click",    
+  () => {    
+    deleteEstimateItem(    
+      item.id    
+    );    
+  }    
+);    
+
+actions.appendChild(    
+  remove    
+);    
+
+card.appendChild(    
+  actions    
+);    
+
+return card;
+
+}
+
+function appendEstimateDetail(
+container,
+labelText,
+valueText
+) {
+const row =
+document.createElement(
+"div"
+);
+
+row.className =    
+  "estimate-detail-row";    
+
+const label =    
+  document.createElement(    
+    "span"    
+  );    
+
+label.className =    
+  "estimate-detail-label";    
+
+label.textContent =    
+  labelText;    
+
+const value =    
+  document.createElement(    
+    "span"    
+  );    
+
+value.className =    
+  "estimate-detail-value";    
+
+value.textContent =    
+  valueText;    
+
+row.appendChild(    
+  label    
+);    
+
+row.appendChild(    
+  value    
+);    
+
+container.appendChild(    
+  row    
+);
+
+}
+
+function resolveOptionDisplay(
+field,
+value
+) {
+const option =
+fieldOptions(field).find(
+item =>
+String(item.value) ===
+String(value)
+);
+
+if (!option) {    
+  return String(value);    
+}    
+
+return currentLanguage() === "hi"    
+  ? option.hi    
+  : option.en;
+
+}
+
+function resolveUnitDisplay(
+material,
+value
+) {
+const unit =
+getUnits(material).find(
+item =>
+String(item.value) ===
+String(value)
+);
+
+if (!unit) {    
+  return String(value);    
+}    
+
+return currentLanguage() === "hi"    
+  ? unit.hi    
+  : unit.en;
+
+}
+
+function resolveBrandDisplay(
+material,
+value
+) {
+const brand =
+getBrands(material).find(
+item =>
+String(item.value) ===
+String(value)
+);
+
+if (!brand) {    
+  return String(value);    
+}    
+
+return currentLanguage() === "hi"    
+  ? brand.hi    
+  : brand.en;
+
+}
+
+/* =======================================================
+29. MATERIAL VIEW MODES
+======================================================= */
+
+function applyMaterialView() {
+const list =
+DOM.materialList;
+
+if (!list) return;    
+
+const validViews = [    
+  "grid",    
+  "list",    
+  "compact",    
+  "large",    
+  "mini",    
+  "two-column",    
+  "horizontal",    
+  "icon-list",    
+  "timeline",    
+  "dense"    
+];    
+
+let view =    
+  state.materialView;    
+
+if (    
+  !validViews.includes(view)    
+) {    
+  view = "grid";    
+}    
+
+validViews.forEach(    
+  mode => {    
+    list.classList.remove(    
+      `view-${mode}`    
+    );    
+  }    
+);    
+
+list.classList.add(    
+  `view-${view}`    
+);
+
+}
+
+function setMaterialView(
+view
+) {
+const allowed = [
+"grid",
+"list",
+"compact",
+"large",
+"mini",
+"two-column",
+"horizontal",
+"icon-list",
+"timeline",
+"dense"
+];
+
+if (    
+  !allowed.includes(view)    
+) {    
+  return;    
+}    
+
+state.materialView =    
+  view;    
+
+saveSetting(    
+  STORAGE.view,    
+  view    
+);    
+
+applyMaterialView();    
+
+if (    
+  DOM.materialViewButton    
+) {    
+  DOM.materialViewButton.textContent =    
+    view;    
+}
+
+}
+
+function cycleMaterialView() {
+const views = [
+"grid",
+"list",
+"compact",
+"large",
+"mini",
+"two-column",
+"horizontal",
+"icon-list",
+"timeline",
+"dense"
+];
+
+const available =    
+  views.filter(    
+    view =>    
+      CONFIG?.views?.[    
+        view    
+      ] !== false    
+  );    
+
+if (!available.length) {    
+  return;    
+}    
+
+const index =    
+  available.indexOf(    
+    state.materialView    
+  );    
+
+const next =    
+  available[    
+    (index + 1) %    
+    available.length    
+  ];    
+
+setMaterialView(    
+  next    
+);
+
+}
+
+/* =======================================================
+30. PAGE NAVIGATION
+======================================================= */
+
+function showPage(
+page,
+pushHistory = true
+) {
+const pages = {
+home:
+DOM.homePage,
+
+materials:    
+    DOM.materialPage,    
+
+  estimate:    
+    DOM.estimatePage,    
+
+  calculator:    
+    DOM.calculatorPage,    
+
+  settings:    
+    DOM.settingsPage    
+};    
+
+Object.entries(    
+  pages    
+).forEach(    
+  ([key, element]) => {    
+    if (!element) return;    
+
+    element.hidden =    
+      key !== page;    
+  }    
+);    
+
+state.currentPage =    
+  page;    
+
+updateTopBarTitle();    
+
+updateBottomNavigation(    
+  page    
+);    
+
+if (pushHistory) {    
+  pushNavigationState(    
+    page    
+  );    
+}    
+
+window.scrollTo({    
+  top: 0,    
+  behavior: "auto"    
+});    
+
+if (    
+  page === "home"    
+) {    
+  renderHome();    
+}    
+
+if (    
+  page === "estimate"    
+) {    
+  renderEstimate();    
+}    
+
+if (    
+  page === "settings"    
+) {    
+  renderSettings();    
+}
+
+}
+
+function updateTopBarTitle() {
+if (
+!DOM.topBarTitle
+) {
+return;
+}
+
+const titles = {    
+  home:    
+    text(    
+      "Estimate List",    
+      "एस्टिमेट लिस्ट"    
+    ),    
+
+  materials:    
+    text(    
+      "Materials",    
+      "मटेरियल्स"    
+    ),    
+
+  estimate:    
+    text(    
+      "Estimate",    
+      "एस्टिमेट"    
+    ),    
+
+  calculator:    
+    text(    
+      "Calculator",    
+      "कैलकुलेटर"    
+    ),    
+
+  settings:    
+    text(    
+      "Settings",    
+      "सेटिंग्स"    
+    )    
+};    
+
+DOM.topBarTitle.textContent =    
+  titles[    
+    state.currentPage    
+  ] ||    
+  titles.home;
+
+}
+
+function pushNavigationState(
+page
+) {
+if (!window.history) return;
+
+const current =    
+  window.history.state;    
+
+if (    
+  current &&    
+  current.sandeepApp === true &&    
+  current.page === page    
+) {    
+  return;    
+}    
+
+try {    
+  window.history.pushState(    
+    {    
+      sandeepApp: true,    
+      page    
+    },    
+    "",    
+    `#${page}`    
+  );    
+} catch (_) {}
+
+}
+
+function handlePopState(
+event
+) {
+const page =
+event.state?.sandeepApp
+? event.state.page
+: "home";
+
+if (    
+  state.menuOpen    
+) {    
+  closeSideMenu();    
+  return;    
+}    
+
+showPage(    
+  page,    
+  false    
+);
+
+}
+
+/* =======================================================
+31. BOTTOM NAVIGATION
+======================================================= */
+
+function updateBottomNavigation(
+page
+) {
+if (
+!DOM.bottomNavigation
+) {
+return;
+}
+
+DOM.bottomNavigation    
+  .querySelectorAll(    
+    "[data-page]"    
+  )    
+  .forEach(    
+    button => {    
+      button.classList.toggle(    
+        "active",    
+        button.dataset.page ===    
+        page    
+      );    
+    }    
   );
 
-  /* =======================================================
-     ESC KEY
-     ======================================================= */
+}
 
-  document.addEventListener(
-    "keydown",
-    event => {
+/* =======================================================
+32. SIDE MENU
+======================================================= */
 
-      if (
-        event.key !==
-        "Escape"
-      ) {
-        return;
-      }
+function openSideMenu() {
+state.menuOpen =
+true;
 
-      const openPopup =
-        $(
-          "[data-view-popup]:not([hidden])"
-        );
+DOM.sideMenu?.classList.add(    
+  "open"    
+);    
 
-      if (openPopup) {
+DOM.menuOverlay?.classList.add(    
+  "show"    
+);    
 
-        openPopup.hidden =
-          true;
+DOM.hamburgerButton?.classList.add(    
+  "active"    
+);
 
-        return;
-      }
+}
 
-      if (
-        $("#drawer")
-          ?.classList
-          .contains("open")
-      ) {
+function closeSideMenu() {
+state.menuOpen =
+false;
 
-        closeDrawer();
+DOM.sideMenu?.classList.remove(    
+  "open"    
+);    
 
-        return;
-      }
-    }
+DOM.menuOverlay?.classList.remove(    
+  "show"    
+);    
+
+DOM.hamburgerButton?.classList.remove(    
+  "active"    
+);
+
+}
+
+function toggleSideMenu() {
+if (
+state.menuOpen
+) {
+closeSideMenu();
+} else {
+openSideMenu();
+}
+}
+
+/* =======================================================
+33. SETTINGS
+======================================================= */
+
+function renderSettings() {
+applyTheme();
+
+if (    
+  DOM.settingsLanguageButton    
+) {    
+  DOM.settingsLanguageButton.textContent =    
+    state.language === "hi"    
+      ? "हिन्दी"    
+      : "English";    
+}    
+
+if (    
+  DOM.materialViewButton    
+) {    
+  DOM.materialViewButton.textContent =    
+    state.materialView;    
+}
+
+}
+
+function backupEstimate() {
+const data =
+JSON.stringify(
+state.estimateItems,
+null,
+2
+);
+
+const blob =    
+  new Blob(    
+    [data],    
+    {    
+      type:    
+        "application/json"    
+    }    
+  );    
+
+const url =    
+  URL.createObjectURL(    
+    blob    
+  );    
+
+const anchor =    
+  document.createElement(    
+    "a"    
+  );    
+
+anchor.href =    
+  url;    
+
+anchor.download =    
+  `sandeep-estimate-${new Date()    
+    .toISOString()    
+    .slice(0, 10)}.json`;    
+
+document.body.appendChild(    
+  anchor    
+);    
+
+anchor.click();    
+
+anchor.remove();    
+
+URL.revokeObjectURL(    
+  url    
+);    
+
+showToast(    
+  "success",    
+  text(    
+    "Backup downloaded.",    
+    "बैकअप डाउनलोड हो गया।"    
+  )    
+);
+
+}
+
+function resetEstimate() {
+const confirmed =
+window.confirm(
+text(
+"Delete all saved estimate items?",
+"क्या सभी सेव किए गए एस्टिमेट आइटम हटाने हैं?"
+)
+);
+
+if (!confirmed) {    
+  return;    
+}    
+
+state.estimateItems =    
+  [];    
+
+state.draftValues =    
+  {};    
+
+state.editingEstimateId =    
+  null;    
+
+state.lastUnit =    
+  "";    
+
+saveEstimateItems();    
+
+renderEstimate();    
+
+showToast(    
+  "success",    
+  text(    
+    "Estimate reset.",    
+    "एस्टिमेट रीसेट हो गया।"    
+  )    
+);
+
+}
+
+function showAbout() {
+window.alert(
+[
+"Sandeep ElectroFix",
+"Powering Your Trust",
+"",
+"Estimate List",
+Version ${APP_VERSION}
+].join("\n")
+);
+}
+
+/* =======================================================
+34. CALCULATOR
+======================================================= */
+
+function calculateVoltage() {
+const current =
+Number(
+DOM.voltageInput?.value
+);
+
+let result = "";    
+
+if (    
+  Number.isFinite(current) &&    
+  current > 0    
+) {    
+  result =    
+    `${current} A`;    
+}    
+
+if (    
+  DOM.voltageResult    
+) {    
+  DOM.voltageResult.textContent =    
+    result ||    
+    text(    
+      "Enter a value",    
+      "मान भरें"    
+    );    
+}
+
+}
+
+function calculateCurrent() {
+const value =
+Number(
+DOM.currentInput?.value
+);
+
+if (    
+  DOM.currentResult    
+) {    
+  DOM.currentResult.textContent =    
+    Number.isFinite(value) &&    
+    value > 0    
+      ? `${value} A`    
+      : text(    
+          "Enter a value",    
+          "मान भरें"    
+        );    
+}
+
+}
+
+function calculatePower() {
+const current =
+Number(
+DOM.powerInput?.value
+);
+
+if (    
+  DOM.powerResult    
+) {    
+  DOM.powerResult.textContent =    
+    Number.isFinite(current) &&    
+    current >= 0    
+      ? `${(    
+          230 *    
+          current    
+        ).toFixed(2)} W`    
+      : text(    
+          "Enter current",    
+          "करंट भरें"    
+        );    
+}
+
+}
+
+function calculateResistance() {
+const current =
+Number(
+DOM.resistanceInput?.value
+);
+
+if (    
+  DOM.resistanceResult    
+) {    
+  DOM.resistanceResult.textContent =    
+    Number.isFinite(current) &&    
+    current > 0    
+      ? `${(    
+          230 /    
+          current    
+        ).toFixed(2)} Ω`    
+      : text(    
+          "Enter current",    
+          "करंट भरें"    
+        );    
+}
+
+}
+
+function bindCalculatorInputs() {
+DOM.voltageInput?.addEventListener(
+"input",
+calculateVoltage
+);
+
+DOM.currentInput?.addEventListener(    
+  "input",    
+  calculateCurrent    
+);    
+
+DOM.powerInput?.addEventListener(    
+  "input",    
+  calculatePower    
+);    
+
+DOM.resistanceInput?.addEventListener(    
+  "input",    
+  calculateResistance    
+);
+
+}
+
+/* =======================================================
+35. TOAST
+======================================================= */
+
+let toastTimer = null;
+
+function showToast(
+type,
+message
+) {
+if (!DOM.appToast) {
+return;
+}
+
+if (    
+  CONFIG?.toast?.enabled === false    
+) {    
+  return;    
+}    
+
+if (toastTimer) {    
+  clearTimeout(    
+    toastTimer    
+  );    
+}    
+
+DOM.appToast.className =    
+  "app-toast";    
+
+if (type) {    
+  DOM.appToast.classList.add(    
+    `toast-${type}`    
+  );    
+}    
+
+if (    
+  DOM.toastIcon    
+) {    
+  const icons = {    
+    success: "✓",    
+    error: "!",    
+    info: "i",    
+    warning: "!"    
+  };    
+
+  DOM.toastIcon.textContent =    
+    icons[type] ||    
+    "✓";    
+}    
+
+if (    
+  DOM.toastMessage    
+) {    
+  DOM.toastMessage.textContent =    
+    message;    
+}    
+
+DOM.appToast.classList.add(    
+  "show"    
+);    
+
+const duration =    
+  Number(    
+    CONFIG?.toast?.duration ||    
+    1800    
+  );    
+
+toastTimer =    
+  setTimeout(    
+    () => {    
+      DOM.appToast.classList.remove(    
+        "show"    
+      );    
+    },    
+    duration    
   );
 
-  /* =======================================================
-     BROWSER / ANDROID BACK
-     ======================================================= */
+}
 
-  window.addEventListener(
-    "popstate",
-    handlePopState
-  );
+/* =======================================================
+36. EVENT BINDING
+======================================================= */
 
-  /* =======================================================
-     SAVE BEFORE REFRESH
-     ======================================================= */
+function bindEvents() {
 
-  window.addEventListener(
-    "beforeunload",
-    () => {
+DOM.hamburgerButton?.addEventListener(    
+  "click",    
+  toggleSideMenu    
+);    
 
-      saveLastValues();
+DOM.sideMenuClose?.addEventListener(    
+  "click",    
+  closeSideMenu    
+);    
 
-      writeJson(
-        stateKey,
-        {
-          electroFix: true,
-          page,
-          currentStage,
-          currentIndex,
-          view,
-          stageView,
-          lang,
-          theme:
-            localStorage.getItem(
-              themeKey
-            ) ||
-            C.theme?.default ||
-            "dark",
-          savedAt:
-            Date.now()
-        }
-      );
-    }
-  );
+DOM.menuOverlay?.addEventListener(    
+  "click",    
+  closeSideMenu    
+);    
 
-  /* =======================================================
-     SAVE WHEN APP GOES BACKGROUND
-     ======================================================= */
 
-  document.addEventListener(
-    "visibilitychange",
-    () => {
+DOM.languageButton?.addEventListener(    
+  "click",    
+  toggleLanguage    
+);    
 
-      if (
-        document.visibilityState ===
-        "hidden"
-      ) {
+DOM.settingsLanguageButton?.addEventListener(    
+  "click",    
+  toggleLanguage    
+);    
 
-        saveLastValues();
 
-        writeJson(
-          stateKey,
-          {
-            electroFix: true,
-            page,
-            currentStage,
-            currentIndex,
-            view,
-            stageView,
-            lang,
-            theme:
-              localStorage.getItem(
-                themeKey
-              ) ||
-              C.theme?.default ||
-              "dark",
-            savedAt:
-              Date.now()
-          }
-        );
-      }
-    }
-  );
+DOM.materialSearch?.addEventListener(    
+  "input",    
+  handleSearch    
+);    
 
-  /* =======================================================
-     BOOT
-     ======================================================= */
+DOM.searchClearButton?.addEventListener(    
+  "click",    
+  clearSearch    
+);    
 
-  function boot() {
 
-    loadSavedState();
+DOM.materialBackButton?.addEventListener(    
+  "click",    
+  () => {    
+    if (    
+      DOM.materialEditor &&    
+      !DOM.materialEditor.hidden    
+    ) {    
+      closeMaterialEditor();    
 
-    applyConfig();
+      if (    
+        DOM.materialList    
+      ) {    
+        DOM.materialList.hidden =    
+          false;    
+      }    
 
-    /*
-      Create the first SPA history state.
-    */
-    try {
+      return;    
+    }    
 
-      const existing =
-        history.state;
+    showPage(    
+      "home"    
+    );    
+  }    
+);    
 
-      if (
-        !existing?.electroFix
-      ) {
 
-        const state = {
-          electroFix: true,
-          root: true,
-          page,
-          currentStage,
-          currentIndex,
-          view,
-          stageView,
-          lang
-        };
+DOM.editorBackButton?.addEventListener(    
+  "click",    
+  () => {    
+    closeMaterialEditor();    
 
-        writeJson(
-          stateKey,
-          state
-        );
+    if (    
+      DOM.materialList    
+    ) {    
+      DOM.materialList.hidden =    
+        false;    
+    }    
 
-        history.replaceState(
-          state,
-          "",
-          location.href
-        );
+    window.scrollTo({    
+      top: 0,    
+      behavior: "auto"    
+    });    
+  }    
+);    
 
-        history.pushState(
-          {
-            ...state,
-            root: false
-          },
-          "",
-          location.href
-        );
 
-      } else {
+DOM.itemBackButton?.addEventListener(    
+  "click",    
+  openPreviousItem    
+);    
 
-        history.replaceState(
-          existing,
-          "",
-          location.href
-        );
-      }
 
-    } catch (_) {}
+DOM.itemNextButton?.addEventListener(    
+  "click",    
+  () => {    
+    openNextItem(false);    
+  }    
+);    
 
-    render();
 
-    /*
-      Loader/splash is not required.
-      If old HTML still contains it,
-      remove it immediately after render.
-    */
-    const splash =
-      $("#splash");
+DOM.addToEstimateButton?.addEventListener(    
+  "click",    
+  addCurrentToEstimate    
+);    
 
-    if (splash) {
 
-      splash.classList.add(
-        "hide"
-      );
+DOM.quantityMinus?.addEventListener(    
+  "click",    
+  () => {    
+    changeQuantity(-1);    
+  }    
+);    
 
-      setTimeout(
-        () =>
-          splash.remove(),
-        120
-      );
-    }
 
-    window.scrollTo(
-      0,
-      0
-    );
-  }
+DOM.quantityPlus?.addEventListener(    
+  "click",    
+  () => {    
+    changeQuantity(1);    
+  }    
+);    
 
-  /* =======================================================
-     PUBLIC API
-     ======================================================= */
 
-  window.ElectroFixApp = {
+DOM.quantityInput?.addEventListener(    
+  "input",    
+  event => {    
+    const material =    
+      state.currentItem;    
 
-    render,
+    if (!material) return;    
 
-    navigateTo,
+    const value =    
+      event.target.value;    
 
-    appBack,
+    if (value === "") {    
+      setDraftValue(    
+        material,    
+        "quantity",    
+        ""    
+      );    
 
-    saveAppState,
+      return;    
+    }    
 
-    setLanguage(language) {
+    const normalized =    
+      normalizeQuantityValue(    
+        value    
+      );    
 
-      if (
-        language !== "hi" &&
-        language !== "en"
-      ) {
-        return;
-      }
+    event.target.value =    
+      normalized;    
 
-      lang =
-        language;
+    setDraftValue(    
+      material,    
+      "quantity",    
+      normalized    
+    );    
+  }    
+);    
 
-      localStorage.setItem(
-        langKey,
-        lang
-      );
 
-      saveAppState(true);
+DOM.unitSelect?.addEventListener(    
+  "change",    
+  event => {    
+    const material =    
+      state.currentItem;    
 
-      render();
-    }
-  };
+    if (!material) return;    
 
-  /* =======================================================
-     START
-     ======================================================= */
+    const value =    
+      event.target.value;    
 
-  if (
-    document.readyState ===
-    "loading"
-  ) {
+    setDraftValue(    
+      material,    
+      "unit",    
+      value    
+    );    
 
-    document.addEventListener(
-      "DOMContentLoaded",
-      boot,
-      { once: true }
-    );
+    if (value) {    
+      state.lastUnit =    
+        value;    
+    }    
+  }    
+);    
 
-  } else {
 
-    boot();
+DOM.brandSelect?.addEventListener(    
+  "change",    
+  event => {    
+    const material =    
+      state.currentItem;    
 
-  }
+    if (!material) return;    
+
+    setDraftValue(    
+      material,    
+      "brand",    
+      event.target.value    
+    );    
+  }    
+);    
+
+
+DOM.priceInput?.addEventListener(    
+  "input",    
+  event => {    
+    const material =    
+      state.currentItem;    
+
+    if (!material) return;    
+
+    setDraftValue(    
+      material,    
+      "price",    
+      event.target.value    
+    );    
+  }    
+);    
+
+
+DOM.bottomNavigation    
+  ?.querySelectorAll(    
+    "[data-page]"    
+  )    
+  .forEach(    
+    button => {    
+      button.addEventListener(    
+        "click",    
+        () => {    
+          showPage(    
+            button.dataset.page    
+          );    
+        }    
+      );    
+    }    
+  );    
+
+
+DOM.sideMenuNav    
+  ?.querySelectorAll(    
+    "[data-page]"    
+  )    
+  .forEach(    
+    button => {    
+      button.addEventListener(    
+        "click",    
+        () => {    
+          closeSideMenu();    
+
+          showPage(    
+            button.dataset.page    
+          );    
+        }    
+      );    
+    }    
+  );    
+
+
+DOM.themeToggleButton?.addEventListener(    
+  "click",    
+  toggleTheme    
+);    
+
+
+DOM.materialViewButton?.addEventListener(    
+  "click",    
+  cycleMaterialView    
+);    
+
+
+DOM.backupButton?.addEventListener(    
+  "click",    
+  backupEstimate    
+);    
+
+
+DOM.resetButton?.addEventListener(    
+  "click",    
+  resetEstimate    
+);    
+
+
+DOM.aboutButton?.addEventListener(    
+  "click",    
+  showAbout    
+);    
+
+
+window.addEventListener(    
+  "popstate",    
+  handlePopState    
+);
+
+}
+
+/* =======================================================
+37. INITIAL PAGE
+======================================================= */
+
+function getInitialPage() {
+const hash =
+String(
+window.location.hash || ""
+).replace(
+"#",
+""
+);
+
+const allowed = [    
+  "home",    
+  "materials",    
+  "estimate",    
+  "calculator",    
+  "settings"    
+];    
+
+return allowed.includes(hash)    
+  ? hash    
+  : "home";
+
+}
+
+/* =======================================================
+38. MASTER DATA VALIDATION
+======================================================= */
+
+function validateMasterData() {
+if (!MATERIALS.length) {
+console.error(
+"Material master list is empty."
+);
+
+return false;    
+}    
+
+const ids =    
+  new Set();    
+
+MATERIALS.forEach(    
+  material => {    
+    if (!material.id) {    
+      console.warn(    
+        "Material without ID:",    
+        material    
+      );    
+    }    
+
+    if (    
+      material.id &&    
+      ids.has(material.id)    
+    ) {    
+      console.error(    
+        "Duplicate material ID:",    
+        material.id    
+      );    
+    }    
+
+    if (material.id) {    
+      ids.add(    
+        material.id    
+      );    
+    }    
+  }    
+);    
+
+const expectedCounts = {    
+  1: 10,    
+  2: 7,    
+  3: 5,    
+  4: 51,    
+  5: 16    
+};    
+
+Object.entries(    
+  expectedCounts    
+).forEach(    
+  ([stage, expected]) => {    
+    const actual =    
+      MATERIALS.filter(    
+        material =>    
+          String(    
+            material.stage    
+          ) === stage    
+      ).length;    
+
+    if (    
+      actual !== expected    
+    ) {    
+      console.warn(    
+        `Stage ${stage}: expected ${expected}, found ${actual}`    
+      );    
+    }    
+  }    
+);    
+
+console.info(    
+  `Sandeep ElectroFix Material Master: ${MATERIALS.length} items`    
+);    
+
+return true;
+
+}
+
+/* =======================================================
+39. INITIAL UI
+======================================================= */
+
+function initializeUI() {
+applyBranding();
+
+applyTheme();    
+
+applyConfigVisibility();    
+
+applyMaterialView();    
+
+renderHome();    
+
+renderSettings();    
+
+bindCalculatorInputs();    
+
+bindEvents();    
+
+updateTopBarTitle();    
+
+updateBottomNavigation(    
+  "home"    
+);    
+
+try {    
+  window.history.replaceState(    
+    {    
+      sandeepApp: true,    
+      page: getInitialPage()    
+    },    
+    "",    
+    `#${getInitialPage()}`    
+  );    
+} catch (_) {}    
+
+const initialPage =    
+  getInitialPage();    
+
+if (    
+  initialPage ===    
+  "materials"    
+) {    
+  showPage(    
+    "home",    
+    false    
+  );    
+} else {    
+  showPage(    
+    initialPage,    
+    false    
+  );    
+}
+
+}
+
+/* =======================================================
+40. GLOBAL ERROR SAFETY
+======================================================= */
+
+function installErrorSafety() {
+window.addEventListener(
+"error",
+event => {
+console.error(
+"App error:",
+event.error ||
+event.message
+);
+}
+);
+
+window.addEventListener(    
+  "unhandledrejection",    
+  event => {    
+    console.error(    
+      "Unhandled promise rejection:",    
+      event.reason    
+    );    
+  }    
+);
+
+}
+
+/* =======================================================
+41. RENDER ALL
+======================================================= */
+
+function renderAll() {
+applyBranding();
+
+applyTheme();    
+
+applyConfigVisibility();    
+
+renderHome();    
+
+if (    
+  state.currentPage ===    
+  "materials"    
+) {    
+  if (state.currentItem) {    
+    renderMaterialEditor(    
+      state.currentItem    
+    );    
+  } else {    
+    renderMaterialPage();    
+  }    
+}    
+
+if (    
+  state.currentPage ===    
+  "estimate"    
+) {    
+  renderEstimate();    
+}    
+
+renderSettings();    
+
+updateTopBarTitle();    
+
+updateBottomNavigation(    
+  state.currentPage    
+);    
+
+applyMaterialView();
+
+}
+
+/* =======================================================
+42. PUBLIC API
+======================================================= */
+
+window.SandeepEstimateApp = {
+state,
+
+openStage,    
+openMaterial,    
+
+showEstimate,    
+renderEstimate,    
+
+addCurrentToEstimate,    
+
+setLanguage,    
+toggleLanguage,    
+
+toggleTheme,    
+
+setMaterialView,    
+cycleMaterialView,    
+
+backupEstimate,    
+resetEstimate,    
+
+showToast,    
+
+renderAll
+
+};
+
+/* =======================================================
+43. INIT
+======================================================= */
+
+function init() {
+try {
+cacheDOM();
+
+installErrorSafety();    
+
+  validateMasterData();    
+
+  initializeUI();    
+
+  /*    
+    Loader system completely removed.    
+    App starts directly.    
+  */    
+
+} catch (error) {    
+  console.error(    
+    "Estimate List initialization failed:",    
+    error    
+  );    
+}
+
+}
+
+/* =======================================================
+44. START
+======================================================= */
+
+if (
+document.readyState ===
+"loading"
+) {
+document.addEventListener(
+"DOMContentLoaded",
+init,
+{
+once: true
+}
+);
+} else {
+init();
+}
 
 })();

@@ -1,115 +1,206 @@
 <!doctype html>
-<html lang="hi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#050816">
-<meta name="description" content="Sandeep ElectroFix - Estimate List">
-<title>Estimate List - Sandeep ElectroFix</title>
-<link rel="stylesheet" href="style.css">
-</head>
 
-<body>
+<html lang="hi"><head>
+  <meta charset="utf-8"><meta
+name="viewport"
+content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
 
-<div id="app">
+«»
 
-<header class="topbar">
+<meta
+name="theme-color"
+content="#050816"
 
-  <button
-    id="menuBtn"
-    class="iconBtn"
-    type="button"
-    aria-label="Open menu"
-  >☰</button>
+«»
 
-  <button
-    id="langBtn"
-    class="langBtn"
-    type="button"
-  >हि</button>
+<meta
+name="description"
+content="Sandeep ElectroFix - Estimate List"
 
-</header>
+«»
 
+  <title>Estimate List - Sandeep ElectroFix</title>  <link rel="stylesheet" href="style.css">
+</head><body><div id="app">  <!-- =====================================================
+       TOP BAR
+       ===================================================== -->  <header class="topbar"><!-- Electric Gradient Hamburger #4 -->
 
-<aside
-  id="drawer"
-  class="drawer"
-  aria-hidden="true"
+<button
+  id="menuBtn"
+  class="iconBtn"
+  type="button"
+  aria-label="Open menu"
+  aria-expanded="false"
 >
+  <span></span>
+</button>
 
-  <button
-    id="closeMenu"
-    class="drawerClose"
-    type="button"
-    aria-label="Close menu"
-  >×</button>
 
-  <div class="drawerBrand">
-    <div class="drawerLogo">SE</div>
-    <b>Sandeep ElectroFix</b>
-    <small>Powering Your Trust</small>
+<!-- Center Branding -->
+
+<div class="brandHead">
+
+  <img
+    class="topLogo"
+    src="logo.png"
+    alt="Sandeep ElectroFix"
+    onerror="this.style.display='none'"
+  >
+
+  <h1 class="appTitle">
+    Estimate List
+  </h1>
+
+  <div class="subTitle">
+    Sandeep ElectroFix
   </div>
-
-  <h2>Menu</h2>
-
-  <button data-page="home" type="button">
-    ⌂ <span>Home</span>
-  </button>
-
-  <button data-page="estimate" type="button">
-    ▤ <span>Estimate</span>
-  </button>
-
-  <button data-page="calculator" type="button">
-    ⌁ <span>Calculator</span>
-  </button>
-
-  <button data-page="settings" type="button">
-    ⚙ <span>Settings</span>
-  </button>
-
-</aside>
-
-
-<div
-  id="drawerOverlay"
-  class="drawerOverlay"
-></div>
-
-
-<main id="main"></main>
-
-
-<nav
-  id="bottomNav"
-  class="bottomNav"
-  aria-label="Bottom navigation"
->
-
-  <button data-page="home" type="button">
-    ⌂<span>Home</span>
-  </button>
-
-  <button data-page="estimate" type="button">
-    ▤<span>Estimate</span>
-  </button>
-
-  <button data-page="calculator" type="button">
-    ⌁<span>Calculator</span>
-  </button>
-
-  <button data-page="settings" type="button">
-    ⚙<span>Settings</span>
-  </button>
-
-</nav>
 
 </div>
 
 
-<script src="config.js"></script>
-<script src="material.js"></script>
-<script src="app.js"></script>
+<!-- Theme Switch -->
 
-</body>
+<button
+  id="themeBtn"
+  class="themeBtn"
+  type="button"
+  aria-label="Toggle theme"
+  aria-pressed="false"
+>
+  <span class="themeIcon">☀️</span>
+</button>
+
+
+<!-- Language -->
+
+<button
+  id="langBtn"
+  class="langBtn"
+  type="button"
+  aria-label="Change language"
+>
+  हि
+</button>
+
+  </header>  <!-- =====================================================
+       DRAWER
+       ===================================================== -->  <aside
+    id="drawer"
+    class="drawer"
+    aria-hidden="true"
+  ><button
+  id="closeMenu"
+  class="drawerClose"
+  type="button"
+  aria-label="Close menu"
+>
+  ×
+</button>
+
+
+<div class="drawerBrand">
+
+  <div class="drawerLogo">
+    SE
+  </div>
+
+  <b>
+    Sandeep ElectroFix
+  </b>
+
+  <small>
+    Powering Your Trust
+  </small>
+
+</div>
+
+
+<h2>
+  Menu
+</h2>
+
+
+<button
+  data-page="home"
+  type="button"
+>
+  ⌂
+  <span>Home</span>
+</button>
+
+
+<button
+  data-page="estimate"
+  type="button"
+>
+  ▤
+  <span>Estimate</span>
+</button>
+
+
+<button
+  data-page="calculator"
+  type="button"
+>
+  ⌁
+  <span>Calculator</span>
+</button>
+
+
+<button
+  data-page="settings"
+  type="button"
+>
+  ⚙
+  <span>Settings</span>
+</button>
+
+  </aside>  <!-- Drawer Overlay -->  <div
+    id="drawerOverlay"
+    class="drawerOverlay"
+  ></div>  <!-- =====================================================
+       MAIN APP
+       ===================================================== -->  <main id="main"></main>  <!-- =====================================================
+       BOTTOM NAVIGATION
+       ===================================================== -->  <nav
+    id="bottomNav"
+    class="bottomNav"
+    aria-label="Bottom navigation"
+  ><button
+  data-page="home"
+  type="button"
+>
+  ⌂
+  <span>Home</span>
+</button>
+
+
+<button
+  data-page="estimate"
+  type="button"
+>
+  ▤
+  <span>Estimate</span>
+</button>
+
+
+<button
+  data-page="calculator"
+  type="button"
+>
+  ⌁
+  <span>Calculator</span>
+</button>
+
+
+<button
+  data-page="settings"
+  type="button"
+>
+  ⚙
+  <span>Settings</span>
+</button>
+
+  </nav></div><!-- =======================================================
+     JAVASCRIPT
+     ======================================================= --><script src="config.js"></script><script src="material.js"></script><script src="app.js"></script></body>
 </html>

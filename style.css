@@ -1413,3 +1413,809 @@ body[data-theme="light"] .calcResult {
   background: #eef4fb;
   color: #0f172a;
 }
+
+
+/* =========================================================
+   SANDEEP ELECTROFIX - FINAL UI UPGRADE
+   ---------------------------------------------------------
+   1. Electric Gradient Hamburger #4
+   2. Circular Sun / Moon Theme Switch
+   3. Cyber Signboard Segmented Switch
+   4. Existing UI remains compatible
+   ========================================================= */
+
+
+/* =========================================================
+   ELECTRIC GRADIENT HAMBURGER #4
+   ---------------------------------------------------------
+   Existing HTML:
+   #menuBtn
+   ========================================================= */
+
+#menuBtn.iconBtn {
+  position: relative;
+
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+
+  margin-left: 8px;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  border: 1px solid rgba(56, 189, 248, .38);
+  border-radius: 14px;
+
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(14, 165, 233, .16),
+      rgba(7, 24, 46, .96) 70%
+    );
+
+  color: transparent;
+
+  box-shadow:
+    0 0 10px rgba(14, 165, 233, .20),
+    inset 0 0 12px rgba(250, 204, 21, .06);
+
+  overflow: hidden;
+
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+/* Electric bars */
+
+#menuBtn.iconBtn::before,
+#menuBtn.iconBtn::after {
+  content: "";
+  position: absolute;
+
+  width: 25px;
+  height: 3px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0ea5e9 0%,
+      #38bdf8 45%,
+      #facc15 100%
+    );
+
+  box-shadow:
+    0 0 5px rgba(56, 189, 248, .75),
+    0 0 10px rgba(14, 165, 233, .35);
+
+  transition:
+    transform .28s ease,
+    top .28s ease,
+    opacity .2s ease;
+}
+
+/* Middle bar */
+
+#menuBtn.iconBtn {
+  --menu-middle:
+    linear-gradient(
+      90deg,
+      #38bdf8,
+      #facc15
+    );
+}
+
+#menuBtn.iconBtn > span {
+  display: block;
+
+  width: 25px;
+  height: 3px;
+
+  border-radius: 10px;
+
+  background: var(--menu-middle);
+
+  box-shadow:
+    0 0 5px rgba(56, 189, 248, .75),
+    0 0 10px rgba(250, 204, 21, .25);
+
+  transition:
+    transform .28s ease,
+    opacity .2s ease;
+}
+
+/*
+   If app.js uses .open on menuBtn,
+   this automatically changes hamburger → X.
+*/
+
+#menuBtn.iconBtn.open::before {
+  transform: translateY(4px) rotate(45deg);
+}
+
+#menuBtn.iconBtn.open::after {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+#menuBtn.iconBtn.open > span {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+/* Support aria-expanded too */
+
+#menuBtn.iconBtn[aria-expanded="true"]::before {
+  transform: translateY(4px) rotate(45deg);
+}
+
+#menuBtn.iconBtn[aria-expanded="true"]::after {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+#menuBtn.iconBtn[aria-expanded="true"] > span {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+#menuBtn.iconBtn:active {
+  transform: scale(.91);
+}
+
+#menuBtn.iconBtn:hover {
+  border-color: #38bdf8;
+
+  box-shadow:
+    0 0 16px rgba(14, 165, 233, .35),
+    0 0 28px rgba(250, 204, 21, .10),
+    inset 0 0 14px rgba(14, 165, 233, .08);
+}
+
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(56, 189, 248, .10);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 11, 25, .98),
+      rgba(5, 11, 25, .90)
+    );
+
+  z-index: 200;
+}
+
+body[data-theme="light"] .topbar {
+  background: #ffffff;
+  border-bottom-color: rgba(14, 165, 233, .18);
+}
+
+
+/* =========================================================
+   CIRCULAR SUN / MOON THEME SWITCH
+   ---------------------------------------------------------
+   Compatible IDs/classes:
+   #themeBtn
+   .themeBtn
+   .themeSwitch
+   .theme-toggle
+   ========================================================= */
+
+#themeBtn,
+.themeBtn,
+.themeSwitch,
+.theme-toggle {
+  position: relative;
+
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+
+  margin-right: 8px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid rgba(56, 189, 248, .38);
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgba(56, 189, 248, .18),
+      #07182e 68%
+    );
+
+  color: #facc15;
+
+  font-size: 21px;
+  line-height: 1;
+
+  box-shadow:
+    0 0 12px rgba(14, 165, 233, .22),
+    inset 0 0 10px rgba(250, 204, 21, .08);
+
+  transition:
+    transform .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease;
+}
+
+#themeBtn:hover,
+.themeBtn:hover,
+.themeSwitch:hover,
+.theme-toggle:hover {
+  transform: rotate(12deg) scale(1.05);
+
+  border-color: #facc15;
+
+  box-shadow:
+    0 0 16px rgba(250, 204, 21, .35),
+    0 0 30px rgba(14, 165, 233, .18);
+}
+
+#themeBtn:active,
+.themeBtn:active,
+.themeSwitch:active,
+.theme-toggle:active {
+  transform: scale(.90);
+}
+
+/* Light mode */
+
+body[data-theme="light"] #themeBtn,
+body[data-theme="light"] .themeBtn,
+body[data-theme="light"] .themeSwitch,
+body[data-theme="light"] .theme-toggle {
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #fff7b2,
+      #eef4fb 68%
+    );
+
+  color: #f59e0b;
+
+  border-color: rgba(245, 158, 11, .45);
+
+  box-shadow:
+    0 0 14px rgba(245, 158, 11, .25),
+    inset 0 0 10px rgba(14, 165, 233, .08);
+}
+
+
+/* =========================================================
+   THEME ICON SUPPORT
+   ---------------------------------------------------------
+   If button contains .sunIcon / .moonIcon
+   ========================================================= */
+
+.themeIcon,
+.sunIcon,
+.moonIcon {
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: 100%;
+
+  line-height: 1;
+
+  transition:
+    transform .25s ease,
+    opacity .2s ease;
+}
+
+.moonIcon {
+  color: #38bdf8;
+}
+
+.sunIcon {
+  color: #facc15;
+}
+
+
+/* =========================================================
+   CYBER SIGNBOARD SEGMENTED SWITCH
+   ---------------------------------------------------------
+   3 options:
+   Grid / List / Compact
+
+   Compatible:
+   .cyberSwitch
+   .cyber-signboard
+   .segmentedSwitch
+   ========================================================= */
+
+.cyberSwitch,
+.cyber-signboard,
+.segmentedSwitch {
+  position: relative;
+
+  width: min(330px, 92vw);
+  min-height: 52px;
+
+  margin: 10px auto 14px;
+  padding: 4px;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+
+  border: 1px solid rgba(56, 189, 248, .35);
+  border-radius: 15px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #020817,
+      #06152a
+    );
+
+  box-shadow:
+    0 0 12px rgba(14, 165, 233, .18),
+    inset 0 0 14px rgba(14, 165, 233, .08);
+}
+
+/* Segmented buttons */
+
+.cyberSwitch button,
+.cyber-signboard button,
+.segmentedSwitch button {
+  position: relative;
+
+  min-height: 42px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #7dd3fc;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  transition:
+    color .2s ease,
+    background .2s ease,
+    box-shadow .2s ease,
+    transform .15s ease;
+}
+
+.cyberSwitch button:hover,
+.cyber-signboard button:hover,
+.segmentedSwitch button:hover {
+  color: #facc15;
+}
+
+.cyberSwitch button:active,
+.cyber-signboard button:active,
+.segmentedSwitch button:active {
+  transform: scale(.95);
+}
+
+/* Active signboard */
+
+.cyberSwitch button.active,
+.cyber-signboard button.active,
+.segmentedSwitch button.active,
+.cyberSwitch button[aria-selected="true"],
+.cyber-signboard button[aria-selected="true"],
+.segmentedSwitch button[aria-selected="true"] {
+  color: #fff;
+
+  border-color: rgba(56, 189, 248, .55);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(14, 165, 233, .24),
+      rgba(250, 204, 21, .12)
+    );
+
+  box-shadow:
+    0 0 10px rgba(14, 165, 233, .28),
+    inset 0 0 10px rgba(250, 204, 21, .08);
+}
+
+.cyberSwitch button.active::after,
+.cyber-signboard button.active::after,
+.segmentedSwitch button.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 18%;
+  right: 18%;
+  bottom: 3px;
+
+  height: 2px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0ea5e9,
+      #38bdf8,
+      #facc15
+    );
+
+  box-shadow:
+    0 0 7px #38bdf8,
+    0 0 12px #facc15;
+}
+
+
+/* =========================================================
+   COLLAPSED CYBER VIEW SELECTOR
+   ---------------------------------------------------------
+   Existing .viewSelector and .stageViewSelector remain.
+   ========================================================= */
+
+.viewSelector,
+.stageViewSelector {
+  z-index: 90;
+}
+
+.viewSelectorHead,
+.stageViewBtn {
+  position: relative;
+
+  overflow: hidden;
+}
+
+.viewSelectorHead::before,
+.stageViewBtn::before {
+  content: "";
+
+  position: absolute;
+
+  inset: -40%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent,
+      rgba(56, 189, 248, .35),
+      transparent,
+      rgba(250, 204, 21, .30),
+      transparent
+    );
+
+  animation: selectorElectricSpin 4s linear infinite;
+
+  pointer-events: none;
+}
+
+.viewSelectorIcon,
+.stageViewBtn > * {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes selectorElectricSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   VIEW OPTION NEON EFFECT
+   ========================================================= */
+
+.viewOption,
+.stageViewOption {
+  position: relative;
+  overflow: hidden;
+}
+
+.viewOption::before,
+.stageViewOption::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: -120%;
+
+  width: 70%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(56, 189, 248, .12),
+      transparent
+    );
+
+  transform: skewX(-20deg);
+
+  transition: left .4s ease;
+
+  pointer-events: none;
+}
+
+.viewOption:hover::before,
+.stageViewOption:hover::before {
+  left: 150%;
+}
+
+
+/* =========================================================
+   DRAWER - ELECTRIC STYLE
+   ========================================================= */
+
+.drawer {
+  background:
+    linear-gradient(
+      180deg,
+      #050b19,
+      #030711
+    );
+
+  box-shadow:
+    12px 0 35px rgba(0, 0, 0, .65),
+    0 0 25px rgba(14, 165, 233, .08);
+}
+
+.drawerClose {
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    color .2s ease;
+}
+
+.drawerClose:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  transform: rotate(90deg);
+}
+
+.drawer > button[data-page] {
+  position: relative;
+  overflow: hidden;
+
+  transition:
+    color .2s ease,
+    background .2s ease,
+    padding-left .2s ease;
+}
+
+.drawer > button[data-page]::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 3px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #0ea5e9,
+      #facc15
+    );
+
+  transform: scaleY(0);
+
+  transition: transform .2s ease;
+}
+
+.drawer > button[data-page]:hover,
+.drawer > button[data-page].active {
+  color: #38bdf8;
+  background: rgba(14, 165, 233, .08);
+  padding-left: 18px;
+}
+
+.drawer > button[data-page]:hover::before,
+.drawer > button[data-page].active::before {
+  transform: scaleY(1);
+}
+
+
+/* =========================================================
+   BOTTOM NAV - CYBER
+   ========================================================= */
+
+.bottomNav {
+  background:
+    linear-gradient(
+      180deg,
+      #050b18,
+      #030711
+    );
+
+  box-shadow:
+    0 -5px 25px rgba(0, 0, 0, .25),
+    0 0 15px rgba(14, 165, 233, .05);
+}
+
+.bottomNav button {
+  position: relative;
+
+  transition:
+    color .2s ease,
+    transform .15s ease;
+}
+
+.bottomNav button.active {
+  color: #38bdf8;
+
+  text-shadow:
+    0 0 8px rgba(56, 189, 248, .65);
+}
+
+.bottomNav button.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 28%;
+  right: 28%;
+  bottom: 2px;
+
+  height: 2px;
+
+  border-radius: 10px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0ea5e9,
+      #facc15
+    );
+
+  box-shadow:
+    0 0 7px #38bdf8,
+    0 0 10px #facc15;
+}
+
+
+/* =========================================================
+   GLOBAL CENTER ALIGNMENT
+   ========================================================= */
+
+.page,
+.hero,
+.stageHead,
+.itemHead,
+.formCard,
+.settingsList,
+.calcGrid,
+.estimateList {
+  text-align: center;
+}
+
+.page > *,
+.hero > *,
+.stageHead > *,
+.itemHead > * {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+  #menuBtn.iconBtn,
+  #themeBtn,
+  .themeBtn,
+  .themeSwitch,
+  .theme-toggle {
+    width: 43px;
+    height: 43px;
+    min-width: 43px;
+  }
+
+  #menuBtn.iconBtn::before,
+  #menuBtn.iconBtn::after,
+  #menuBtn.iconBtn > span {
+    width: 23px;
+  }
+
+  .cyberSwitch,
+  .cyber-signboard,
+  .segmentedSwitch {
+    width: min(310px, 94vw);
+  }
+
+  .cyberSwitch button,
+  .cyber-signboard button,
+  .segmentedSwitch button {
+    font-size: 11px;
+  }
+}
+
+
+/* =========================================================
+   LIGHT THEME - NEW UI
+   ========================================================= */
+
+body[data-theme="light"] #menuBtn.iconBtn {
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      rgba(14, 165, 233, .10),
+      #eef4fb 70%
+    );
+
+  border-color: rgba(14, 165, 233, .30);
+}
+
+body[data-theme="light"] .cyberSwitch,
+body[data-theme="light"] .cyber-signboard,
+body[data-theme="light"] .segmentedSwitch {
+  background:
+    linear-gradient(
+      180deg,
+      #f8fbff,
+      #eaf2fa
+    );
+
+  border-color: rgba(14, 165, 233, .25);
+
+  box-shadow:
+    0 0 12px rgba(14, 165, 233, .12),
+    inset 0 0 10px rgba(14, 165, 233, .04);
+}
+
+body[data-theme="light"] .cyberSwitch button,
+body[data-theme="light"] .cyber-signboard button,
+body[data-theme="light"] .segmentedSwitch button {
+  color: #0284c7;
+}
+
+body[data-theme="light"] .cyberSwitch button.active,
+body[data-theme="light"] .cyber-signboard button.active,
+body[data-theme="light"] .segmentedSwitch button.active {
+  color: #0369a1;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(14, 165, 233, .12),
+      rgba(250, 204, 21, .16)
+    );
+}
+
+
+/* =========================================================
+   ACCESSIBILITY / REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+}

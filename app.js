@@ -10,16 +10,23 @@
    material.js
    app.js
 
+   IMPORTANT
+   ---------------------------------------------------------
+   material.js master data is NEVER modified.
+
+   This app.js creates the missing dynamic UI shell inside
+   #main so the revised index.html can work correctly.
+
    FEATURES
    ---------------------------------------------------------
    ✓ Hindi / English
-   ✓ Dark / Light theme
-   ✓ Top circular theme switch
+   ✓ Dark / Light
+   ✓ Circular top theme switch
    ✓ Electric Gradient hamburger
    ✓ Drawer + overlay
    ✓ Bottom navigation
    ✓ Home / Materials / Estimate / Calculator / Settings
-   ✓ Stage View
+   ✓ Stage View - 10 modes
    ✓ Material View - 10 modes
    ✓ Search
    ✓ Quantity + / -
@@ -27,25 +34,17 @@
    ✓ Optional Brand
    ✓ Optional Price
    ✓ Explicit Add
-   ✓ Next does NOT auto-add
+   ✓ Next NEVER auto-adds
    ✓ Auto Next after Add
    ✓ Back / Previous / Next
    ✓ Estimate Edit / Delete
    ✓ LocalStorage
    ✓ Refresh state restore
-   ✓ Browser / Android Back handling
+   ✓ Android / Browser Back
    ✓ Short Toast
    ✓ Backup / Reset
-   ✓ P = V × I
-   ✓ V = I × R
-   ✓ I = P ÷ V
-   ✓ R = V ÷ I
-   ✓ Inverter 12V / 24V → 230V examples
+   ✓ Electrical Calculator
    ✓ Loader completely removed
-
-   IMPORTANT
-   ---------------------------------------------------------
-   material.js master data is NOT modified.
 ========================================================= */
 
 (() => {
@@ -78,7 +77,7 @@
         ? window.MATERIAL_STAGES
         : [];
 
-  const APP_VERSION = "1.0.0";
+  const APP_VERSION = "1.1.0";
 
   /* =======================================================
      02. STORAGE
@@ -118,20 +117,7 @@
      03. VIEW MODES
   ======================================================= */
 
-  const MATERIAL_VIEW_MODES = [
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "two-column",
-    "horizontal",
-    "icon-list",
-    "timeline",
-    "dense"
-  ];
-
-  const STAGE_VIEW_MODES = [
+  const VIEW_MODES = [
     "grid",
     "list",
     "compact",
@@ -162,7 +148,6 @@
 
     materialView:
       localStorage.getItem(STORAGE.materialView) ||
-      CONFIG?.views?.default ||
       "grid",
 
     stageView:
@@ -191,14 +176,14 @@
 
     historyReady: false,
 
-    suppressHistory: false
+    initialized: false
   };
 
   /* =======================================================
-     05. DOM CACHE
+     05. DOM
   ======================================================= */
 
-  const $ = (id) =>
+  const $ = id =>
     document.getElementById(id);
 
   const DOM = {};
@@ -206,8 +191,8 @@
   function cacheDOM() {
     const ids = [
       "app",
+      "main",
 
-      /* NEW INDEX.HTML */
       "menuBtn",
       "drawer",
       "closeMenu",
@@ -215,25 +200,12 @@
       "bottomNav",
       "themeBtn",
       "langBtn",
-      "main",
 
       "brandHead",
       "topLogo",
       "appTitle",
       "subTitle",
 
-      /* OLD / COMPATIBILITY */
-      "topBar",
-      "hamburgerButton",
-      "topBarTitle",
-      "languageButton",
-
-      "sideMenu",
-      "sideMenuClose",
-      "sideMenuNav",
-      "menuOverlay",
-
-      /* HOME */
       "homePage",
       "homeHero",
       "heroLogo",
@@ -250,7 +222,6 @@
       "stageViewBtn",
       "stageViewOptions",
 
-      /* MATERIAL */
       "materialPage",
       "materialHeader",
       "materialBackButton",
@@ -259,12 +230,10 @@
       "materialStageTitleHi",
       "materialList",
 
-      /* MATERIAL VIEW */
       "materialViewSelector",
       "materialViewButton",
       "materialViewOptions",
 
-      /* EDITOR */
       "materialEditor",
       "materialEditorTop",
       "editorBackButton",
@@ -294,13 +263,11 @@
       "itemNextButton",
       "addToEstimateButton",
 
-      /* ESTIMATE */
       "estimatePage",
       "estimateContent",
       "estimateEmpty",
       "estimateItems",
 
-      /* CALCULATOR */
       "calculatorPage",
 
       "voltageCalculator",
@@ -322,7 +289,6 @@
       "formulaSection",
       "inverterExamples",
 
-      /* SETTINGS */
       "settingsPage",
 
       "settingLanguage",
@@ -332,7 +298,6 @@
       "themeToggleButton",
 
       "settingMaterialView",
-      "materialViewButton",
 
       "settingBackup",
       "backupButton",
@@ -343,55 +308,684 @@
       "settingAbout",
       "aboutButton",
 
-      /* TOAST */
       "appToast",
       "toastIcon",
       "toastMessage"
     ];
 
-    ids.forEach((id) => {
+    ids.forEach(id => {
       DOM[id] = $(id);
     });
 
-    /*
-      New HTML → old JS compatibility aliases
-    */
-
-    if (!DOM.hamburgerButton) {
-      DOM.hamburgerButton = DOM.menuBtn;
-    }
-
-    if (!DOM.sideMenu) {
-      DOM.sideMenu = DOM.drawer;
-    }
-
-    if (!DOM.sideMenuClose) {
-      DOM.sideMenuClose = DOM.closeMenu;
-    }
-
-    if (!DOM.menuOverlay) {
-      DOM.menuOverlay = DOM.drawerOverlay;
-    }
-
-    if (!DOM.languageButton) {
-      DOM.languageButton = DOM.langBtn;
-    }
-
-    if (!DOM.bottomNavigation) {
-      DOM.bottomNavigation = DOM.bottomNav;
-    }
-
-    if (!DOM.themeToggleButton) {
-      DOM.themeToggleButton = DOM.themeBtn;
-    }
-
-    if (!DOM.topBarTitle) {
-      DOM.topBarTitle = DOM.appTitle;
-    }
+    DOM.hamburgerButton = DOM.menuBtn;
+    DOM.sideMenu = DOM.drawer;
+    DOM.sideMenuClose = DOM.closeMenu;
+    DOM.menuOverlay = DOM.drawerOverlay;
+    DOM.languageButton = DOM.langBtn;
+    DOM.bottomNavigation = DOM.bottomNav;
+    DOM.themeToggleButton = DOM.themeBtn;
+    DOM.topBarTitle = DOM.appTitle;
   }
 
   /* =======================================================
-     06. SAFE STORAGE
+     06. DYNAMIC UI SHELL
+  ======================================================= */
+
+  function ensureMainShell() {
+    if (!DOM.main) return;
+
+    /*
+      The revised index.html intentionally contains only:
+
+      <main id="main"></main>
+
+      Therefore all application pages are generated here.
+    */
+
+    if (!DOM.homePage) {
+      DOM.main.innerHTML = createApplicationShellHTML();
+      cacheDOM();
+    }
+
+    ensureToast();
+  }
+
+  function createApplicationShellHTML() {
+    return `
+      <section id="homePage" class="page home-page">
+        <div id="homeHero" class="hero">
+          <img
+            id="heroLogo"
+            class="heroLogo"
+            src="logo.png"
+            alt="Sandeep ElectroFix"
+          >
+
+          <div id="businessName" class="businessName">
+            Sandeep ElectroFix
+          </div>
+
+          <div id="businessTagline" class="businessTagline">
+            Powering Your Trust
+          </div>
+        </div>
+
+        <div id="searchContainer" class="searchBox">
+          <span id="searchIcon" class="searchIcon">⌕</span>
+
+          <input
+            id="materialSearch"
+            type="search"
+            autocomplete="off"
+            placeholder="Search material / सामग्री खोजें"
+            aria-label="Search material"
+          >
+
+          <button
+            id="searchClearButton"
+            type="button"
+            class="searchClear"
+            hidden
+            aria-label="Clear search"
+          >×</button>
+        </div>
+
+        <div
+          id="stageViewSelector"
+          class="stageViewSelector viewSelector"
+        >
+          <button
+            id="stageViewBtn"
+            class="stageViewBtn viewSelectorButton"
+            type="button"
+            aria-label="Stage view"
+          >
+            <span class="viewSelectorIcon">▦</span>
+          </button>
+
+          <div
+            id="stageViewOptions"
+            class="stageViewOptions viewOptions"
+          ></div>
+        </div>
+
+        <div
+          id="stageCardsContainer"
+          class="stageGrid"
+        ></div>
+      </section>
+
+      <section
+        id="materialPage"
+        class="page material-page"
+        hidden
+      >
+        <div id="materialHeader" class="stageHead">
+          <button
+            id="materialBackButton"
+            class="back"
+            type="button"
+          >← <span data-i18n="back">Back</span></button>
+
+          <div class="stageHeadText">
+            <div
+              id="materialStageNumber"
+              class="stage-number"
+            ></div>
+
+            <div
+              id="materialStageTitle"
+              class="stage-title"
+            ></div>
+
+            <div
+              id="materialStageTitleHi"
+              class="stage-title-hi"
+            ></div>
+          </div>
+
+          <div
+            id="materialViewSelector"
+            class="viewSelector"
+          >
+            <button
+              id="materialViewButton"
+              class="viewSelectorButton"
+              type="button"
+              aria-label="Material view"
+            >
+              <span class="viewSelectorIcon">▦</span>
+            </button>
+
+            <div
+              id="materialViewOptions"
+              class="viewOptions"
+            ></div>
+          </div>
+        </div>
+
+        <div
+          id="materialList"
+          class="itemGrid"
+        ></div>
+
+        <section
+          id="materialEditor"
+          class="materialEditor"
+          hidden
+        >
+          <div
+            id="materialEditorTop"
+            class="formCard"
+          >
+            <button
+              id="editorBackButton"
+              class="back"
+              type="button"
+            >← <span data-i18n="back">Back</span></button>
+
+            <div class="editorTitleBlock">
+              <div
+                id="editorItemNumber"
+                class="material-item-number"
+              ></div>
+
+              <div
+                id="editorItemName"
+                class="material-name"
+              ></div>
+
+              <div
+                id="editorItemNameHi"
+                class="material-name-hi"
+              ></div>
+            </div>
+
+            <div
+              id="editorImageContainer"
+              class="editorImageContainer"
+              hidden
+            >
+              <img
+                id="editorItemImage"
+                class="editorItemImage"
+                alt=""
+              >
+            </div>
+          </div>
+
+          <div
+            id="materialFields"
+            class="formCard"
+          ></div>
+
+          <div
+            id="quantityField"
+            class="formCard field"
+          >
+            <label class="field-label">
+              Quantity / क्वांटिटी
+            </label>
+
+            <div class="qtyRow">
+              <button
+                id="quantityMinus"
+                class="qtyButton"
+                type="button"
+              >−</button>
+
+              <input
+                id="quantityInput"
+                class="field-input qtyInput"
+                type="number"
+                min="1"
+                inputmode="numeric"
+                autocomplete="off"
+              >
+
+              <button
+                id="quantityPlus"
+                class="qtyButton"
+                type="button"
+              >+</button>
+            </div>
+          </div>
+
+          <div
+            id="unitField"
+            class="formCard field"
+          >
+            <label
+              class="field-label"
+              for="unitSelect"
+            >
+              Unit / यूनिट
+            </label>
+
+            <select
+              id="unitSelect"
+              class="field-input"
+            ></select>
+          </div>
+
+          <div
+            id="brandField"
+            class="formCard field"
+          >
+            <label
+              class="field-label"
+              for="brandSelect"
+            >
+              Brand / ब्रांड
+            </label>
+
+            <select
+              id="brandSelect"
+              class="field-input"
+            ></select>
+          </div>
+
+          <div
+            id="priceField"
+            class="formCard field priceWrap"
+            hidden
+          >
+            <label
+              class="field-label"
+              for="priceInput"
+            >
+              Price / कीमत
+            </label>
+
+            <input
+              id="priceInput"
+              class="field-input"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              autocomplete="off"
+            >
+          </div>
+
+          <div
+            id="editorActions"
+            class="editorActions"
+          >
+            <button
+              id="itemBackButton"
+              class="secondary"
+              type="button"
+            >
+              ← Previous / पिछला
+            </button>
+
+            <button
+              id="addToEstimateButton"
+              class="primary"
+              type="button"
+            >
+              + Add / जोड़ें
+            </button>
+
+            <button
+              id="itemNextButton"
+              class="secondary"
+              type="button"
+            >
+              Next / अगला →
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <section
+        id="estimatePage"
+        class="page estimate-page"
+        hidden
+      >
+        <div class="pageHeader">
+          <h2>
+            Estimate / एस्टिमेट
+          </h2>
+        </div>
+
+        <div
+          id="estimateContent"
+          class="estimateContent"
+        >
+          <div
+            id="estimateEmpty"
+            class="empty-state"
+            hidden
+          >
+            <div class="emptyIcon">▤</div>
+            <strong>
+              No estimate items
+            </strong>
+            <span>
+              अभी कोई आइटम नहीं जोड़ा गया।
+            </span>
+          </div>
+
+          <div
+            id="estimateItems"
+            class="estimateItems"
+          ></div>
+        </div>
+      </section>
+
+      <section
+        id="calculatorPage"
+        class="page calculator-page"
+        hidden
+      >
+        <div class="pageHeader">
+          <h2>
+            Calculator / कैलकुलेटर
+          </h2>
+        </div>
+
+        <div class="calculatorGrid">
+
+          <div
+            id="voltageCalculator"
+            class="calculatorCard"
+          >
+            <h3>
+              Voltage / वोल्टेज
+            </h3>
+
+            <input
+              id="voltageInput"
+              class="field-input"
+              type="number"
+              inputmode="decimal"
+              placeholder="Current (A)"
+            >
+
+            <div
+              id="voltageResult"
+              class="calculatorResult"
+            >
+              Enter a value
+            </div>
+
+            <small>
+              V = I × R
+            </small>
+          </div>
+
+          <div
+            id="currentCalculator"
+            class="calculatorCard"
+          >
+            <h3>
+              Current / करंट
+            </h3>
+
+            <input
+              id="currentInput"
+              class="field-input"
+              type="number"
+              inputmode="decimal"
+              placeholder="Current (A)"
+            >
+
+            <div
+              id="currentResult"
+              class="calculatorResult"
+            >
+              Enter a value
+            </div>
+
+            <small>
+              I = P ÷ V
+            </small>
+          </div>
+
+          <div
+            id="powerCalculator"
+            class="calculatorCard"
+          >
+            <h3>
+              Power / पावर
+            </h3>
+
+            <input
+              id="powerInput"
+              class="field-input"
+              type="number"
+              inputmode="decimal"
+              placeholder="Current (A)"
+            >
+
+            <div
+              id="powerResult"
+              class="calculatorResult"
+            >
+              Enter current
+            </div>
+
+            <small>
+              P = V × I
+            </small>
+          </div>
+
+          <div
+            id="resistanceCalculator"
+            class="calculatorCard"
+          >
+            <h3>
+              Resistance / रेजिस्टेंस
+            </h3>
+
+            <input
+              id="resistanceInput"
+              class="field-input"
+              type="number"
+              inputmode="decimal"
+              placeholder="Current (A)"
+            >
+
+            <div
+              id="resistanceResult"
+              class="calculatorResult"
+            >
+              Enter current
+            </div>
+
+            <small>
+              R = V ÷ I
+            </small>
+          </div>
+
+        </div>
+
+        <div
+          id="formulaSection"
+          class="formulaSection"
+        ></div>
+
+        <div
+          id="inverterExamples"
+          class="formulaSection"
+        ></div>
+      </section>
+
+      <section
+        id="settingsPage"
+        class="page settings-page"
+        hidden
+      >
+        <div class="pageHeader">
+          <h2>
+            Settings / सेटिंग्स
+          </h2>
+        </div>
+
+        <div class="settingsList">
+
+          <div
+            id="settingLanguage"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                Language / भाषा
+              </strong>
+              <small>
+                Hindi / English
+              </small>
+            </div>
+
+            <button
+              id="settingsLanguageButton"
+              class="secondary"
+              type="button"
+            >
+              हिन्दी
+            </button>
+          </div>
+
+          <div
+            id="settingTheme"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                Theme / थीम
+              </strong>
+              <small>
+                Dark / Light
+              </small>
+            </div>
+
+            <button
+              id="themeToggleButton"
+              class="secondary"
+              type="button"
+            >
+              Theme
+            </button>
+          </div>
+
+          <div
+            id="settingMaterialView"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                Material View / मटेरियल व्यू
+              </strong>
+              <small>
+                Current: <span id="settingsCurrentView">Grid</span>
+              </small>
+            </div>
+
+            <button
+              id="settingsViewButton"
+              class="secondary"
+              type="button"
+            >
+              Change
+            </button>
+          </div>
+
+          <div
+            id="settingBackup"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                Backup / बैकअप
+              </strong>
+              <small>
+                Save estimate data
+              </small>
+            </div>
+
+            <button
+              id="backupButton"
+              class="secondary"
+              type="button"
+            >
+              Backup
+            </button>
+          </div>
+
+          <div
+            id="settingReset"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                Reset / रीसेट
+              </strong>
+              <small>
+                Delete saved estimate
+              </small>
+            </div>
+
+            <button
+              id="resetButton"
+              class="danger"
+              type="button"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div
+            id="settingAbout"
+            class="settingCard"
+          >
+            <div>
+              <strong>
+                About / जानकारी
+              </strong>
+              <small>
+                Sandeep ElectroFix
+              </small>
+            </div>
+
+            <button
+              id="aboutButton"
+              class="secondary"
+              type="button"
+            >
+              About
+            </button>
+          </div>
+
+        </div>
+      </section>
+    `;
+  }
+
+  function ensureToast() {
+    if ($("appToast")) {
+      cacheDOM();
+      return;
+    }
+
+    const toast = document.createElement("div");
+
+    toast.id = "appToast";
+    toast.className = "app-toast";
+
+    toast.innerHTML = `
+      <span id="toastIcon" class="toastIcon">✓</span>
+      <span id="toastMessage" class="toastMessage"></span>
+    `;
+
+    document.body.appendChild(toast);
+
+    cacheDOM();
+  }
+
+  /* =======================================================
+     07. STORAGE
   ======================================================= */
 
   function loadEstimateItems() {
@@ -454,7 +1048,7 @@
     try {
       localStorage.setItem(
         key,
-        value
+        String(value)
       );
     } catch (error) {
       console.error(
@@ -487,27 +1081,25 @@
 
   function saveNavigationState() {
     try {
-      const data = {
-        page: state.currentPage,
-        stageId: state.currentStageId,
-        itemIndex: state.currentItemIndex,
-        materialId:
-          state.currentItem?.id ||
-          null,
-        editingEstimateId:
-          state.editingEstimateId ||
-          null
-      };
-
       localStorage.setItem(
         STORAGE.navigation,
-        JSON.stringify(data)
+        JSON.stringify({
+          page: state.currentPage,
+          stageId: state.currentStageId,
+          itemIndex: state.currentItemIndex,
+          materialId:
+            state.currentItem?.id ||
+            null,
+          editingEstimateId:
+            state.editingEstimateId ||
+            null
+        })
       );
     } catch (_) {}
   }
 
   /* =======================================================
-     07. LANGUAGE
+     08. LANGUAGE
   ======================================================= */
 
   function currentLanguage() {
@@ -516,10 +1108,7 @@
       : "hi";
   }
 
-  function text(
-    en,
-    hi
-  ) {
+  function text(en, hi) {
     return currentLanguage() === "hi"
       ? (hi || en || "")
       : (en || hi || "");
@@ -529,7 +1118,9 @@
     obj,
     fallback = ""
   ) {
-    if (!obj) return fallback;
+    if (obj === null || obj === undefined) {
+      return fallback;
+    }
 
     if (
       typeof obj === "string" ||
@@ -538,10 +1129,8 @@
       return String(obj);
     }
 
-    if (
-      currentLanguage() === "hi"
-    ) {
-      return (
+    if (currentLanguage() === "hi") {
+      return String(
         obj.hi ??
         obj.en ??
         obj.name ??
@@ -550,7 +1139,7 @@
       );
     }
 
-    return (
+    return String(
       obj.en ??
       obj.hi ??
       obj.name ??
@@ -559,9 +1148,7 @@
     );
   }
 
-  function setLanguage(
-    language
-  ) {
+  function setLanguage(language) {
     state.language =
       language === "en"
         ? "en"
@@ -573,25 +1160,18 @@
     );
 
     document.documentElement.lang =
-      state.language === "hi"
-        ? "hi"
-        : "en";
+      state.language;
 
-    if (
-      typeof window.setMaterialLanguage ===
-      "function"
-    ) {
-      try {
+    try {
+      if (
+        typeof window.setMaterialLanguage ===
+        "function"
+      ) {
         window.setMaterialLanguage(
           state.language
         );
-      } catch (error) {
-        console.warn(
-          "Material language sync:",
-          error
-        );
       }
-    }
+    } catch (_) {}
 
     renderAll();
   }
@@ -605,60 +1185,45 @@
   }
 
   function updateLanguageButton() {
-    const buttons = [
-      DOM.langBtn,
-      DOM.languageButton,
-      DOM.settingsLanguageButton
-    ];
+    if (DOM.langBtn) {
+      DOM.langBtn.textContent =
+        state.language === "hi"
+          ? "हि"
+          : "EN";
+    }
 
-    buttons.forEach(
-      (button) => {
-        if (!button) return;
-
-        if (
-          button ===
-            DOM.settingsLanguageButton
-        ) {
-          button.textContent =
-            state.language === "hi"
-              ? "हिन्दी"
-              : "English";
-        } else {
-          button.textContent =
-            state.language === "hi"
-              ? "हि"
-              : "EN";
-        }
-      }
-    );
+    if (DOM.settingsLanguageButton) {
+      DOM.settingsLanguageButton.textContent =
+        state.language === "hi"
+          ? "हिन्दी"
+          : "English";
+    }
   }
 
   /* =======================================================
-     08. THEME
+     09. THEME
   ======================================================= */
 
   function applyTheme() {
-    const theme =
+    state.theme =
       state.theme === "light"
         ? "light"
         : "dark";
 
-    state.theme = theme;
-
     document.documentElement.dataset.theme =
-      theme;
+      state.theme;
 
     document.body.dataset.theme =
-      theme;
+      state.theme;
 
     document.body.classList.toggle(
       "light-theme",
-      theme === "light"
+      state.theme === "light"
     );
 
     saveSetting(
       STORAGE.theme,
-      theme
+      state.theme
     );
 
     updateThemeButtons();
@@ -667,10 +1232,6 @@
   function updateThemeButtons() {
     const isDark =
       state.theme === "dark";
-
-    /*
-      New circular top switch
-    */
 
     if (DOM.themeBtn) {
       DOM.themeBtn.setAttribute(
@@ -698,59 +1259,45 @@
 
       if (icon) {
         icon.textContent =
-          isDark
-            ? "☀"
-            : "☾";
-      } else {
-        DOM.themeBtn.textContent =
-          isDark
-            ? "☀"
-            : "☾";
+          isDark ? "☀" : "☾";
       }
     }
 
-    /*
-      Settings compatibility
-    */
-
-    if (DOM.themeToggleButton) {
-      if (
-        DOM.themeToggleButton !==
-        DOM.themeBtn
-      ) {
-        DOM.themeToggleButton.textContent =
-          isDark
-            ? text(
-                "☀ Light Mode",
-                "☀ लाइट मोड"
-              )
-            : text(
-                "☾ Dark Mode",
-                "☾ डार्क मोड"
-              );
-      }
+    if (
+      DOM.themeToggleButton &&
+      DOM.themeToggleButton !== DOM.themeBtn
+    ) {
+      DOM.themeToggleButton.textContent =
+        isDark
+          ? text(
+              "☀ Light Mode",
+              "☀ लाइट मोड"
+            )
+          : text(
+              "☾ Dark Mode",
+              "☾ डार्क मोड"
+            );
     }
   }
 
   function toggleTheme() {
-    if (
-      CONFIG?.theme &&
-      CONFIG.theme.allowToggle === false
-    ) {
-      return;
-    }
-
     state.theme =
       state.theme === "dark"
         ? "light"
         : "dark";
 
     applyTheme();
-    renderSettings();
+
+    if (
+      state.currentPage ===
+      "settings"
+    ) {
+      renderSettings();
+    }
   }
 
   /* =======================================================
-     09. BRANDING
+     10. BRANDING
   ======================================================= */
 
   function applyBranding() {
@@ -798,167 +1345,10 @@
   }
 
   /* =======================================================
-     10. CONFIG HELPERS
-  ======================================================= */
-
-  function configEnabled(
-    path,
-    fallback = true
-  ) {
-    const parts =
-      String(path)
-        .split(".")
-        .filter(Boolean);
-
-    let value = CONFIG;
-
-    for (const part of parts) {
-      if (
-        value === null ||
-        value === undefined ||
-        !Object.prototype.hasOwnProperty.call(
-          value,
-          part
-        )
-      ) {
-        return fallback;
-      }
-
-      value = value[part];
-    }
-
-    return value !== false;
-  }
-
-  function setVisible(
-    element,
-    visible
-  ) {
-    if (!element) return;
-
-    element.hidden = !visible;
-
-    element.classList.toggle(
-      "config-hidden",
-      !visible
-    );
-  }
-
-  function applyConfigVisibility() {
-    const ui =
-      CONFIG?.ui || {};
-
-    const home =
-      CONFIG?.home || {};
-
-    const materials =
-      CONFIG?.materials || {};
-
-    const bottomNav =
-      CONFIG?.bottomNav || {};
-
-    const calculator =
-      CONFIG?.calculator || {};
-
-    const settings =
-      CONFIG?.settings || {};
-
-    setVisible(
-      DOM.hamburgerButton,
-      ui.menu !== false &&
-      ui.hamburger !== false
-    );
-
-    setVisible(
-      DOM.languageButton,
-      ui.languageButton !== false &&
-      CONFIG?.language?.enabled !== false
-    );
-
-    setVisible(
-      DOM.themeBtn,
-      ui.themeButton !== false &&
-      CONFIG?.theme?.enabled !== false
-    );
-
-    setVisible(
-      DOM.homeHero,
-      home.enabled !== false &&
-      home.showHero !== false
-    );
-
-    setVisible(
-      DOM.stageCardsContainer,
-      home.enabled !== false &&
-      home.showStageCards !== false
-    );
-
-    setVisible(
-      DOM.searchContainer,
-      home.enabled !== false &&
-      home.showSearch !== false &&
-      CONFIG?.search?.enabled !== false &&
-      ui.search !== false
-    );
-
-    setVisible(
-      DOM.materialBackButton,
-      ui.backButton !== false
-    );
-
-    setVisible(
-      DOM.editorBackButton,
-      ui.backButton !== false
-    );
-
-    setVisible(
-      DOM.itemBackButton,
-      ui.backButton !== false
-    );
-
-    setVisible(
-      DOM.itemNextButton,
-      ui.nextButton !== false
-    );
-
-    setVisible(
-      DOM.addToEstimateButton,
-      ui.addToEstimateButton !== false
-    );
-
-    setVisible(
-      DOM.bottomNavigation,
-      bottomNav.enabled !== false &&
-      ui.bottomNav !== false &&
-      ui.bottomNavigation !== false
-    );
-
-    setVisible(
-      DOM.calculatorPage,
-      calculator.enabled !== false &&
-      ui.calculator !== false
-    );
-
-    setVisible(
-      DOM.settingsPage,
-      settings.enabled !== false &&
-      ui.settings !== false
-    );
-
-    setVisible(
-      DOM.priceField,
-      materials.showPrice === true &&
-      CONFIG?.price?.enabled !== false
-    );
-  }
-
-  /* =======================================================
      11. MATERIAL HELPERS
   ======================================================= */
 
-  function getMaterialFields(
-    material
-  ) {
+  function getMaterialFields(material) {
     if (!material) return [];
 
     if (
@@ -977,25 +1367,13 @@
             material
           ) || []
         ).slice();
-      } catch (error) {
-        console.warn(error);
-      }
+      } catch (_) {}
     }
 
     return [];
   }
 
-  function sortFields(
-    fields
-  ) {
-    return Array.isArray(fields)
-      ? fields.slice()
-      : [];
-  }
-
-  function fieldKey(
-    field
-  ) {
+  function fieldKey(field) {
     if (!field) return "";
 
     return String(
@@ -1007,9 +1385,7 @@
     );
   }
 
-  function normalizedFieldKey(
-    field
-  ) {
+  function normalizedFieldKey(field) {
     return fieldKey(field)
       .toLowerCase()
       .replace(
@@ -1018,24 +1394,19 @@
       );
   }
 
-  function isSystemField(
-    field
-  ) {
-    const key =
-      normalizedFieldKey(field);
-
+  function isSystemField(field) {
     return [
       "quantity",
       "qty",
       "unit",
       "brand",
       "price"
-    ].includes(key);
+    ].includes(
+      normalizedFieldKey(field)
+    );
   }
 
-  function fieldLabel(
-    field
-  ) {
+  function fieldLabel(field) {
     if (!field) return "";
 
     if (
@@ -1065,9 +1436,7 @@
     );
   }
 
-  function normalizeOption(
-    option
-  ) {
+  function normalizeOption(option) {
     if (
       typeof option === "string" ||
       typeof option === "number"
@@ -1114,9 +1483,7 @@
     };
   }
 
-  function fieldOptions(
-    field
-  ) {
+  function fieldOptions(field) {
     if (!field) return [];
 
     let options =
@@ -1136,9 +1503,7 @@
       }
     }
 
-    if (
-      !Array.isArray(options)
-    ) {
+    if (!Array.isArray(options)) {
       return [];
     }
 
@@ -1147,9 +1512,7 @@
     );
   }
 
-  function fieldType(
-    field
-  ) {
+  function fieldType(field) {
     const type =
       String(
         field?.type ||
@@ -1176,9 +1539,7 @@
       : "text";
   }
 
-  function getMaterialById(
-    id
-  ) {
+  function getMaterialById(id) {
     if (
       id === null ||
       id === undefined
@@ -1195,17 +1556,14 @@
     );
   }
 
-  function getStageById(
-    id
-  ) {
+  function getStageById(id) {
     return (
       STAGES.find(
         stage =>
           String(
             stage.id ??
             stage.stage
-          ) ===
-          String(id)
+          ) === String(id)
       ) || null
     );
   }
@@ -1215,7 +1573,7 @@
   ) {
     if (!material) return "";
 
-    return (
+    return String(
       material.name?.en ??
       material.title?.en ??
       material.en ??
@@ -1234,7 +1592,7 @@
   ) {
     if (!material) return "";
 
-    return (
+    return String(
       material.name?.hi ??
       material.title?.hi ??
       material.hi ??
@@ -1242,12 +1600,10 @@
     );
   }
 
-  function stageEnglishName(
-    stage
-  ) {
+  function stageEnglishName(stage) {
     if (!stage) return "";
 
-    return (
+    return String(
       stage.en ??
       stage.name?.en ??
       stage.title?.en ??
@@ -1261,12 +1617,10 @@
     );
   }
 
-  function stageHindiName(
-    stage
-  ) {
+  function stageHindiName(stage) {
     if (!stage) return "";
 
-    return (
+    return String(
       stage.hi ??
       stage.name?.hi ??
       stage.title?.hi ??
@@ -1274,13 +1628,19 @@
     );
   }
 
+  function getStageMaterials(stageId) {
+    return MATERIALS.filter(
+      material =>
+        String(material.stage) ===
+        String(stageId)
+    );
+  }
+
   /* =======================================================
-     12. DRAFT VALUES
+     12. DRAFT
   ======================================================= */
 
-  function getDraftKey(
-    material
-  ) {
+  function getDraftKey(material) {
     if (!material) return "";
 
     return String(
@@ -1289,15 +1649,11 @@
     );
   }
 
-  function getDraft(
-    material
-  ) {
+  function getDraft(material) {
     const key =
       getDraftKey(material);
 
-    if (
-      !state.draftValues[key]
-    ) {
+    if (!state.draftValues[key]) {
       state.draftValues[key] = {};
     }
 
@@ -1308,10 +1664,10 @@
     material,
     key
   ) {
-    const draft =
-      getDraft(material);
-
-    return draft[key] ?? "";
+    return (
+      getDraft(material)[key] ??
+      ""
+    );
   }
 
   function setDraftValue(
@@ -1319,20 +1675,8 @@
     key,
     value
   ) {
-    const draft =
-      getDraft(material);
-
-    draft[key] = value;
-  }
-
-  function clearDraft(
-    material
-  ) {
-    if (!material) return;
-
-    delete state.draftValues[
-      getDraftKey(material)
-    ];
+    getDraft(material)[key] =
+      value;
   }
 
   /* =======================================================
@@ -1340,9 +1684,7 @@
   ======================================================= */
 
   function renderHome() {
-    if (
-      !DOM.stageCardsContainer
-    ) {
+    if (!DOM.stageCardsContainer) {
       return;
     }
 
@@ -1353,27 +1695,22 @@
         .trim()
         .toLowerCase();
 
-    let visibleMaterials =
-      MATERIALS;
-
-    if (search) {
-      visibleMaterials =
-        MATERIALS.filter(
-          material =>
-            searchMatchesMaterial(
-              material,
-              search
-            )
-        );
-    }
+    const visibleMaterials =
+      search
+        ? MATERIALS.filter(
+            material =>
+              searchMatchesMaterial(
+                material,
+                search
+              )
+          )
+        : MATERIALS;
 
     const visibleStageIds =
       new Set(
         visibleMaterials.map(
           material =>
-            String(
-              material.stage
-            )
+            String(material.stage)
         )
       );
 
@@ -1391,9 +1728,7 @@
 
         if (
           search &&
-          !visibleStageIds.has(
-            stageId
-          )
+          !visibleStageIds.has(stageId)
         ) {
           return;
         }
@@ -1409,8 +1744,7 @@
 
     if (
       search &&
-      DOM.stageCardsContainer
-        .children.length === 0
+      !DOM.stageCardsContainer.children.length
     ) {
       const empty =
         document.createElement(
@@ -1444,9 +1778,7 @@
       );
 
     card.type = "button";
-
-    card.className =
-      "stage-card";
+    card.className = "stage-card";
 
     card.dataset.stage =
       String(
@@ -1454,22 +1786,6 @@
         stage.stage ??
         index + 1
       );
-
-    if (
-      CONFIG?.stageCards
-        ?.rotation !== false
-    ) {
-      card.style.setProperty(
-        "--rotation-time",
-        `${
-          Number(
-            CONFIG?.stageCards
-              ?.rotationTime ||
-            5000
-          ) / 1000
-        }s`
-      );
-    }
 
     const inner =
       document.createElement(
@@ -1479,32 +1795,23 @@
     inner.className =
       "stage-card-inner";
 
-    if (
-      CONFIG?.stageCards
-        ?.showNumber !== false
-    ) {
-      const number =
-        document.createElement(
-          "div"
-        );
+    const number =
+      document.createElement(
+        "div"
+      );
 
-      number.className =
-        "stage-number";
+    number.className =
+      "stage-number";
 
-      number.textContent =
-        stage.no ??
-        `STAGE ${String(
-          index + 1
-        ).padStart(2, "0")}`;
+    number.textContent =
+      stage.no ??
+      `STAGE ${String(
+        index + 1
+      ).padStart(2, "0")}`;
 
-      inner.appendChild(number);
-    }
+    inner.appendChild(number);
 
-    if (
-      CONFIG?.stageCards
-        ?.showIcon !== false &&
-      stage.icon
-    ) {
+    if (stage.icon) {
       const icon =
         document.createElement(
           "div"
@@ -1519,47 +1826,33 @@
       inner.appendChild(icon);
     }
 
-    if (
-      CONFIG?.stageCards
-        ?.showEnglish !== false
-    ) {
-      const en =
-        document.createElement(
-          "div"
-        );
+    const en =
+      document.createElement(
+        "div"
+      );
 
-      en.className =
-        "stage-title";
+    en.className =
+      "stage-title";
 
-      en.textContent =
-        stageEnglishName(stage);
+    en.textContent =
+      stageEnglishName(stage);
 
-      inner.appendChild(en);
-    }
+    inner.appendChild(en);
 
-    if (
-      CONFIG?.stageCards
-        ?.showHindi !== false
-    ) {
-      const hi =
-        document.createElement(
-          "div"
-        );
+    const hi =
+      document.createElement(
+        "div"
+      );
 
-      hi.className =
-        "stage-title-hi";
+    hi.className =
+      "stage-title-hi";
 
-      hi.textContent =
-        stageHindiName(stage);
+    hi.textContent =
+      stageHindiName(stage);
 
-      inner.appendChild(hi);
-    }
+    inner.appendChild(hi);
 
-    if (
-      CONFIG?.stageCards
-        ?.showDescription !== false &&
-      stage.description
-    ) {
+    if (stage.description) {
       const description =
         document.createElement(
           "div"
@@ -1570,8 +1863,7 @@
 
       description.textContent =
         getObjectText(
-          stage.description,
-          ""
+          stage.description
         );
 
       inner.appendChild(
@@ -1684,15 +1976,11 @@
       .includes(query);
   }
 
-  function handleSearch(
-    event
-  ) {
+  function handleSearch(event) {
     state.searchText =
       event.target.value || "";
 
-    if (
-      DOM.searchClearButton
-    ) {
+    if (DOM.searchClearButton) {
       DOM.searchClearButton.hidden =
         !state.searchText;
     }
@@ -1708,16 +1996,12 @@
   function clearSearch() {
     state.searchText = "";
 
-    if (
-      DOM.materialSearch
-    ) {
+    if (DOM.materialSearch) {
       DOM.materialSearch.value =
         "";
     }
 
-    if (
-      DOM.searchClearButton
-    ) {
+    if (DOM.searchClearButton) {
       DOM.searchClearButton.hidden =
         true;
     }
@@ -1726,16 +2010,86 @@
   }
 
   /* =======================================================
-     15. STAGE VIEW
+     15. VIEW HELPERS
   ======================================================= */
 
-  function normalizeView(
-    value,
-    allowed
-  ) {
-    return allowed.includes(value)
-      ? value
+  function normalizeView(view) {
+    return VIEW_MODES.includes(view)
+      ? view
       : "grid";
+  }
+
+  function getViewLabel(view) {
+    const labels = {
+      grid: text(
+        "Grid",
+        "ग्रिड"
+      ),
+
+      list: text(
+        "List",
+        "लिस्ट"
+      ),
+
+      compact: text(
+        "Compact",
+        "कॉम्पैक्ट"
+      ),
+
+      large: text(
+        "Large",
+        "बड़ा"
+      ),
+
+      mini: text(
+        "Mini",
+        "मिनी"
+      ),
+
+      "two-column": text(
+        "2 Column",
+        "2 कॉलम"
+      ),
+
+      horizontal: text(
+        "Horizontal",
+        "हॉरिजॉन्टल"
+      ),
+
+      "icon-list": text(
+        "Icon List",
+        "आइकन लिस्ट"
+      ),
+
+      timeline: text(
+        "Timeline",
+        "टाइमलाइन"
+      ),
+
+      dense: text(
+        "Dense",
+        "डेंस"
+      )
+    };
+
+    return labels[view] || view;
+  }
+
+  function getViewSymbol(view) {
+    const symbols = {
+      grid: "▦",
+      list: "☷",
+      compact: "▤",
+      large: "▥",
+      mini: "▪",
+      "two-column": "▦",
+      horizontal: "▤",
+      "icon-list": "☷",
+      timeline: "◉",
+      dense: "▦"
+    };
+
+    return symbols[view] || "▦";
   }
 
   function applyStageView() {
@@ -1746,37 +2100,29 @@
 
     const view =
       normalizeView(
-        state.stageView,
-        STAGE_VIEW_MODES
+        state.stageView
       );
 
-    STAGE_VIEW_MODES.forEach(
-      mode => {
-        list.classList.remove(
-          `view-${mode}`
-        );
-        list.classList.remove(
-          mode
-        );
-      }
-    );
+    VIEW_MODES.forEach(mode => {
+      list.classList.remove(
+        `view-${mode}`
+      );
+
+      list.classList.remove(
+        mode
+      );
+    });
 
     list.classList.add(
       `view-${view}`
     );
 
-    /*
-      Compatibility with CSS
-      that may use direct mode classes.
-    */
     list.classList.add(view);
 
     updateStageViewUI(view);
   }
 
-  function updateStageViewUI(
-    view
-  ) {
+  function updateStageViewUI(view) {
     if (DOM.stageViewBtn) {
       const icon =
         DOM.stageViewBtn.querySelector(
@@ -1785,9 +2131,6 @@
 
       if (icon) {
         icon.textContent =
-          getViewSymbol(view);
-      } else {
-        DOM.stageViewBtn.textContent =
           getViewSymbol(view);
       }
 
@@ -1800,31 +2143,14 @@
       );
     }
 
-    if (
-      DOM.stageViewOptions
-    ) {
-      DOM.stageViewOptions
-        .querySelectorAll(
-          "[data-view]"
-        )
-        .forEach(button => {
-          button.classList.toggle(
-            "active",
-            button.dataset.view ===
-            view
-          );
-        });
-    }
+    updateViewOptionsActive(
+      DOM.stageViewOptions,
+      view
+    );
   }
 
-  function setStageView(
-    view
-  ) {
-    if (
-      !STAGE_VIEW_MODES.includes(
-        view
-      )
-    ) {
+  function setStageView(view) {
+    if (!VIEW_MODES.includes(view)) {
       return;
     }
 
@@ -1842,8 +2168,219 @@
     );
   }
 
+  function applyMaterialView() {
+    const list =
+      DOM.materialList;
+
+    if (!list) return;
+
+    const view =
+      normalizeView(
+        state.materialView
+      );
+
+    VIEW_MODES.forEach(mode => {
+      list.classList.remove(
+        `view-${mode}`
+      );
+
+      list.classList.remove(
+        mode
+      );
+    });
+
+    list.classList.add(
+      `view-${view}`
+    );
+
+    list.classList.add(view);
+
+    updateMaterialViewUI(view);
+  }
+
+  function updateMaterialViewUI(view) {
+    if (DOM.materialViewButton) {
+      const icon =
+        DOM.materialViewButton.querySelector(
+          ".viewSelectorIcon"
+        );
+
+      if (icon) {
+        icon.textContent =
+          getViewSymbol(view);
+      }
+
+      DOM.materialViewButton.setAttribute(
+        "aria-label",
+        `${text(
+          "Material view",
+          "मटेरियल व्यू"
+        )}: ${getViewLabel(view)}`
+      );
+    }
+
+    updateViewOptionsActive(
+      DOM.materialViewOptions,
+      view
+    );
+
+    const settingsView =
+      $("settingsCurrentView");
+
+    if (settingsView) {
+      settingsView.textContent =
+        getViewLabel(view);
+    }
+  }
+
+  function updateViewOptionsActive(
+    container,
+    selected
+  ) {
+    if (!container) return;
+
+    container
+      .querySelectorAll(
+        "[data-view]"
+      )
+      .forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.view ===
+          selected
+        );
+      });
+  }
+
+  function setMaterialView(view) {
+    if (!VIEW_MODES.includes(view)) {
+      return;
+    }
+
+    state.materialView = view;
+
+    saveSetting(
+      STORAGE.materialView,
+      view
+    );
+
+    applyMaterialView();
+
+    closeViewOptions(
+      DOM.materialViewOptions
+    );
+  }
+
+  function closeViewOptions(element) {
+    if (!element) return;
+
+    element.classList.remove(
+      "open",
+      "show",
+      "active"
+    );
+
+    element.parentElement?.classList.remove(
+      "open",
+      "active"
+    );
+  }
+
+  function closeAllViewOptions() {
+    closeViewOptions(
+      DOM.stageViewOptions
+    );
+
+    closeViewOptions(
+      DOM.materialViewOptions
+    );
+  }
+
+  function toggleViewOptions(element) {
+    if (!element) return;
+
+    const open =
+      element.classList.contains(
+        "open"
+      ) ||
+      element.classList.contains(
+        "show"
+      );
+
+    closeAllViewOptions();
+
+    if (!open) {
+      element.classList.add(
+        "open"
+      );
+
+      element.classList.add(
+        "show"
+      );
+
+      element.parentElement?.classList.add(
+        "open"
+      );
+    }
+  }
+
+  function populateViewOptions(
+    container,
+    selectedView,
+    callback
+  ) {
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    VIEW_MODES.forEach(view => {
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type = "button";
+      button.className =
+        "view-option";
+
+      button.dataset.view =
+        view;
+
+      button.innerHTML = `
+        <span class="viewOptionIcon">
+          ${getViewSymbol(view)}
+        </span>
+
+        <span>
+          ${getViewLabel(view)}
+        </span>
+
+        <span class="viewCheck">
+          ✓
+        </span>
+      `;
+
+      button.classList.toggle(
+        "active",
+        view === selectedView
+      );
+
+      button.addEventListener(
+        "click",
+        event => {
+          event.stopPropagation();
+          callback(view);
+        }
+      );
+
+      container.appendChild(
+        button
+      );
+    });
+  }
+
   /* =======================================================
-     16. STAGE / MATERIAL LIST
+     16. MATERIAL PAGE
   ======================================================= */
 
   function openStage(
@@ -1853,7 +2390,13 @@
     const stage =
       getStageById(stageId);
 
-    if (!stage) return;
+    if (!stage) {
+      console.warn(
+        "Stage not found:",
+        stageId
+      );
+      return;
+    }
 
     state.currentStageId =
       stage.id ??
@@ -1879,18 +2422,6 @@
     });
   }
 
-  function getStageMaterials(
-    stageId
-  ) {
-    return MATERIALS.filter(
-      material =>
-        String(
-          material.stage
-        ) ===
-        String(stageId)
-    );
-  }
-
   function renderMaterialPage() {
     const stage =
       getStageById(
@@ -1904,24 +2435,18 @@
         state.currentStageId
       );
 
-    if (
-      DOM.materialStageNumber
-    ) {
+    if (DOM.materialStageNumber) {
       DOM.materialStageNumber.textContent =
         stage.no ||
         `STAGE ${stage.id}`;
     }
 
-    if (
-      DOM.materialStageTitle
-    ) {
+    if (DOM.materialStageTitle) {
       DOM.materialStageTitle.textContent =
         stageEnglishName(stage);
     }
 
-    if (
-      DOM.materialStageTitleHi
-    ) {
+    if (DOM.materialStageTitleHi) {
       DOM.materialStageTitleHi.textContent =
         stageHindiName(stage);
     }
@@ -1940,16 +2465,14 @@
           );
         }
       );
+
+      DOM.materialList.hidden =
+        false;
     }
 
     if (DOM.materialEditor) {
       DOM.materialEditor.hidden =
         true;
-    }
-
-    if (DOM.materialList) {
-      DOM.materialList.hidden =
-        false;
     }
 
     applyMaterialView();
@@ -1965,21 +2488,15 @@
       );
 
     card.type = "button";
-
     card.className =
       "material-card";
 
     card.dataset.materialId =
       material.id || "";
 
-    /*
-      No fallback icon is created.
-      Image appears only if actual image exists.
-    */
-
     if (
-      CONFIG?.materials
-        ?.showImages !== false &&
+      CONFIG?.materials?.showImages !==
+      false &&
       material.image
     ) {
       const imageWrap =
@@ -2007,7 +2524,6 @@
         "lazy";
 
       imageWrap.appendChild(img);
-
       card.appendChild(
         imageWrap
       );
@@ -2021,59 +2537,49 @@
     content.className =
       "material-card-content";
 
-    if (
-      CONFIG?.materials
-        ?.showItemNumber !== false
-    ) {
-      const no =
-        document.createElement(
-          "div"
-        );
+    const no =
+      document.createElement(
+        "div"
+      );
 
-      no.className =
-        "material-item-number";
+    no.className =
+      "material-item-number";
 
-      no.textContent =
-        material.no ??
-        index + 1;
+    no.textContent =
+      material.no ??
+      index + 1;
 
-      content.appendChild(no);
-    }
+    content.appendChild(no);
 
-    if (
-      CONFIG?.materials
-        ?.showItemName !== false
-    ) {
-      const en =
-        document.createElement(
-          "div"
-        );
+    const en =
+      document.createElement(
+        "div"
+      );
 
-      en.className =
-        "material-name";
+    en.className =
+      "material-name";
 
-      en.textContent =
-        materialEnglishName(
-          material
-        );
+    en.textContent =
+      materialEnglishName(
+        material
+      );
 
-      content.appendChild(en);
+    content.appendChild(en);
 
-      const hi =
-        document.createElement(
-          "div"
-        );
+    const hi =
+      document.createElement(
+        "div"
+      );
 
-      hi.className =
-        "material-name-hi";
+    hi.className =
+      "material-name-hi";
 
-      hi.textContent =
-        materialHindiName(
-          material
-        );
+    hi.textContent =
+      materialHindiName(
+        material
+      );
 
-      content.appendChild(hi);
-    }
+    content.appendChild(hi);
 
     card.appendChild(
       content
@@ -2092,7 +2598,7 @@
   }
 
   /* =======================================================
-     17. OPEN MATERIAL
+     17. MATERIAL EDITOR
   ======================================================= */
 
   function openMaterial(
@@ -2104,7 +2610,13 @@
         materialId
       );
 
-    if (!material) return;
+    if (!material) {
+      console.warn(
+        "Material not found:",
+        materialId
+      );
+      return;
+    }
 
     const stageMaterials =
       getStageMaterials(
@@ -2134,7 +2646,6 @@
       null;
 
     if (
-      options.fromEdit &&
       options.estimateItem
     ) {
       loadEstimateItemIntoDraft(
@@ -2167,10 +2678,6 @@
     scrollEditorToTop();
   }
 
-  /* =======================================================
-     18. MATERIAL EDITOR
-  ======================================================= */
-
   function renderMaterialEditor(
     material
   ) {
@@ -2179,25 +2686,19 @@
     state.currentItem =
       material;
 
-    if (
-      DOM.editorItemNumber
-    ) {
+    if (DOM.editorItemNumber) {
       DOM.editorItemNumber.textContent =
         material.no || "";
     }
 
-    if (
-      DOM.editorItemName
-    ) {
+    if (DOM.editorItemName) {
       DOM.editorItemName.textContent =
         materialEnglishName(
           material
         );
     }
 
-    if (
-      DOM.editorItemNameHi
-    ) {
+    if (DOM.editorItemNameHi) {
       DOM.editorItemNameHi.textContent =
         materialHindiName(
           material
@@ -2236,15 +2737,13 @@
   function renderMaterialImage(
     material
   ) {
-    if (
-      !DOM.editorImageContainer
-    ) {
+    if (!DOM.editorImageContainer) {
       return;
     }
 
     const showImages =
-      CONFIG?.materials
-        ?.showImages !== false;
+      CONFIG?.materials?.showImages !==
+      false;
 
     if (
       !showImages ||
@@ -2253,9 +2752,7 @@
       DOM.editorImageContainer.hidden =
         true;
 
-      if (
-        DOM.editorItemImage
-      ) {
+      if (DOM.editorItemImage) {
         DOM.editorItemImage.removeAttribute(
           "src"
         );
@@ -2267,9 +2764,7 @@
     DOM.editorImageContainer.hidden =
       false;
 
-    if (
-      DOM.editorItemImage
-    ) {
+    if (DOM.editorItemImage) {
       DOM.editorItemImage.src =
         material.image;
 
@@ -2281,108 +2776,40 @@
   }
 
   /* =======================================================
-     19. DYNAMIC FIELDS
+     18. DYNAMIC FIELDS
   ======================================================= */
 
   function renderDynamicFields(
     material
   ) {
-    if (
-      !DOM.materialFields
-    ) {
+    if (!DOM.materialFields) {
       return;
     }
 
     DOM.materialFields.innerHTML =
       "";
 
-    let fields =
+    const fields =
       getMaterialFields(
         material
-      );
-
-    fields =
-      fields.filter(
+      ).filter(
         field =>
           !isSystemField(field)
       );
 
-    fields =
-      sortFields(fields);
+    fields.forEach(field => {
+      const element =
+        createDynamicField(
+          material,
+          field
+        );
 
-    fields.forEach(
-      field => {
-        if (
-          !shouldShowField(field)
-        ) {
-          return;
-        }
-
-        const element =
-          createDynamicField(
-            material,
-            field
-          );
-
-        if (element) {
-          DOM.materialFields.appendChild(
-            element
-          );
-        }
+      if (element) {
+        DOM.materialFields.appendChild(
+          element
+        );
       }
-    );
-  }
-
-  function shouldShowField(
-    field
-  ) {
-    const key =
-      normalizedFieldKey(field);
-
-    if (
-      key === "size" &&
-      CONFIG?.materials
-        ?.showSize === false
-    ) {
-      return false;
-    }
-
-    if (
-      key === "type" &&
-      CONFIG?.materials
-        ?.showType === false
-    ) {
-      return false;
-    }
-
-    if (
-      key === "subtype" &&
-      CONFIG?.materials
-        ?.showSubType === false
-    ) {
-      return false;
-    }
-
-    if (
-      (
-        key === "colour" ||
-        key === "color"
-      ) &&
-      CONFIG?.materials
-        ?.showColour === false
-    ) {
-      return false;
-    }
-
-    if (
-      key === "material" &&
-      CONFIG?.materials
-        ?.showMaterial === false
-    ) {
-      return false;
-    }
-
-    return true;
+    });
   }
 
   function createDynamicField(
@@ -2395,7 +2822,7 @@
       );
 
     wrapper.className =
-      "option-field";
+      "field option-field";
 
     wrapper.dataset.field =
       fieldKey(field);
@@ -2424,9 +2851,7 @@
         fieldKey(field)
       );
 
-    if (
-      type === "select"
-    ) {
+    if (type === "select") {
       const options =
         fieldOptions(field);
 
@@ -2436,70 +2861,65 @@
         );
 
       optionWrap.className =
-        "option-buttons";
+        "choices option-buttons";
 
-      options.forEach(
-        option => {
-          const button =
-            document.createElement(
-              "button"
+      options.forEach(option => {
+        const button =
+          document.createElement(
+            "button"
+          );
+
+        button.type = "button";
+
+        button.className =
+          "choice option-button";
+
+        button.dataset.value =
+          option.value;
+
+        button.textContent =
+          currentLanguage() === "hi"
+            ? option.hi
+            : option.en;
+
+        if (
+          String(current) ===
+          String(option.value)
+        ) {
+          button.classList.add(
+            "active"
+          );
+        }
+
+        button.addEventListener(
+          "click",
+          () => {
+            setDraftValue(
+              material,
+              fieldKey(field),
+              option.value
             );
 
-          button.type =
-            "button";
+            optionWrap
+              .querySelectorAll(
+                ".option-button"
+              )
+              .forEach(btn =>
+                btn.classList.remove(
+                  "active"
+                )
+              );
 
-          button.className =
-            "option-button";
-
-          button.dataset.value =
-            option.value;
-
-          button.textContent =
-            currentLanguage() ===
-            "hi"
-              ? option.hi
-              : option.en;
-
-          if (
-            String(current) ===
-            String(option.value)
-          ) {
             button.classList.add(
               "active"
             );
           }
+        );
 
-          button.addEventListener(
-            "click",
-            () => {
-              setDraftValue(
-                material,
-                fieldKey(field),
-                option.value
-              );
-
-              optionWrap
-                .querySelectorAll(
-                  ".option-button"
-                )
-                .forEach(
-                  btn =>
-                    btn.classList.remove(
-                      "active"
-                    )
-                );
-
-              button.classList.add(
-                "active"
-              );
-            }
-          );
-
-          optionWrap.appendChild(
-            button
-          );
-        }
-      );
+        optionWrap.appendChild(
+          button
+        );
+      });
 
       wrapper.appendChild(
         optionWrap
@@ -2527,11 +2947,6 @@
     input.autocomplete =
       "off";
 
-    addClearButton(
-      wrapper,
-      input
-    );
-
     input.addEventListener(
       "input",
       () => {
@@ -2547,10 +2962,11 @@
       input
     );
 
-    /*
-      Move clear button after input
-      when required.
-    */
+    addClearButton(
+      wrapper,
+      input
+    );
+
     return wrapper;
   }
 
@@ -2558,11 +2974,6 @@
     wrapper,
     input
   ) {
-    /*
-      Clear buttons are intentionally
-      small and unobtrusive.
-    */
-
     const clear =
       document.createElement(
         "button"
@@ -2609,23 +3020,21 @@
   }
 
   /* =======================================================
-     20. QUANTITY
+     19. QUANTITY
   ======================================================= */
 
   function renderQuantityField(
     material
   ) {
-    if (
-      !DOM.quantityField
-    ) {
+    if (!DOM.quantityField) {
       return;
     }
 
     const enabled =
-      CONFIG?.quantity
-        ?.enabled !== false &&
-      CONFIG?.materials
-        ?.showQuantity !== false;
+      CONFIG?.quantity?.enabled !==
+      false &&
+      CONFIG?.materials?.showQuantity !==
+      false;
 
     DOM.quantityField.hidden =
       !enabled;
@@ -2635,9 +3044,7 @@
     const draft =
       getDraft(material);
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       DOM.quantityInput.value =
         draft.quantity ?? "";
 
@@ -2749,33 +3156,30 @@
         )
       );
 
+    const result =
+      String(value);
+
     setDraftValue(
       material,
       "quantity",
-      String(value)
+      result
     );
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       DOM.quantityInput.value =
-        String(value);
+        result;
     }
   }
 
   /* =======================================================
-     21. UNIT
+     20. UNIT
   ======================================================= */
 
-  function getUnits(
-    material
-  ) {
+  function getUnits(material) {
     if (!material) return [];
 
     const units =
-      Array.isArray(
-        material.units
-      )
+      Array.isArray(material.units)
         ? material.units
         : [];
 
@@ -2787,15 +3191,13 @@
   function renderUnitField(
     material
   ) {
-    if (
-      !DOM.unitField
-    ) {
+    if (!DOM.unitField) {
       return;
     }
 
     const enabled =
-      CONFIG?.materials
-        ?.showUnit !== false;
+      CONFIG?.materials?.showUnit !==
+      false;
 
     DOM.unitField.hidden =
       !enabled;
@@ -2811,6 +3213,9 @@
     let current =
       draft.unit ?? "";
 
+    /*
+      Unit carries forward.
+    */
     if (
       !current &&
       state.lastUnit
@@ -2818,12 +3223,8 @@
       const valid =
         units.some(
           unit =>
-            String(
-              unit.value
-            ) ===
-            String(
-              state.lastUnit
-            )
+            String(unit.value) ===
+            String(state.lastUnit)
         );
 
       if (valid) {
@@ -2839,9 +3240,7 @@
       current &&
       !units.some(
         unit =>
-          String(
-            unit.value
-          ) ===
+          String(unit.value) ===
           String(current)
       )
     ) {
@@ -2861,8 +3260,7 @@
         "option"
       );
 
-    blank.value =
-      "";
+    blank.value = "";
 
     blank.textContent =
       text(
@@ -2874,45 +3272,38 @@
       blank
     );
 
-    units.forEach(
-      unit => {
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          unit.value;
-
-        option.textContent =
-          currentLanguage() ===
-          "hi"
-            ? unit.hi
-            : unit.en;
-
-        DOM.unitSelect.appendChild(
-          option
+    units.forEach(unit => {
+      const option =
+        document.createElement(
+          "option"
         );
-      }
-    );
+
+      option.value =
+        unit.value;
+
+      option.textContent =
+        currentLanguage() === "hi"
+          ? unit.hi
+          : unit.en;
+
+      DOM.unitSelect.appendChild(
+        option
+      );
+    });
 
     DOM.unitSelect.value =
       current;
   }
 
   /* =======================================================
-     22. BRAND
+     21. BRAND
   ======================================================= */
 
-  function getBrands(
-    material
-  ) {
+  function getBrands(material) {
     if (!material) return [];
 
     const brands =
-      Array.isArray(
-        material.brands
-      )
+      Array.isArray(material.brands)
         ? material.brands
         : [];
 
@@ -2924,17 +3315,15 @@
   function renderBrandField(
     material
   ) {
-    if (
-      !DOM.brandField
-    ) {
+    if (!DOM.brandField) {
       return;
     }
 
     const enabled =
-      CONFIG?.brand
-        ?.enabled !== false &&
-      CONFIG?.materials
-        ?.showBrand !== false;
+      CONFIG?.brand?.enabled !==
+      false &&
+      CONFIG?.materials?.showBrand !==
+      false;
 
     DOM.brandField.hidden =
       !enabled;
@@ -2962,8 +3351,7 @@
         "option"
       );
 
-    blank.value =
-      "";
+    blank.value = "";
 
     blank.textContent =
       text(
@@ -2975,73 +3363,74 @@
       blank
     );
 
-    brands.forEach(
-      brand => {
-        const combined =
-          `${brand.value} ${brand.en} ${brand.hi}`
-            .toLowerCase();
+    brands.forEach(brand => {
+      /*
+        Skip Brand is deliberately not shown.
+      */
+      const combined =
+        `${brand.value} ${brand.en} ${brand.hi}`
+          .toLowerCase();
 
-        if (
-          combined.includes(
-            "skip brand"
-          ) ||
-          combined.includes(
-            "skipbrand"
-          )
-        ) {
-          return;
-        }
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          brand.value;
-
-        option.textContent =
-          currentLanguage() ===
-          "hi"
-            ? brand.hi
-            : brand.en;
-
-        DOM.brandSelect.appendChild(
-          option
-        );
+      if (
+        combined.includes(
+          "skip brand"
+        ) ||
+        combined.includes(
+          "skipbrand"
+        )
+      ) {
+        return;
       }
-    );
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        brand.value;
+
+      option.textContent =
+        currentLanguage() === "hi"
+          ? brand.hi
+          : brand.en;
+
+      DOM.brandSelect.appendChild(
+        option
+      );
+    });
 
     DOM.brandSelect.value =
       current;
   }
 
   /* =======================================================
-     23. PRICE
+     22. PRICE
   ======================================================= */
 
   function renderPriceField(
     material
   ) {
-    if (
-      !DOM.priceField
-    ) {
+    if (!DOM.priceField) {
       return;
     }
 
     const priceConfig =
       CONFIG?.price || {};
 
-    const materialConfig =
+    const materialsConfig =
       CONFIG?.materials || {};
 
     const enabled =
-      priceConfig.enabled !== false;
+      priceConfig.enabled !==
+      false;
 
     const visible =
       enabled &&
-      priceConfig.visible === true &&
-      materialConfig.showPrice === true;
+      priceConfig.visible ===
+      true &&
+      materialsConfig.showPrice ===
+      true;
 
     DOM.priceField.hidden =
       !visible;
@@ -3051,16 +3440,14 @@
     const draft =
       getDraft(material);
 
-    if (
-      DOM.priceInput
-    ) {
+    if (DOM.priceInput) {
       DOM.priceInput.value =
         draft.price ?? "";
     }
   }
 
   /* =======================================================
-     24. SYNC EDITOR
+     23. SYNC DRAFT
   ======================================================= */
 
   function syncEditorInputsToDraft() {
@@ -3069,9 +3456,7 @@
 
     if (!material) return;
 
-    if (
-      DOM.quantityInput
-    ) {
+    if (DOM.quantityInput) {
       setDraftValue(
         material,
         "quantity",
@@ -3079,9 +3464,7 @@
       );
     }
 
-    if (
-      DOM.unitSelect
-    ) {
+    if (DOM.unitSelect) {
       setDraftValue(
         material,
         "unit",
@@ -3089,9 +3472,7 @@
       );
     }
 
-    if (
-      DOM.brandSelect
-    ) {
+    if (DOM.brandSelect) {
       setDraftValue(
         material,
         "brand",
@@ -3099,9 +3480,7 @@
       );
     }
 
-    if (
-      DOM.priceInput
-    ) {
+    if (DOM.priceInput) {
       setDraftValue(
         material,
         "price",
@@ -3109,34 +3488,28 @@
       );
     }
 
-    if (
-      DOM.materialFields
-    ) {
-      DOM.materialFields
-        .querySelectorAll(
-          "input, select"
-        )
-        .forEach(
-          input => {
-            const key =
-              input.closest(
-                ".option-field"
-              )?.dataset?.field;
+    DOM.materialFields
+      ?.querySelectorAll(
+        "input, select"
+      )
+      .forEach(input => {
+        const key =
+          input.closest(
+            ".option-field"
+          )?.dataset?.field;
 
-            if (key) {
-              setDraftValue(
-                material,
-                key,
-                input.value
-              );
-            }
-          }
-        );
-    }
+        if (key) {
+          setDraftValue(
+            material,
+            key,
+            input.value
+          );
+        }
+      });
   }
 
   /* =======================================================
-     25. VALIDATION
+     24. VALIDATION
   ======================================================= */
 
   function validateCurrentMaterial() {
@@ -3164,8 +3537,8 @@
       );
 
     if (
-      CONFIG?.quantity
-        ?.required !== false
+      CONFIG?.quantity?.required !==
+      false
     ) {
       if (
         quantity === "" ||
@@ -3181,9 +3554,7 @@
       }
     }
 
-    if (
-      quantity !== ""
-    ) {
+    if (quantity !== "") {
       draft.quantity =
         quantity;
     }
@@ -3195,7 +3566,7 @@
   }
 
   /* =======================================================
-     26. CREATE ESTIMATE ITEM
+     25. ESTIMATE ITEM
   ======================================================= */
 
   function createEstimateItem(
@@ -3214,23 +3585,21 @@
         field =>
           !isSystemField(field)
       )
-      .forEach(
-        field => {
-          const key =
-            fieldKey(field);
+      .forEach(field => {
+        const key =
+          fieldKey(field);
 
-          const value =
-            draft[key];
+        const value =
+          draft[key];
 
-          if (
-            value !== undefined &&
-            value !== ""
-          ) {
-            selections[key] =
-              value;
-          }
+        if (
+          value !== undefined &&
+          value !== ""
+        ) {
+          selections[key] =
+            value;
         }
-      );
+      });
 
     return {
       id,
@@ -3276,7 +3645,7 @@
   }
 
   /* =======================================================
-     27. ADD TO ESTIMATE
+     26. ADD
   ======================================================= */
 
   function addCurrentToEstimate() {
@@ -3293,7 +3662,6 @@
         "error",
         validation.message
       );
-
       return;
     }
 
@@ -3306,7 +3674,7 @@
     }
 
     /*
-      EDIT EXISTING ITEM
+      EDIT EXISTING
     */
 
     if (
@@ -3337,9 +3705,8 @@
         updated.createdAt =
           old.createdAt;
 
-        state.estimateItems[
-          index
-        ] = updated;
+        state.estimateItems[index] =
+          updated;
 
         saveEstimateItems();
 
@@ -3353,8 +3720,6 @@
             "एस्टिमेट आइटम अपडेट हो गया।"
           )
         );
-
-        saveNavigationState();
 
         showEstimate();
 
@@ -3390,15 +3755,16 @@
     );
 
     /*
-      Explicit Add only.
-      Next never adds anything.
+      IMPORTANT:
+      Add -> next item
+      Next -> NEVER adds current item.
     */
 
-    const autoNext =
+    if (
       CONFIG?.navigation
-        ?.autoNextAfterAdd !== false;
-
-    if (autoNext) {
+        ?.autoNextAfterAdd !==
+      false
+    ) {
       openNextItem(true);
     } else {
       updateNavigationButtons();
@@ -3406,7 +3772,7 @@
   }
 
   /* =======================================================
-     28. NEXT / BACK ITEM
+     27. NEXT / PREVIOUS
   ======================================================= */
 
   function getCurrentStageMaterials() {
@@ -3415,9 +3781,7 @@
     );
   }
 
-  function openNextItem(
-    fromAdd = false
-  ) {
+  function openNextItem() {
     const materials =
       getCurrentStageMaterials();
 
@@ -3426,8 +3790,7 @@
     }
 
     /*
-      Next NEVER saves/adds the current
-      item to estimate.
+      NEVER add current item here.
     */
 
     syncEditorInputsToDraft();
@@ -3465,12 +3828,7 @@
       state.currentItem
     );
 
-    if (
-      CONFIG?.navigation
-        ?.scrollNextToTop !== false
-    ) {
-      scrollEditorToTop();
-    }
+    scrollEditorToTop();
   }
 
   function openPreviousItem() {
@@ -3486,9 +3844,7 @@
     const previousIndex =
       state.currentItemIndex - 1;
 
-    if (
-      previousIndex < 0
-    ) {
+    if (previousIndex < 0) {
       closeMaterialEditor();
 
       return;
@@ -3511,12 +3867,7 @@
       state.currentItem
     );
 
-    if (
-      CONFIG?.navigation
-        ?.restorePreviousItemTop !== false
-    ) {
-      scrollEditorToTop();
-    }
+    scrollEditorToTop();
   }
 
   function updateNavigationButtons() {
@@ -3526,16 +3877,12 @@
     const index =
       state.currentItemIndex;
 
-    if (
-      DOM.itemBackButton
-    ) {
+    if (DOM.itemBackButton) {
       DOM.itemBackButton.disabled =
         index <= 0;
     }
 
-    if (
-      DOM.itemNextButton
-    ) {
+    if (DOM.itemNextButton) {
       DOM.itemNextButton.disabled =
         index >=
         materials.length - 1;
@@ -3543,30 +3890,22 @@
   }
 
   function scrollEditorToTop() {
-    requestAnimationFrame(
-      () => {
-        if (
-          DOM.materialEditor
-        ) {
-          DOM.materialEditor.scrollIntoView(
-            {
-              behavior: "auto",
-              block: "start"
-            }
-          );
-        }
-
-        window.scrollTo({
-          top: 0,
-          behavior: "auto"
+    requestAnimationFrame(() => {
+      if (DOM.materialEditor) {
+        DOM.materialEditor.scrollIntoView({
+          behavior: "auto",
+          block: "start"
         });
       }
-    );
+
+      window.scrollTo({
+        top: 0,
+        behavior: "auto"
+      });
+    });
   }
 
-  function closeMaterialEditor(
-    pushHistory = true
-  ) {
+  function closeMaterialEditor() {
     syncEditorInputsToDraft();
 
     state.currentItem =
@@ -3577,31 +3916,26 @@
 
     saveNavigationState();
 
-    if (
-      DOM.materialEditor
-    ) {
+    if (DOM.materialEditor) {
       DOM.materialEditor.hidden =
         true;
     }
 
-    if (
-      DOM.materialList
-    ) {
+    if (DOM.materialList) {
       DOM.materialList.hidden =
         false;
     }
 
-    if (
-      pushHistory &&
-      state.currentPage ===
-        "materials"
-    ) {
-      replaceCurrentHistoryState();
-    }
+    renderMaterialPage();
+
+    window.scrollTo({
+      top: 0,
+      behavior: "auto"
+    });
   }
 
   /* =======================================================
-     29. ESTIMATE EDIT
+     28. ESTIMATE EDIT
   ======================================================= */
 
   function loadEstimateItemIntoDraft(
@@ -3620,7 +3954,7 @@
     Object.assign(
       draft,
       estimateItem.selections ||
-        {}
+      {}
     );
 
     draft.quantity =
@@ -3677,7 +4011,6 @@
     openMaterial(
       material.id,
       {
-        fromEdit: true,
         estimateItem,
         editingEstimateId:
           estimateItem.id
@@ -3685,9 +4018,7 @@
     );
   }
 
-  function deleteEstimateItem(
-    id
-  ) {
+  function deleteEstimateItem(id) {
     const confirmed =
       window.confirm(
         text(
@@ -3721,7 +4052,7 @@
   }
 
   /* =======================================================
-     30. ESTIMATE PAGE
+     29. ESTIMATE PAGE
   ======================================================= */
 
   function showEstimate() {
@@ -3733,9 +4064,7 @@
   }
 
   function renderEstimate() {
-    if (
-      !DOM.estimateItems
-    ) {
+    if (!DOM.estimateItems) {
       return;
     }
 
@@ -3746,9 +4075,7 @@
       state.estimateItems;
 
     if (!items.length) {
-      if (
-        DOM.estimateEmpty
-      ) {
+      if (DOM.estimateEmpty) {
         DOM.estimateEmpty.hidden =
           false;
       }
@@ -3756,22 +4083,16 @@
       return;
     }
 
-    if (
-      DOM.estimateEmpty
-    ) {
+    if (DOM.estimateEmpty) {
       DOM.estimateEmpty.hidden =
         true;
     }
 
-    items.forEach(
-      item => {
-        DOM.estimateItems.appendChild(
-          createEstimateCard(
-            item
-          )
-        );
-      }
-    );
+    items.forEach(item => {
+      DOM.estimateItems.appendChild(
+        createEstimateCard(item)
+      );
+    });
   }
 
   function createEstimateCard(
@@ -3784,9 +4105,6 @@
 
     card.className =
       "estimate-item-card";
-
-    card.dataset.id =
-      item.id;
 
     const material =
       getMaterialById(
@@ -3810,8 +4128,7 @@
       "estimate-item-title";
 
     title.textContent =
-      currentLanguage() ===
-      "hi"
+      currentLanguage() === "hi"
         ? (
             item.name?.hi ||
             item.name?.en ||
@@ -3861,23 +4178,19 @@
       "estimate-item-details";
 
     if (material) {
-      const fields =
-        getMaterialFields(
-          material
-        ).filter(
+      getMaterialFields(
+        material
+      )
+        .filter(
           field =>
             !isSystemField(field)
-        );
-
-      fields.forEach(
-        field => {
+        )
+        .forEach(field => {
           const key =
             fieldKey(field);
 
           const value =
-            item.selections?.[
-              key
-            ];
+            item.selections?.[key];
 
           if (
             value === undefined ||
@@ -3894,13 +4207,10 @@
               value
             )
           );
-        }
-      );
+        });
     }
 
-    if (
-      item.quantity !== ""
-    ) {
+    if (item.quantity !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3911,9 +4221,7 @@
       );
     }
 
-    if (
-      item.unit !== ""
-    ) {
+    if (item.unit !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3927,9 +4235,7 @@
       );
     }
 
-    if (
-      item.brand !== ""
-    ) {
+    if (item.brand !== "") {
       appendEstimateDetail(
         details,
         text(
@@ -3945,9 +4251,12 @@
 
     if (
       item.price !== "" &&
-      CONFIG?.price?.enabled !== false &&
-      CONFIG?.price?.visible === true &&
-      CONFIG?.materials?.showPrice === true
+      CONFIG?.price?.enabled !==
+      false &&
+      CONFIG?.price?.visible ===
+      true &&
+      CONFIG?.materials?.showPrice ===
+      true
     ) {
       appendEstimateDetail(
         details,
@@ -3955,10 +4264,7 @@
           "Price",
           "कीमत"
         ),
-        `${
-          CONFIG?.price?.currency ||
-          "₹"
-        }${item.price}`
+        `${CONFIG?.price?.currency || "₹"}${item.price}`
       );
     }
 
@@ -4074,10 +4380,17 @@
     value.textContent =
       valueText;
 
-    row.appendChild(label);
-    row.appendChild(value);
+    row.appendChild(
+      label
+    );
 
-    container.appendChild(row);
+    row.appendChild(
+      value
+    );
+
+    container.appendChild(
+      row
+    );
   }
 
   function resolveOptionDisplay(
@@ -4144,414 +4457,10 @@
   }
 
   /* =======================================================
-     31. MATERIAL VIEW
+     30. PAGE NAVIGATION
   ======================================================= */
 
-  function applyMaterialView() {
-    const list =
-      DOM.materialList;
-
-    if (!list) return;
-
-    const view =
-      normalizeView(
-        state.materialView,
-        MATERIAL_VIEW_MODES
-      );
-
-    MATERIAL_VIEW_MODES.forEach(
-      mode => {
-        list.classList.remove(
-          `view-${mode}`
-        );
-        list.classList.remove(
-          mode
-        );
-      }
-    );
-
-    list.classList.add(
-      `view-${view}`
-    );
-
-    list.classList.add(view);
-
-    updateMaterialViewUI(view);
-  }
-
-  function setMaterialView(
-    view
-  ) {
-    if (
-      !MATERIAL_VIEW_MODES.includes(
-        view
-      )
-    ) {
-      return;
-    }
-
-    state.materialView =
-      view;
-
-    saveSetting(
-      STORAGE.materialView,
-      view
-    );
-
-    applyMaterialView();
-
-    closeViewOptions(
-      DOM.materialViewOptions
-    );
-  }
-
-  function cycleMaterialView() {
-    const available =
-      MATERIAL_VIEW_MODES.filter(
-        view =>
-          CONFIG?.views?.[
-            view
-          ] !== false
-      );
-
-    if (!available.length) {
-      return;
-    }
-
-    const index =
-      available.indexOf(
-        state.materialView
-      );
-
-    const next =
-      available[
-        (
-          index < 0
-            ? 0
-            : index + 1
-        ) %
-        available.length
-      ];
-
-    setMaterialView(next);
-  }
-
-  function updateMaterialViewUI(
-    view
-  ) {
-    if (
-      DOM.materialViewButton
-    ) {
-      const icon =
-        DOM.materialViewButton.querySelector(
-          ".viewSelectorIcon"
-        );
-
-      if (icon) {
-        icon.textContent =
-          getViewSymbol(view);
-      } else {
-        DOM.materialViewButton.textContent =
-          getViewSymbol(view);
-      }
-
-      DOM.materialViewButton.setAttribute(
-        "aria-label",
-        `${text(
-          "Material view",
-          "मटेरियल व्यू"
-        )}: ${getViewLabel(view)}`
-      );
-    }
-
-    if (
-      DOM.materialViewOptions
-    ) {
-      DOM.materialViewOptions
-        .querySelectorAll(
-          "[data-view]"
-        )
-        .forEach(
-          button => {
-            button.classList.toggle(
-              "active",
-              button.dataset.view ===
-              view
-            );
-          }
-        );
-    }
-  }
-
-  function getViewLabel(
-    view
-  ) {
-    const labels = {
-      grid:
-        text(
-          "Grid",
-          "ग्रिड"
-        ),
-      list:
-        text(
-          "List",
-          "लिस्ट"
-        ),
-      compact:
-        text(
-          "Compact",
-          "कॉम्पैक्ट"
-        ),
-      large:
-        text(
-          "Large",
-          "बड़ा"
-        ),
-      mini:
-        text(
-          "Mini",
-          "मिनी"
-        ),
-      "two-column":
-        text(
-          "2 Column",
-          "2 कॉलम"
-        ),
-      horizontal:
-        text(
-          "Horizontal",
-          "हॉरिजॉन्टल"
-        ),
-      "icon-list":
-        text(
-          "Icon List",
-          "आइकन लिस्ट"
-        ),
-      timeline:
-        text(
-          "Timeline",
-          "टाइमलाइन"
-        ),
-      dense:
-        text(
-          "Dense",
-          "डेंस"
-        )
-    };
-
-    return (
-      labels[view] ||
-      view
-    );
-  }
-
-  function getViewSymbol(
-    view
-  ) {
-    const symbols = {
-      grid: "▦",
-      list: "☷",
-      compact: "▤",
-      large: "▥",
-      mini: "▪",
-      "two-column": "▦",
-      horizontal: "▤",
-      "icon-list": "☷",
-      timeline: "◉",
-      dense: "▦"
-    };
-
-    return (
-      symbols[view] ||
-      "▦"
-    );
-  }
-
-  /* =======================================================
-     32. VIEW OPTION HELPERS
-  ======================================================= */
-
-  function closeViewOptions(
-    element
-  ) {
-    if (!element) return;
-
-    element.classList.remove(
-      "open",
-      "show",
-      "active"
-    );
-
-    if (
-      element.parentElement
-    ) {
-      element.parentElement.classList.remove(
-        "open",
-        "active"
-      );
-    }
-
-    if (
-      element.style &&
-      element.style.display
-    ) {
-      element.style.display =
-        "";
-    }
-  }
-
-  function toggleViewOptions(
-    element
-  ) {
-    if (!element) return;
-
-    const currentlyOpen =
-      element.classList.contains(
-        "open"
-      ) ||
-      element.classList.contains(
-        "show"
-      ) ||
-      element.parentElement?.classList.contains(
-        "open"
-      );
-
-    closeAllViewOptions();
-
-    if (!currentlyOpen) {
-      element.classList.add(
-        "open"
-      );
-      element.classList.add(
-        "show"
-      );
-
-      element.parentElement?.classList.add(
-        "open"
-      );
-    }
-  }
-
-  function closeAllViewOptions() {
-    [
-      DOM.stageViewOptions,
-      DOM.materialViewOptions
-    ].forEach(
-      element => {
-        if (!element) return;
-
-        element.classList.remove(
-          "open",
-          "show"
-        );
-
-        element.parentElement?.classList.remove(
-          "open"
-        );
-      }
-    );
-  }
-
-  function populateViewOptions(
-    container,
-    selectedView,
-    onSelect
-  ) {
-    if (!container) return;
-
-    const existing =
-      container.querySelectorAll(
-        "[data-view]"
-      );
-
-    /*
-      If HTML already has options,
-      don't destroy custom design.
-    */
-
-    if (existing.length) {
-      existing.forEach(
-        button => {
-          const view =
-            button.dataset.view;
-
-          button.onclick =
-            () => {
-              onSelect(view);
-            };
-
-          button.classList.toggle(
-            "active",
-            view === selectedView
-          );
-        }
-      );
-
-      return;
-    }
-
-    container.innerHTML =
-      "";
-
-    MATERIAL_VIEW_MODES.forEach(
-      view => {
-        if (
-          CONFIG?.views?.[
-            view
-          ] === false
-        ) {
-          return;
-        }
-
-        const button =
-          document.createElement(
-            "button"
-          );
-
-        button.type =
-          "button";
-
-        button.className =
-          "view-option";
-
-        button.dataset.view =
-          view;
-
-        button.innerHTML =
-          `
-            <span class="viewOptionIcon">
-              ${getViewSymbol(view)}
-            </span>
-            <span>${getViewLabel(view)}</span>
-            <span class="viewCheck">✓</span>
-          `;
-
-        button.classList.toggle(
-          "active",
-          view === selectedView
-        );
-
-        button.addEventListener(
-          "click",
-          () => {
-            onSelect(view);
-          }
-        );
-
-        container.appendChild(
-          button
-        );
-      }
-    );
-  }
-
-  /* =======================================================
-     33. PAGE NAVIGATION
-  ======================================================= */
-
-  function normalizePage(
-    page
-  ) {
+  function normalizePage(page) {
     const allowed = [
       "home",
       "materials",
@@ -4603,37 +4512,16 @@
     state.currentPage =
       page;
 
-    if (
-      page !== "materials"
-    ) {
-      state.currentItem =
-        null;
-      state.editingEstimateId =
-        null;
-    }
-
     closeSideMenu();
     closeAllViewOptions();
 
     updateTopBarTitle();
+
     updateBottomNavigation(
       page
     );
 
-    if (pushHistory) {
-      pushNavigationState(
-        page
-      );
-    } else {
-      replaceCurrentHistoryState();
-    }
-
     saveNavigationState();
-
-    window.scrollTo({
-      top: 0,
-      behavior: "auto"
-    });
 
     if (page === "home") {
       renderHome();
@@ -4641,31 +4529,23 @@
 
     if (page === "materials") {
       if (
-        state.currentStageId
+        state.currentItem
       ) {
-        if (
-          state.currentItem
-        ) {
-          if (
-            DOM.materialList
-          ) {
-            DOM.materialList.hidden =
-              true;
-          }
-
-          if (
-            DOM.materialEditor
-          ) {
-            DOM.materialEditor.hidden =
-              false;
-          }
-
-          renderMaterialEditor(
-            state.currentItem
-          );
-        } else {
-          renderMaterialPage();
+        if (DOM.materialList) {
+          DOM.materialList.hidden =
+            true;
         }
+
+        if (DOM.materialEditor) {
+          DOM.materialEditor.hidden =
+            false;
+        }
+
+        renderMaterialEditor(
+          state.currentItem
+        );
+      } else {
+        renderMaterialPage();
       }
     }
 
@@ -4680,13 +4560,38 @@
     if (page === "settings") {
       renderSettings();
     }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "auto"
+    });
+
+    if (pushHistory) {
+      try {
+        history.pushState(
+          {
+            sandeepApp: true,
+            page,
+            stageId:
+              state.currentStageId,
+            itemIndex:
+              state.currentItemIndex,
+            materialId:
+              state.currentItem?.id ||
+              null
+          },
+          "",
+          `#${page}`
+        );
+
+        state.historyReady =
+          true;
+      } catch (_) {}
+    }
   }
 
   function updateTopBarTitle() {
-    const titleElement =
-      DOM.topBarTitle;
-
-    if (!titleElement) {
+    if (!DOM.appTitle) {
       return;
     }
 
@@ -4722,198 +4627,17 @@
         )
     };
 
-    /*
-      New design has centered
-      logo/title. Keep only title.
-    */
-
-    titleElement.textContent =
+    DOM.appTitle.textContent =
       titles[
         state.currentPage
       ] ||
       titles.home;
-
-    if (
-      DOM.appTitle &&
-      DOM.appTitle !==
-        titleElement
-    ) {
-      DOM.appTitle.textContent =
-        titles[
-          state.currentPage
-        ] ||
-        titles.home;
-    }
   }
-
-  function pushNavigationState(
-    page
-  ) {
-    if (!window.history) return;
-
-    try {
-      window.history.pushState(
-        {
-          sandeepApp: true,
-          page,
-          stageId:
-            state.currentStageId,
-          itemIndex:
-            state.currentItemIndex,
-          materialId:
-            state.currentItem?.id ||
-            null
-        },
-        "",
-        `#${page}`
-      );
-
-      state.historyReady =
-        true;
-    } catch (_) {}
-  }
-
-  function replaceCurrentHistoryState() {
-    if (!window.history) return;
-
-    try {
-      window.history.replaceState(
-        {
-          sandeepApp: true,
-          page:
-            state.currentPage,
-          stageId:
-            state.currentStageId,
-          itemIndex:
-            state.currentItemIndex,
-          materialId:
-            state.currentItem?.id ||
-            null
-        },
-        "",
-        `#${state.currentPage}`
-      );
-
-      state.historyReady =
-        true;
-    } catch (_) {}
-  }
-
-  /* =======================================================
-     34. POPSTATE / ANDROID BACK
-  ======================================================= */
-
-  function handlePopState(
-    event
-  ) {
-    /*
-      Drawer has first priority.
-    */
-
-    if (
-      state.menuOpen
-    ) {
-      closeSideMenu();
-      return;
-    }
-
-    /*
-      Material editor → material list
-    */
-
-    if (
-      state.currentPage ===
-        "materials" &&
-      state.currentItem
-    ) {
-      closeMaterialEditor(
-        false
-      );
-
-      state.currentItem =
-        null;
-
-      renderMaterialPage();
-
-      replaceCurrentHistoryState();
-
-      return;
-    }
-
-    /*
-      Material list → home
-    */
-
-    if (
-      state.currentPage ===
-      "materials"
-    ) {
-      state.currentStageId =
-        null;
-
-      state.currentItem =
-        null;
-
-      showPage(
-        "home",
-        false
-      );
-
-      replaceCurrentHistoryState();
-
-      return;
-    }
-
-    /*
-      Other pages → home
-    */
-
-    if (
-      state.currentPage !==
-      "home"
-    ) {
-      showPage(
-        "home",
-        false
-      );
-
-      replaceCurrentHistoryState();
-
-      return;
-    }
-
-    /*
-      Already on home.
-      Browser controls the actual
-      leave/previous-page behavior.
-    */
-
-    const page =
-      normalizePage(
-        event.state?.page
-      );
-
-    if (
-      event.state?.sandeepApp &&
-      page !== "home"
-    ) {
-      showPage(
-        page,
-        false
-      );
-    }
-  }
-
-  /* =======================================================
-     35. BOTTOM NAVIGATION
-  ======================================================= */
 
   function updateBottomNavigation(
     page
   ) {
-    if (
-      !DOM.bottomNavigation
-    ) {
+    if (!DOM.bottomNavigation) {
       return;
     }
 
@@ -4921,19 +4645,17 @@
       .querySelectorAll(
         "[data-page]"
       )
-      .forEach(
-        button => {
-          button.classList.toggle(
-            "active",
-            button.dataset.page ===
-            page
-          );
-        }
-      );
+      .forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.page ===
+          page
+        );
+      });
   }
 
   /* =======================================================
-     36. SIDE MENU
+     31. DRAWER
   ======================================================= */
 
   function openSideMenu() {
@@ -4949,10 +4671,7 @@
     );
 
     DOM.hamburgerButton?.classList.add(
-      "open"
-    );
-
-    DOM.hamburgerButton?.classList.add(
+      "open",
       "active"
     );
 
@@ -4984,10 +4703,7 @@
     );
 
     DOM.hamburgerButton?.classList.remove(
-      "open"
-    );
-
-    DOM.hamburgerButton?.classList.remove(
+      "open",
       "active"
     );
 
@@ -5007,32 +4723,18 @@
   }
 
   function toggleSideMenu() {
-    if (
-      state.menuOpen
-    ) {
-      closeSideMenu();
-    } else {
-      openSideMenu();
-    }
+    state.menuOpen
+      ? closeSideMenu()
+      : openSideMenu();
   }
 
   /* =======================================================
-     37. SETTINGS
+     32. SETTINGS
   ======================================================= */
 
   function renderSettings() {
-    applyTheme();
     updateLanguageButton();
-
-    if (
-      DOM.settingsLanguageButton
-    ) {
-      DOM.settingsLanguageButton.textContent =
-        state.language === "hi"
-          ? "हिन्दी"
-          : "English";
-    }
-
+    updateThemeButtons();
     updateMaterialViewUI(
       state.materialView
     );
@@ -5145,46 +4847,26 @@
   }
 
   /* =======================================================
-     38. CALCULATOR
+     33. CALCULATOR
   ======================================================= */
 
-  /*
-    Electrical formulas:
-
-    P = V × I
-    V = P ÷ I
-    I = P ÷ V
-    R = V ÷ I
-    V = I × R
-
-    Existing four UI fields are
-    interpreted safely according to
-    their IDs.
-  */
-
   function calculateVoltage() {
-    /*
-      Voltage calculator:
-      Input = current
-      Result = voltage when
-      suitable power input exists.
-
-      If power calculator UI is separate,
-      voltage input remains informative.
-    */
-
-    const value =
+    const current =
       Number(
         DOM.voltageInput?.value
       );
 
-    if (
-      DOM.voltageResult
-    ) {
+    /*
+      Voltage needs I and R.
+      Since this compact calculator only has
+      one input, use 230V reference for display.
+    */
+
+    if (DOM.voltageResult) {
       DOM.voltageResult.textContent =
-        Number.isFinite(value) &&
-        value > 0
-          ? `${value} A`
+        Number.isFinite(current) &&
+        current > 0
+          ? `I = ${current} A`
           : text(
               "Enter a value",
               "मान भरें"
@@ -5198,13 +4880,11 @@
         DOM.currentInput?.value
       );
 
-    if (
-      DOM.currentResult
-    ) {
+    if (DOM.currentResult) {
       DOM.currentResult.textContent =
         Number.isFinite(value) &&
         value > 0
-          ? `${value} A`
+          ? `I = ${value} A`
           : text(
               "Enter a value",
               "मान भरें"
@@ -5218,9 +4898,7 @@
         DOM.powerInput?.value
       );
 
-    if (
-      DOM.powerResult
-    ) {
+    if (DOM.powerResult) {
       DOM.powerResult.textContent =
         Number.isFinite(current) &&
         current >= 0
@@ -5240,9 +4918,7 @@
         DOM.resistanceInput?.value
       );
 
-    if (
-      DOM.resistanceResult
-    ) {
+    if (DOM.resistanceResult) {
       DOM.resistanceResult.textContent =
         Number.isFinite(current) &&
         current > 0
@@ -5261,59 +4937,52 @@
     calculateCurrent();
     calculatePower();
     calculateResistance();
-
     renderFormulaSection();
   }
 
   function renderFormulaSection() {
-    if (
-      DOM.formulaSection
-    ) {
-      DOM.formulaSection.innerHTML =
-        `
-          <div class="formula-row">
-            <strong>P</strong>
-            <span>=</span>
-            <span>V × I</span>
-          </div>
+    if (DOM.formulaSection) {
+      DOM.formulaSection.innerHTML = `
+        <div class="formula-row">
+          <strong>P</strong>
+          <span>=</span>
+          <span>V × I</span>
+        </div>
 
-          <div class="formula-row">
-            <strong>V</strong>
-            <span>=</span>
-            <span>I × R</span>
-          </div>
+        <div class="formula-row">
+          <strong>V</strong>
+          <span>=</span>
+          <span>I × R</span>
+        </div>
 
-          <div class="formula-row">
-            <strong>I</strong>
-            <span>=</span>
-            <span>P ÷ V</span>
-          </div>
+        <div class="formula-row">
+          <strong>I</strong>
+          <span>=</span>
+          <span>P ÷ V</span>
+        </div>
 
-          <div class="formula-row">
-            <strong>R</strong>
-            <span>=</span>
-            <span>V ÷ I</span>
-          </div>
-        `;
+        <div class="formula-row">
+          <strong>R</strong>
+          <span>=</span>
+          <span>V ÷ I</span>
+        </div>
+      `;
     }
 
-    if (
-      DOM.inverterExamples
-    ) {
-      DOM.inverterExamples.innerHTML =
-        `
-          <div class="formula-row">
-            <strong>12V</strong>
-            <span>→</span>
-            <span>230V Inverter</span>
-          </div>
+    if (DOM.inverterExamples) {
+      DOM.inverterExamples.innerHTML = `
+        <div class="formula-row">
+          <strong>12V</strong>
+          <span>→</span>
+          <span>230V Inverter</span>
+        </div>
 
-          <div class="formula-row">
-            <strong>24V</strong>
-            <span>→</span>
-            <span>230V Inverter</span>
-          </div>
-        `;
+        <div class="formula-row">
+          <strong>24V</strong>
+          <span>→</span>
+          <span>230V Inverter</span>
+        </div>
+      `;
     }
   }
 
@@ -5340,7 +5009,7 @@
   }
 
   /* =======================================================
-     39. TOAST
+     34. TOAST
   ======================================================= */
 
   let toastTimer =
@@ -5350,14 +5019,13 @@
     type,
     message
   ) {
-    if (
-      !DOM.appToast
-    ) {
+    if (!DOM.appToast) {
       return;
     }
 
     if (
-      CONFIG?.toast?.enabled === false
+      CONFIG?.toast?.enabled ===
+      false
     ) {
       return;
     }
@@ -5377,9 +5045,7 @@
       );
     }
 
-    if (
-      DOM.toastIcon
-    ) {
+    if (DOM.toastIcon) {
       const icons = {
         success: "✓",
         error: "!",
@@ -5392,9 +5058,7 @@
         "✓";
     }
 
-    if (
-      DOM.toastMessage
-    ) {
+    if (DOM.toastMessage) {
       DOM.toastMessage.textContent =
         message;
     }
@@ -5421,7 +5085,7 @@
   }
 
   /* =======================================================
-     40. EVENT BINDING
+     35. EVENTS
   ======================================================= */
 
   function bindEvents() {
@@ -5429,7 +5093,10 @@
 
     DOM.hamburgerButton?.addEventListener(
       "click",
-      toggleSideMenu
+      event => {
+        event.stopPropagation();
+        toggleSideMenu();
+      }
     );
 
     DOM.sideMenuClose?.addEventListener(
@@ -5449,17 +5116,6 @@
       toggleLanguage
     );
 
-    if (
-      DOM.langBtn &&
-      DOM.langBtn !==
-        DOM.languageButton
-    ) {
-      DOM.langBtn.addEventListener(
-        "click",
-        toggleLanguage
-      );
-    }
-
     DOM.settingsLanguageButton?.addEventListener(
       "click",
       toggleLanguage
@@ -5472,16 +5128,10 @@
       toggleTheme
     );
 
-    if (
-      DOM.themeToggleButton &&
-      DOM.themeToggleButton !==
-        DOM.themeBtn
-    ) {
-      DOM.themeToggleButton.addEventListener(
-        "click",
-        toggleTheme
-      );
-    }
+    DOM.themeToggleButton?.addEventListener(
+      "click",
+      toggleTheme
+    );
 
     /* SEARCH */
 
@@ -5505,16 +5155,14 @@
           !DOM.materialEditor.hidden
         ) {
           closeMaterialEditor();
-
-          if (
-            DOM.materialList
-          ) {
-            DOM.materialList.hidden =
-              false;
-          }
-
           return;
         }
+
+        state.currentStageId =
+          null;
+
+        state.currentItem =
+          null;
 
         showPage(
           "home"
@@ -5528,18 +5176,6 @@
       "click",
       () => {
         closeMaterialEditor();
-
-        if (
-          DOM.materialList
-        ) {
-          DOM.materialList.hidden =
-            false;
-        }
-
-        window.scrollTo({
-          top: 0,
-          behavior: "auto"
-        });
       }
     );
 
@@ -5557,9 +5193,9 @@
       () => {
         /*
           IMPORTANT:
-          Next does NOT add to estimate.
+          This NEVER adds the item.
         */
-        openNextItem(false);
+        openNextItem();
       }
     );
 
@@ -5691,78 +5327,46 @@
       ?.querySelectorAll(
         "[data-page]"
       )
-      .forEach(
-        button => {
-          button.addEventListener(
-            "click",
-            () => {
-              showPage(
-                button.dataset.page
-              );
-            }
-          );
-        }
-      );
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            showPage(
+              button.dataset.page
+            );
+          }
+        );
+      });
 
-    /* DRAWER NAV */
+    /* DRAWER */
 
     DOM.sideMenu
       ?.querySelectorAll(
         "[data-page]"
       )
-      .forEach(
-        button => {
-          button.addEventListener(
-            "click",
-            () => {
-              closeSideMenu();
+      .forEach(button => {
+        button.addEventListener(
+          "click",
+          () => {
+            closeSideMenu();
 
-              showPage(
-                button.dataset.page
-              );
-            }
-          );
-        }
-      );
-
-    /*
-      Compatibility if old nav container
-      exists separately.
-    */
-
-    DOM.sideMenuNav
-      ?.querySelectorAll(
-        "[data-page]"
-      )
-      .forEach(
-        button => {
-          button.addEventListener(
-            "click",
-            () => {
-              closeSideMenu();
-
-              showPage(
-                button.dataset.page
-              );
-            }
-          );
-        }
-      );
+            showPage(
+              button.dataset.page
+            );
+          }
+        );
+      });
 
     /* MATERIAL VIEW */
 
     DOM.materialViewButton?.addEventListener(
       "click",
-      () => {
-        if (
+      event => {
+        event.stopPropagation();
+
+        toggleViewOptions(
           DOM.materialViewOptions
-        ) {
-          toggleViewOptions(
-            DOM.materialViewOptions
-          );
-        } else {
-          cycleMaterialView();
-        }
+        );
       }
     );
 
@@ -5770,12 +5374,36 @@
 
     DOM.stageViewBtn?.addEventListener(
       "click",
-      () => {
+      event => {
+        event.stopPropagation();
+
         toggleViewOptions(
           DOM.stageViewOptions
         );
       }
     );
+
+    /* SETTINGS VIEW */
+
+    $("settingsViewButton")
+      ?.addEventListener(
+        "click",
+        () => {
+          if (
+            state.currentPage !==
+            "materials"
+          ) {
+            showToast(
+              "info",
+              text(
+                "Open a material stage to change its view.",
+                "मटेरियल व्यू बदलने के लिए कोई स्टेज खोलें।"
+              )
+            );
+            return;
+          }
+        }
+      );
 
     /* BACKUP */
 
@@ -5798,9 +5426,7 @@
       showAbout
     );
 
-    /*
-      Existing HTML view options
-    */
+    /* VIEW OPTIONS */
 
     populateViewOptions(
       DOM.materialViewOptions,
@@ -5814,43 +5440,38 @@
       setStageView
     );
 
-    /* POPSTATE */
+    /* BROWSER / ANDROID BACK */
 
     window.addEventListener(
       "popstate",
       handlePopState
     );
 
-    /*
-      Close view dropdowns when tapping
-      outside.
-    */
+    /* OUTSIDE CLICK */
 
     document.addEventListener(
       "click",
       event => {
-        const insideMaterial =
+        const materialInside =
           DOM.materialViewSelector?.contains(
             event.target
           );
 
-        const insideStage =
+        const stageInside =
           DOM.stageViewSelector?.contains(
             event.target
           );
 
         if (
-          !insideMaterial &&
-          !insideStage
+          !materialInside &&
+          !stageInside
         ) {
           closeAllViewOptions();
         }
       }
     );
 
-    /*
-      Keyboard Escape
-    */
+    /* ESCAPE */
 
     document.addEventListener(
       "keydown",
@@ -5862,9 +5483,7 @@
           return;
         }
 
-        if (
-          state.menuOpen
-        ) {
+        if (state.menuOpen) {
           closeSideMenu();
           return;
         }
@@ -5875,7 +5494,132 @@
   }
 
   /* =======================================================
-     41. INITIAL PAGE / RESTORE STATE
+     36. BACK / POPSTATE
+  ======================================================= */
+
+  function handlePopState(event) {
+    /*
+      Drawer first.
+    */
+
+    if (state.menuOpen) {
+      closeSideMenu();
+      return;
+    }
+
+    /*
+      Editor -> material list
+    */
+
+    if (
+      state.currentPage ===
+        "materials" &&
+      state.currentItem
+    ) {
+      syncEditorInputsToDraft();
+
+      state.currentItem =
+        null;
+
+      state.editingEstimateId =
+        null;
+
+      renderMaterialPage();
+
+      replaceHistoryState();
+
+      return;
+    }
+
+    /*
+      Material list -> home
+    */
+
+    if (
+      state.currentPage ===
+      "materials"
+    ) {
+      state.currentStageId =
+        null;
+
+      state.currentItem =
+        null;
+
+      showPage(
+        "home",
+        false
+      );
+
+      replaceHistoryState();
+
+      return;
+    }
+
+    /*
+      Other pages -> home.
+    */
+
+    if (
+      state.currentPage !==
+      "home"
+    ) {
+      showPage(
+        "home",
+        false
+      );
+
+      replaceHistoryState();
+
+      return;
+    }
+
+    /*
+      Let browser handle actual exit
+      when already on app home.
+    */
+
+    const page =
+      normalizePage(
+        event.state?.page
+      );
+
+    if (
+      event.state?.sandeepApp &&
+      page !== "home"
+    ) {
+      showPage(
+        page,
+        false
+      );
+    }
+  }
+
+  function replaceHistoryState() {
+    try {
+      history.replaceState(
+        {
+          sandeepApp: true,
+          page:
+            state.currentPage,
+          stageId:
+            state.currentStageId,
+          itemIndex:
+            state.currentItemIndex,
+          materialId:
+            state.currentItem?.id ||
+            null
+        },
+        "",
+        `#${state.currentPage}`
+      );
+
+      state.historyReady =
+        true;
+    } catch (_) {}
+  }
+
+  /* =======================================================
+     37. RESTORE
   ======================================================= */
 
   function getInitialPage() {
@@ -5932,9 +5676,7 @@
         saved.editingEstimateId ||
         null;
 
-      if (
-        saved.materialId
-      ) {
+      if (saved.materialId) {
         const material =
           getMaterialById(
             saved.materialId
@@ -5956,9 +5698,7 @@
             stageMaterials.findIndex(
               item =>
                 String(item.id) ===
-                String(
-                  material.id
-                )
+                String(material.id)
             );
 
           if (index >= 0) {
@@ -5976,7 +5716,61 @@
   }
 
   /* =======================================================
-     42. MASTER DATA VALIDATION
+     38. CONFIG VISIBILITY
+  ======================================================= */
+
+  function setVisible(
+    element,
+    visible
+  ) {
+    if (!element) return;
+
+    element.hidden =
+      !visible;
+  }
+
+  function applyConfigVisibility() {
+    const ui =
+      CONFIG?.ui || {};
+
+    setVisible(
+      DOM.hamburgerButton,
+      ui.menu !== false
+    );
+
+    setVisible(
+      DOM.languageButton,
+      ui.languageButton !==
+      false
+    );
+
+    setVisible(
+      DOM.themeBtn,
+      ui.themeButton !==
+      false
+    );
+
+    setVisible(
+      DOM.bottomNavigation,
+      ui.bottomNav !==
+      false
+    );
+
+    setVisible(
+      DOM.searchContainer,
+      ui.search !==
+      false
+    );
+
+    setVisible(
+      DOM.addToEstimateButton,
+      ui.addToEstimateButton !==
+      false
+    );
+  }
+
+  /* =======================================================
+     39. MASTER DATA VALIDATION
   ======================================================= */
 
   function validateMasterData() {
@@ -6002,7 +5796,9 @@
 
         if (
           material.id &&
-          ids.has(material.id)
+          ids.has(
+            String(material.id)
+          )
         ) {
           console.error(
             "Duplicate material ID:",
@@ -6012,42 +5808,7 @@
 
         if (material.id) {
           ids.add(
-            material.id
-          );
-        }
-      }
-    );
-
-    /*
-      Do not modify master data if counts
-      differ. Only warn.
-    */
-
-    const expectedCounts = {
-      1: 10,
-      2: 7,
-      3: 5,
-      4: 51,
-      5: 16
-    };
-
-    Object.entries(
-      expectedCounts
-    ).forEach(
-      ([stage, expected]) => {
-        const actual =
-          MATERIALS.filter(
-            material =>
-              String(
-                material.stage
-              ) === stage
-          ).length;
-
-        if (
-          actual !== expected
-        ) {
-          console.warn(
-            `Stage ${stage}: expected ${expected}, found ${actual}`
+            String(material.id)
           );
         }
       }
@@ -6061,66 +5822,21 @@
   }
 
   /* =======================================================
-     43. INITIAL UI
+     40. RENDER ALL
   ======================================================= */
 
-  function initializeUI() {
-    state.estimateItems =
-      loadEstimateItems();
-
-    restoreNavigationState();
-
+  function renderAll() {
     applyBranding();
-
     applyTheme();
-
     applyConfigVisibility();
-
     updateLanguageButton();
 
-    renderHome();
-
-    renderSettings();
-
-    bindCalculatorInputs();
-
-    bindEvents();
-
-    updateTopBarTitle();
-
-    updateBottomNavigation(
-      state.currentPage
-    );
-
-    /*
-      Prepare initial history state.
-    */
-
-    try {
-      window.history.replaceState(
-        {
-          sandeepApp: true,
-          page:
-            state.currentPage,
-          stageId:
-            state.currentStageId,
-          itemIndex:
-            state.currentItemIndex,
-          materialId:
-            state.currentItem?.id ||
-            null
-        },
-        "",
-        `#${state.currentPage}`
-      );
-
-      state.historyReady =
-        true;
-    } catch (_) {}
-
-    /*
-      Restore current screen.
-    */
+    if (
+      state.currentPage ===
+      "home"
+    ) {
+      renderHome();
+    }
 
     if (
       state.currentPage ===
@@ -6129,21 +5845,12 @@
       if (
         state.currentItem
       ) {
-        showPage(
-          "materials",
-          false
-        );
-
-        if (
-          DOM.materialList
-        ) {
+        if (DOM.materialList) {
           DOM.materialList.hidden =
             true;
         }
 
-        if (
-          DOM.materialEditor
-        ) {
+        if (DOM.materialEditor) {
           DOM.materialEditor.hidden =
             false;
         }
@@ -6151,89 +5858,7 @@
         renderMaterialEditor(
           state.currentItem
         );
-
-        scrollEditorToTop();
-      } else if (
-        state.currentStageId
-      ) {
-        showPage(
-          "materials",
-          false
-        );
-
-        renderMaterialPage();
       } else {
-        showPage(
-          "home",
-          false
-        );
-      }
-    } else {
-      showPage(
-        state.currentPage,
-        false
-      );
-    }
-
-    applyMaterialView();
-    applyStageView();
-  }
-
-  /* =======================================================
-     44. ERROR SAFETY
-  ======================================================= */
-
-  function installErrorSafety() {
-    window.addEventListener(
-      "error",
-      event => {
-        console.error(
-          "Estimate List error:",
-          event.error ||
-          event.message
-        );
-      }
-    );
-
-    window.addEventListener(
-      "unhandledrejection",
-      event => {
-        console.error(
-          "Unhandled promise rejection:",
-          event.reason
-        );
-      }
-    );
-  }
-
-  /* =======================================================
-     45. RENDER ALL
-  ======================================================= */
-
-  function renderAll() {
-    applyBranding();
-
-    applyTheme();
-
-    applyConfigVisibility();
-
-    updateLanguageButton();
-
-    renderHome();
-
-    if (
-      state.currentPage ===
-      "materials"
-    ) {
-      if (
-        state.currentItem
-      ) {
-        renderMaterialEditor(
-          state.currentItem
-        );
-      } else if (
-        state.currentStageId
-      ) {
         renderMaterialPage();
       }
     }
@@ -6261,7 +5886,6 @@
     );
 
     applyMaterialView();
-
     applyStageView();
 
     populateViewOptions(
@@ -6280,7 +5904,153 @@
   }
 
   /* =======================================================
-     46. PUBLIC API
+     41. INITIALIZE
+  ======================================================= */
+
+  function initializeUI() {
+    /*
+      First load saved data.
+    */
+
+    state.estimateItems =
+      loadEstimateItems();
+
+    /*
+      Restore page/stage/item.
+    */
+
+    restoreNavigationState();
+
+    /*
+      Dynamic pages must be created BEFORE
+      render functions are called.
+    */
+
+    ensureMainShell();
+
+    cacheDOM();
+
+    /*
+      Branding / theme.
+    */
+
+    applyBranding();
+    applyTheme();
+    applyConfigVisibility();
+
+    updateLanguageButton();
+
+    /*
+      Bind events only once.
+    */
+
+    bindCalculatorInputs();
+    bindEvents();
+
+    /*
+      Render current page.
+    */
+
+    renderAll();
+
+    /*
+      Initial history state.
+    */
+
+    try {
+      history.replaceState(
+        {
+          sandeepApp: true,
+          page:
+            state.currentPage,
+          stageId:
+            state.currentStageId,
+          itemIndex:
+            state.currentItemIndex,
+          materialId:
+            state.currentItem?.id ||
+            null
+        },
+        "",
+        `#${state.currentPage}`
+      );
+
+      state.historyReady =
+        true;
+    } catch (_) {}
+
+    /*
+      Restore exact material editor
+      after refresh.
+    */
+
+    if (
+      state.currentPage ===
+      "materials"
+    ) {
+      if (
+        state.currentItem
+      ) {
+        if (DOM.materialList) {
+          DOM.materialList.hidden =
+            true;
+        }
+
+        if (DOM.materialEditor) {
+          DOM.materialEditor.hidden =
+            false;
+        }
+
+        renderMaterialEditor(
+          state.currentItem
+        );
+
+        scrollEditorToTop();
+      } else if (
+        state.currentStageId
+      ) {
+        renderMaterialPage();
+      } else {
+        showPage(
+          "home",
+          false
+        );
+      }
+    }
+
+    state.initialized =
+      true;
+  }
+
+  /* =======================================================
+     42. ERROR SAFETY
+  ======================================================= */
+
+  function installErrorSafety() {
+    window.addEventListener(
+      "error",
+      event => {
+        console.error(
+          "Estimate List error:",
+          event.error ||
+          event.message
+        );
+      }
+    );
+
+    window.addEventListener(
+      "unhandledrejection",
+      event => {
+        console.error(
+          "Estimate List promise error:",
+          event.reason
+        );
+      }
+    );
+  }
+
+  /* =======================================================
+     43. PUBLIC API
   ======================================================= */
 
   window.SandeepEstimateApp = {
@@ -6291,6 +6061,7 @@
 
     showPage,
     showEstimate,
+
     renderEstimate,
 
     addCurrentToEstimate,
@@ -6301,8 +6072,6 @@
     toggleTheme,
 
     setMaterialView,
-    cycleMaterialView,
-
     setStageView,
 
     openNextItem,
@@ -6320,7 +6089,7 @@
   };
 
   /* =======================================================
-     47. INIT
+     44. INIT
   ======================================================= */
 
   function init() {
@@ -6334,8 +6103,7 @@
       initializeUI();
 
       /*
-        Loader system completely removed.
-        App starts directly.
+        Loader intentionally NOT created.
       */
 
     } catch (error) {
@@ -6345,14 +6113,14 @@
       );
 
       /*
-        Do not create a loader/error screen.
-        Existing HTML remains visible.
+        No loader/error screen.
+        Log only.
       */
     }
   }
 
   /* =======================================================
-     48. START
+     45. START
   ======================================================= */
 
   if (

@@ -1,286 +1,102 @@
 /* =========================================================
    SANDEEP ELECTROFIX - ESTIMATE LIST
    app.js
-   FINAL MATERIAL LIST FIX
    ---------------------------------------------------------
-   material.js is NOT modified
+   Works with:
+   index.html
+   config.js
+   material.js
+
+   MATERIALS structure:
+   [
+     STAGE,
+     STAGE TITLE,
+     MAIN SECTION,
+     ITEMS,
+     [SUB SECTION, ITEMS],
+     [SUB SECTION, ITEMS],
+     ...
+   ]
+
+   IMPORTANT:
+   - material.js is NOT modified
+   - Section index is stored
+   - Item index is stored
+   - Hindi / English UI
+   - Stage navigation
+   - Material navigation
+   - Search
+   - Filters
+   - View modes
+   - Estimate
+   - Calculator
+   - Theme
+   - Language
+   - Refresh state
+   - Browser / Android back
    ========================================================= */
 
 (() => {
   "use strict";
 
   /* =======================================================
-     CONFIG
-     ======================================================= */
-
-  const CFG = window.APP_CONFIG || {};
-
-  const CONFIG = {
-    appName: CFG.appName || "Estimate List",
-    appNameHi: CFG.appNameHi || "एस्टिमेट लिस्ट",
-    businessName: CFG.businessName || "Sandeep ElectroFix",
-    tagline: CFG.tagline || "Powering Your Trust",
-
-    defaultLanguage:
-      CFG.defaultLanguage === "en" ? "en" : "hi",
-
-    storageKey:
-      CFG.storageKey || "sandeepEstimateItems",
-
-    languageKey:
-      CFG.languageKey || "sandeepMaterialLang",
-
-    themeKey:
-      CFG.themeKey || "sandeepTheme",
-
-    viewKey:
-      CFG.viewKey || "sandeepMaterialView",
-
-    routeKey:
-      CFG.routeKey || "sandeepEstimateRoute",
-
-    unitKey:
-      "sandeepLastUnit"
-  };
-
-
-  /* =======================================================
-     DOM
-     ======================================================= */
-
-  const main =
-    document.getElementById("main");
-
-  if (!main) {
-    console.error(
-      "Estimate List: #main not found"
-    );
-    return;
-  }
-
-  const menuBtn =
-    document.getElementById("menuBtn");
-
-  const drawer =
-    document.getElementById("drawer");
-
-  const drawerOverlay =
-    document.getElementById("drawerOverlay");
-
-  const closeMenu =
-    document.getElementById("closeMenu");
-
-  const themeBtn =
-    document.getElementById("themeBtn") ||
-    document.getElementById("themeButton");
-
-  const langBtn =
-    document.getElementById("langBtn");
-
-  const bottomNav =
-    document.getElementById("bottomNav") ||
-    document.querySelector(".bottom-nav");
-
-
-  /* =======================================================
-     MATERIAL DATA
-     ======================================================= */
-
-  const RAW_MATERIALS =
-    Array.isArray(window.MATERIALS)
-      ? window.MATERIALS
-      : [];
-
-  console.log(
-    "MATERIALS loaded:",
-    RAW_MATERIALS
-  );
-
-
-  /* =======================================================
-     STATE
-     ======================================================= */
-
-  const state = {
-    page: "home",
-
-    stageIndex: null,
-
-    sectionIndex: null,
-
-    itemIndex: null,
-
-    selectedItem: null,
-
-    editEstimateIndex: -1,
-
-    language: loadLanguage(),
-
-    theme: loadTheme(),
-
-    view: loadView(),
-
-    search: "",
-
-    drawerOpen: false,
-
-    history: [],
-
-    lastUnit:
-      localStorage.getItem(
-        CONFIG.unitKey
-      ) || ""
-  };
-
-
-  /* =======================================================
      STORAGE
      ======================================================= */
 
-  function loadLanguage() {
-    return (
-      localStorage.getItem(
-        CONFIG.languageKey
-      ) || CONFIG.defaultLanguage
-    ) === "en"
-      ? "en"
-      : "hi";
-  }
-
-
-  function loadTheme() {
-    return (
-      localStorage.getItem(
-        CONFIG.themeKey
-      ) || "dark"
-    ) === "light"
-      ? "light"
-      : "dark";
-  }
-
-
-  const VIEWS = [
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "twoColumn",
-    "horizontal",
-    "iconList",
-    "timeline",
-    "dense"
-  ];
-
-
-  function loadView() {
-    const value =
-      localStorage.getItem(
-        CONFIG.viewKey
-      );
-
-    return VIEWS.includes(value)
-      ? value
-      : "grid";
-  }
-
-
-  function loadEstimate() {
-    try {
-      const value =
-        localStorage.getItem(
-          CONFIG.storageKey
-        );
-
-      if (!value) return [];
-
-      const parsed =
-        JSON.parse(value);
-
-      return Array.isArray(parsed)
-        ? parsed
-        : [];
-    } catch {
-      return [];
-    }
-  }
-
-
-  state.estimateItems =
-    loadEstimate();
-
-
-  function saveEstimate() {
-    localStorage.setItem(
-      CONFIG.storageKey,
-      JSON.stringify(
-        state.estimateItems
-      )
-    );
-  }
+  const STORAGE = {
+    lang: "sandeepMaterialLang",
+    theme: "sandeepTheme",
+    route: "sandeepEstimateRoute",
+    estimate: "sandeepEstimateItems",
+    materialView: "sandeepMaterialView",
+    stageView: "sandeepStageView",
+    unit: "sandeepLastUnit"
+  };
 
 
   /* =======================================================
-     TRANSLATION
+     DEFAULT STATE
      ======================================================= */
 
-  const UI = {
-    en: {
-      home: "Home",
-      estimate: "Estimate",
-      calculator: "Calculator",
-      settings: "Settings",
+  let currentLang =
+    localStorage.getItem(STORAGE.lang) || "hi";
 
-      search: "Search material",
+  let currentTheme =
+    localStorage.getItem(STORAGE.theme) || "dark";
 
-      back: "Back",
-      add: "Add to Estimate",
-      update: "Update Estimate",
-      next: "Next",
+  let currentStage = null;
+  let currentSection = null;
+  let currentItem = null;
 
-      quantity: "Quantity",
-      unit: "Unit",
-      brand: "Brand",
+  let currentMaterialView =
+    localStorage.getItem(STORAGE.materialView) || "grid";
 
-      optional: "Optional",
-      required: "Required",
+  let currentStageView =
+    localStorage.getItem(STORAGE.stageView) || "grid";
 
-      noMaterial:
-        "No material found",
+  let searchText = "";
 
-      noSearch:
-        "No material found",
+  let selectedFilters = {
+    stage: "",
+    type: "",
+    size: "",
+    brand: ""
+  };
 
-      empty:
-        "No items added yet",
+  let drawerOpen = false;
+  let filterOpen = false;
+  let viewOpen = false;
 
-      clear:
-        "Clear Estimate",
+  let historyStack = [];
 
-      edit: "Edit",
-      delete: "Delete",
+  let estimateItems = [];
 
-      saved:
-        "Added to Estimate",
 
-      updated:
-        "Estimate Updated",
+  /* =======================================================
+     TEXT
+     ======================================================= */
 
-      deleted:
-        "Item Deleted",
-
-      cleared:
-        "Estimate Cleared",
-
-      complete:
-        "This stage is complete",
-
-      enterQuantity:
-        "Please enter quantity",
-
-      close:
-        "Press back again to exit"
-    },
+  const TEXT = {
 
     hi: {
       home: "होम",
@@ -288,1068 +104,519 @@
       calculator: "कैलकुलेटर",
       settings: "सेटिंग्स",
 
-      search: "सामग्री खोजें",
+      search: "Material खोजें...",
+      noResults: "कोई Material नहीं मिला",
 
-      back: "वापस",
       add: "एस्टिमेट में जोड़ें",
-      update: "एस्टिमेट अपडेट करें",
+      update: "अपडेट करें",
       next: "अगला",
+      back: "वापस",
 
       quantity: "मात्रा",
       unit: "यूनिट",
       brand: "ब्रांड",
+      price: "कीमत",
 
+      required: "आवश्यक",
       optional: "वैकल्पिक",
-      required: "जरूरी",
 
-      noMaterial:
-        "सामग्री नहीं मिली",
+      select: "चुनें",
+      enter: "दर्ज करें",
 
-      noSearch:
-        "कोई सामग्री नहीं मिली",
+      added: "एस्टिमेट में जोड़ दिया गया",
+      updated: "एस्टिमेट अपडेट हो गया",
 
-      empty:
-        "अभी कोई आइटम नहीं जोड़ा गया",
+      stage: "स्टेज",
+      section: "सेक्शन",
 
-      clear:
-        "एस्टिमेट साफ करें",
+      totalItems: "कुल आइटम",
+      emptyEstimate: "एस्टिमेट खाली है",
 
+      clear: "साफ करें",
+      save: "सेव",
       edit: "एडिट",
       delete: "डिलीट",
 
-      saved:
-        "एस्टिमेट में जोड़ दिया गया",
+      calculatorTitle: "Electrical Calculator",
+      voltage: "Voltage",
+      current: "Current",
+      resistance: "Resistance",
+      power: "Power",
+      calculate: "Calculate",
+      result: "Result",
 
-      updated:
-        "एस्टिमेट अपडेट हो गया",
+      inverter: "Inverter 12V / 24V → 230V",
 
-      deleted:
-        "आइटम डिलीट हो गया",
+      close: "बंद करें",
+      menu: "मेन्यू",
 
-      cleared:
-        "एस्टिमेट साफ हो गया",
+      dark: "डार्क मोड",
+      light: "लाइट मोड",
 
-      complete:
-        "यह स्टेज पूरा हो गया",
+      hindi: "हिन्दी",
+      english: "English",
 
-      enterQuantity:
-        "कृपया मात्रा डालें",
+      stageView: "Stage View",
+      materialView: "Material View",
 
-      close:
-        "ऐप बंद करने के लिए फिर से Back दबाएँ"
+      grid: "Grid",
+      list: "List",
+      compact: "Compact",
+      large: "Large",
+      mini: "Mini",
+      twoColumn: "2 Column",
+      horizontal: "Horizontal",
+      iconList: "Icon List",
+      timeline: "Timeline",
+      dense: "Dense",
+
+      leaveTitle: "App बंद करें?",
+      leaveText: "क्या आप App से बाहर जाना चाहते हैं?",
+      yes: "हाँ",
+      no: "नहीं"
+    },
+
+    en: {
+      home: "Home",
+      estimate: "Estimate",
+      calculator: "Calculator",
+      settings: "Settings",
+
+      search: "Search material...",
+      noResults: "No material found",
+
+      add: "Add to Estimate",
+      update: "Update",
+      next: "Next",
+      back: "Back",
+
+      quantity: "Quantity",
+      unit: "Unit",
+      brand: "Brand",
+      price: "Price",
+
+      required: "Required",
+      optional: "Optional",
+
+      select: "Select",
+      enter: "Enter",
+
+      added: "Added to estimate",
+      updated: "Estimate updated",
+
+      stage: "Stage",
+      section: "Section",
+
+      totalItems: "Total Items",
+      emptyEstimate: "Estimate is empty",
+
+      clear: "Clear",
+      save: "Save",
+      edit: "Edit",
+      delete: "Delete",
+
+      calculatorTitle: "Electrical Calculator",
+      voltage: "Voltage",
+      current: "Current",
+      resistance: "Resistance",
+      power: "Power",
+      calculate: "Calculate",
+      result: "Result",
+
+      inverter: "Inverter 12V / 24V → 230V",
+
+      close: "Close",
+      menu: "Menu",
+
+      dark: "Dark Mode",
+      light: "Light Mode",
+
+      hindi: "हिन्दी",
+      english: "English",
+
+      stageView: "Stage View",
+      materialView: "Material View",
+
+      grid: "Grid",
+      list: "List",
+      compact: "Compact",
+      large: "Large",
+      mini: "Mini",
+      twoColumn: "2 Column",
+      horizontal: "Horizontal",
+      iconList: "Icon List",
+      timeline: "Timeline",
+      dense: "Dense",
+
+      leaveTitle: "Close App?",
+      leaveText: "Do you want to leave the app?",
+      yes: "Yes",
+      no: "No"
     }
+
   };
 
+
+  /* =======================================================
+     DOM
+     ======================================================= */
+
+  const $ = (selector, root = document) =>
+    root.querySelector(selector);
+
+  const $$ = (selector, root = document) =>
+    Array.from(root.querySelectorAll(selector));
+
+
+  const home =
+    $("#home");
+
+  const stageGrid =
+    $("#stageGrid");
+
+  const searchInput =
+    $("#main");
+
+  const filterPanel =
+    $("#filterPanel");
+
+  const stageFilter =
+    $("#stageFilter");
+
+  const typeFilter =
+    $("#typeFilter");
+
+  const sizeFilter =
+    $("#sizeFilter");
+
+  const brandFilter =
+    $("#brandFilter");
+
+  const resultsInfo =
+    $("#resultsInfo");
+
+  const noResults =
+    $("#noResults");
+
+  const toast =
+    $("#toast");
+
+  const drawer =
+    $("#drawer");
+
+  const drawerOverlay =
+    $("#drawerOverlay");
+
+  const menuBtn =
+    $("#menuBtn");
+
+  const filterBtn =
+    $("#filter-icon");
+
+  const clearFilterBtn =
+    $("#clearFilter");
+
+  const viewTrigger =
+    $("#viewTrigger");
+
+  const viewOptions =
+    $("#viewOptions");
+
+  const themeButton =
+    $("#themeButton");
+
+  const themeIcon =
+    $("#themeIcon");
+
+  const themeTitle =
+    $("#themeTitle");
+
+  const themeState =
+    $("#themeState");
+
+
+  /* =======================================================
+     SAFETY
+     ======================================================= */
+
+  if (!Array.isArray(window.MATERIALS)) {
+    console.error(
+      "MATERIALS not found. Check material.js loading order."
+    );
+    return;
+  }
+
+
+  /* =======================================================
+     LANGUAGE HELPERS
+     ======================================================= */
 
   function t(key) {
     return (
-      UI[state.language]?.[key] ||
-      UI.en[key] ||
-      key
-    );
+      TEXT[currentLang] &&
+      TEXT[currentLang][key]
+    ) || key;
   }
 
 
-  /* =======================================================
-     HINDI NAMES
-     ======================================================= */
+  const DICT = {
 
-  const HI = {
-    Pipe: "पाइप",
-    Bend: "बेंड",
+    "Pipe": "पाइप",
+    "Bend": "बेंड",
     "Junction Box": "जंक्शन बॉक्स",
     "Fan Box": "फैन बॉक्स",
-    "Concealed Light Box":
-      "कंसील्ड लाइट बॉक्स",
+    "Concealed Light Box": "कन्सील्ड लाइट बॉक्स",
 
-    Wire: "वायर",
-    "Flexible Pipe": "फ्लेक्सिबल पाइप",
-    "Electrical Tape": "इलेक्ट्रिकल टेप",
-    Fastener: "फास्टनर",
+    "Installation Material": "इंस्टॉलेशन सामग्री",
+    "Pulling Material": "पुलिंग सामग्री",
+    "MCB & Protection": "MCB और प्रोटेक्शन",
+    "Fan & Ceiling": "फैन और सीलिंग",
+    "Lighting": "लाइटिंग",
+    "Installation & Finishing": "इंस्टॉलेशन और फिनिशिंग",
+    "Installation & Fastening": "इंस्टॉलेशन और फास्टनिंग",
 
-    "Switch Plate": "स्विच प्लेट",
-    "Switch Board (Surface Gang Box)":
-      "स्विच बोर्ड",
-    Switch: "स्विच",
-    Socket: "सॉकेट",
-    "Fan Regulator": "फैन रेगुलेटर",
-    "2 Way Switch": "2 वे स्विच",
-    "Bell Push": "बेल पुश",
-    "Neon Indicator": "नियॉन इंडिकेटर",
+    "Conduit & Box": "कंड्यूट और बॉक्स",
+    "Wiring Material": "वायरिंग सामग्री",
+    "Switch & Socket": "स्विच और सॉकेट",
+    "Wiring & Conduit": "वायरिंग और कंड्यूट",
 
-    "Mini MCB": "मिनी एमसीबी",
-    "SP MCB": "एसपी एमसीबी",
-    "DP MCB": "डीपी एमसीबी",
-    "TPN MCB": "टीपीएन एमसीबी",
-    "DP Isolator": "डीपी आइसोलेटर",
-    "TPN Isolator": "टीपीएन आइसोलेटर",
-    "RCCB / RCD": "आरसीसीबी / आरसीडी",
-    "MCB Box": "एमसीबी बॉक्स",
+    "Size": "साइज़",
+    "Type": "टाइप",
+    "Sub Type": "सब टाइप",
+    "Conduit Size": "कंड्यूट साइज़",
+    "Shape / Ways": "शेप / वे",
+    "Material": "मटेरियल",
+    "Depth": "डेप्थ",
+    "Ways": "वे",
+    "Hook Rod": "हुक रॉड",
+    "Diameter": "डायमीटर",
+    "Material Type": "मटेरियल टाइप",
+    "Module": "मॉड्यूल",
+    "Phase Selection": "फेज़",
+    "Door Type": "डोर टाइप",
+    "Material Type": "मटेरियल टाइप",
 
-    "Fan Sheet": "फैन शीट",
-    "Round Sheet": "राउंड शीट",
-    "Fan Rod": "फैन रॉड",
-    "Fan Clamp": "फैन क्लैंप",
-    Holder: "होल्डर",
-    "Ceiling Rose": "सीलिंग रोज",
-    Chain: "चेन",
+    "Colour": "रंग",
+    "Color": "रंग",
+    "Pack Size": "पैक साइज़",
+    "Pack Size (Weight)": "पैक साइज़",
+    "Gauge / Size": "गेज / साइज़",
+    "Size (Length)": "लंबाई",
+    "Size (Width)": "चौड़ाई",
+    "Size (Width × Length)": "साइज़",
+    "Size (Diameter × Length)": "साइज़",
+    "Size (Cable Size × Stud Size)": "केबल / स्टड साइज़",
 
-    "LED Bulb": "एलईडी बल्ब",
-    "LED Tube Light": "एलईडी ट्यूब लाइट",
-    "Foot Light": "फुट लाइट",
-    "Panel Light": "पैनल लाइट",
-    "Surface Light": "सरफेस लाइट",
-    "COB Light": "सीओबी लाइट",
-    "Down Light": "डाउन लाइट",
-    "Strip Light": "स्ट्रिप लाइट",
-    "Rope Light": "रोप लाइट",
+    "Amp": "एम्पियर",
+    "Curve": "कर्व",
+    "Door": "डोर",
+    "Sensitivity": "सेंसिटिविटी",
+    "Voltage": "वोल्टेज",
+    "Wattage": "वॉटेज",
+    "Base": "बेस",
+    "Colour Temp": "कलर टेम्परेचर",
+    "Mounting": "माउंटिंग",
+    "Shape": "शेप",
+    "Movement": "मूवमेंट",
+    "Beam Angle": "बीम एंगल",
+    "Body Finish": "बॉडी फिनिश",
+    "Density": "डेंसिटी",
+    "Length": "लंबाई",
+    "Supply Voltage": "सप्लाई वोल्टेज",
+    "Dimensions (W × D)": "डायमेंशन",
+    "Diffuser": "डिफ्यूज़र",
+    "Output Voltage": "आउटपुट वोल्टेज",
+    "Type": "टाइप",
+    "Size (Weight)": "वज़न",
+    "Length": "लंबाई",
 
-    "Door Bell": "डोर बेल",
-    "Instant Glue": "इंस्टेंट ग्लू",
-    POP: "पीओपी",
-    Screw: "स्क्रू",
-    Washer: "वॉशर",
-    "Cable Clip": "केबल क्लिप",
-    "Cable Tie": "केबल टाई",
-    Saddle: "सैडल"
+    "Size / Diameter": "साइज़ / डायमीटर",
+
+    "Power": "पावर",
+    "Current": "करंट",
+    "Resistance": "रेज़िस्टेंस"
   };
 
 
-  const GROUP_HI = {
-    "Conduit & Box":
-      "कंड्यूट एवं बॉक्स",
+  function translate(value) {
+    if (!value) return "";
 
-    "Installation Material":
-      "इंस्टॉलेशन सामग्री",
-
-    "Wiring Material":
-      "वायरिंग सामग्री",
-
-    "Pulling Material":
-      "पुलिंग सामग्री",
-
-    "Switch & Socket":
-      "स्विच एवं सॉकेट",
-
-    "MCB & Protection":
-      "एमसीबी एवं प्रोटेक्शन",
-
-    "Fan & Ceiling":
-      "फैन एवं सीलिंग",
-
-    Lighting:
-      "लाइटिंग",
-
-    "Installation & Finishing":
-      "इंस्टॉलेशन एवं फिनिशिंग",
-
-    "Wiring & Conduit":
-      "वायरिंग एवं कंड्यूट",
-
-    "Installation & Fastening":
-      "इंस्टॉलेशन एवं फास्टनिंग"
-  };
-
-
-  function displayMaterial(name) {
-    if (state.language !== "hi") {
-      return name;
+    if (currentLang === "en") {
+      return value;
     }
 
-    return HI[name]
-      ? `${HI[name]} / ${name}`
-      : name;
+    return DICT[value] || value;
   }
 
 
-  function displayGroup(name) {
-    if (state.language !== "hi") {
-      return name;
+  function bilingual(value) {
+    if (!value) return "";
+
+    if (currentLang === "en") {
+      return value;
     }
 
-    return GROUP_HI[name]
-      ? `${GROUP_HI[name]} / ${name}`
-      : name;
+    const hindi = DICT[value];
+
+    if (hindi && hindi !== value) {
+      return `${hindi} / ${value}`;
+    }
+
+    return value;
   }
 
 
   /* =======================================================
-     IMPORTANT MATERIAL PARSER
-     -------------------------------------------------------
-     This is the main fix.
-     It accepts the existing material.js structure
-     without requiring units/brands to be present.
+     MATERIAL PARSER
      ======================================================= */
 
-  function isMaterialItem(item) {
+  function getStage(stageNumber) {
 
-    return (
-      Array.isArray(item) &&
-      typeof item[0] === "string" &&
-      Array.isArray(item[1])
-    );
+    return window.MATERIALS.find(
+      stage => {
+
+        if (!Array.isArray(stage)) {
+          return false;
+        }
+
+        return (
+          String(stage[0])
+            .replace(/\D/g, "") ===
+          String(stageNumber)
+        );
+
+      }
+    ) || null;
+
   }
 
 
-  function parseMaterialItem(
-    item,
-    stageIndex,
-    sectionName
-  ) {
+  function getStageSections(stageNumber) {
 
-    return {
-      name:
-        item[0] || "",
+    const stage = getStage(stageNumber);
 
-      fields:
-        Array.isArray(item[1])
-          ? item[1]
-          : [],
-
-      units:
-        Array.isArray(item[2])
-          ? item[2]
-          : [],
-
-      brands:
-        Array.isArray(item[3])
-          ? item[3]
-          : [],
-
-      stageIndex,
-
-      section:
-        sectionName || ""
-    };
-  }
-
-
-  function parseItemArray(
-    array,
-    stageIndex,
-    sectionName
-  ) {
-
-    if (!Array.isArray(array)) {
+    if (!stage) {
       return [];
     }
 
-    return array
-      .filter(isMaterialItem)
-      .map(item =>
-        parseMaterialItem(
-          item,
-          stageIndex,
-          sectionName
-        )
-      );
-  }
+    const sections = [];
+
+    /*
+      stage[2] = first/main section name
+      stage[3] = first/main section items
+
+      stage[4+] = [sectionName, items]
+    */
+
+    if (
+      typeof stage[2] === "string" &&
+      Array.isArray(stage[3])
+    ) {
+
+      sections.push({
+        index: 0,
+        name: stage[2],
+        items: stage[3]
+      });
+
+    }
 
 
-  function parseMaterials() {
+    for (
+      let i = 4;
+      i < stage.length;
+      i++
+    ) {
 
-    const stages = [];
+      const section = stage[i];
 
-    RAW_MATERIALS.forEach(
-      (
-        raw,
-        stageIndex
-      ) => {
+      if (
+        Array.isArray(section) &&
+        typeof section[0] === "string" &&
+        Array.isArray(section[1])
+      ) {
 
-        if (
-          !Array.isArray(raw)
-        ) {
-          return;
-        }
-
-        const code =
-          typeof raw[0] === "string"
-            ? raw[0]
-            : `STAGE ${stageIndex + 1}`;
-
-        const title =
-          typeof raw[1] === "string"
-            ? raw[1]
-            : code;
-
-        const category =
-          typeof raw[2] === "string"
-            ? raw[2]
-            : "";
-
-        const sections = [];
-
-
-        /* -----------------------------------------------
-           Main category items
-           ----------------------------------------------- */
-
-        const mainItems =
-          parseItemArray(
-            raw[3],
-            stageIndex,
-            category
-          );
-
-        if (mainItems.length) {
-
-          sections.push({
-            name: category,
-            items: mainItems
-          });
-
-        }
-
-
-        /* -----------------------------------------------
-           Additional grouped sections
-
-           Example:
-
-           [
-             "Installation Material",
-             [
-               ["Tape", ...],
-               ["Solvent Cement", ...]
-             ]
-           ]
-           ----------------------------------------------- */
-
-        for (
-          let i = 4;
-          i < raw.length;
-          i++
-        ) {
-
-          const group =
-            raw[i];
-
-          if (
-            !Array.isArray(group)
-          ) {
-            continue;
-          }
-
-          if (
-            typeof group[0] !==
-            "string"
-          ) {
-            continue;
-          }
-
-          const groupItems =
-            parseItemArray(
-              group[1],
-              stageIndex,
-              group[0]
-            );
-
-          if (
-            groupItems.length
-          ) {
-
-            sections.push({
-              name: group[0],
-              items: groupItems
-            });
-
-          }
-        }
-
-
-        stages.push({
-          code,
-          title,
-          category,
-          sections
+        sections.push({
+          index: sections.length,
+          name: section[0],
+          items: section[1]
         });
 
       }
-    );
-
-    return stages;
-  }
-
-
-  const STAGES =
-    parseMaterials();
-
-
-  /* =======================================================
-     DEBUG
-     ======================================================= */
-
-  console.log(
-    "================================"
-  );
-
-  console.log(
-    "Estimate List Parser"
-  );
-
-  console.log(
-    "RAW MATERIALS:",
-    RAW_MATERIALS.length
-  );
-
-  console.log(
-    "PARSED STAGES:",
-    STAGES.length
-  );
-
-  STAGES.forEach(
-    (
-      stage,
-      index
-    ) => {
-
-      console.log(
-        index,
-        stage.code,
-        stage.title,
-        stage.sections
-      );
 
     }
-  );
 
-  console.log(
-    "================================"
-  );
-
-
-  /* =======================================================
-     STAGE HINDI
-     ======================================================= */
-
-  const STAGE_HI = {
-    "Slab Conduit Installation":
-      "स्लैब कंड्यूट इंस्टॉलेशन",
-
-    "Wall Conduit Installation":
-      "वॉल कंड्यूट इंस्टॉलेशन",
-
-    "Wiring Installation":
-      "वायरिंग इंस्टॉलेशन",
-
-    "Final Electrical Fittings":
-      "फाइनल इलेक्ट्रिकल फिटिंग्स",
-
-    "False Ceiling Wiring Material":
-      "फॉल्स सीलिंग वायरिंग मटेरियल"
-  };
-
-
-  function displayStage(stage) {
-
-    if (
-      state.language !== "hi"
-    ) {
-      return stage.title;
-    }
-
-    return STAGE_HI[
-      stage.title
-    ]
-      ? `${STAGE_HI[stage.title]} / ${stage.title}`
-      : stage.title;
+    return sections;
   }
 
 
-  /* =======================================================
-     ESCAPE
-     ======================================================= */
-
-  function esc(value) {
-    return String(
-      value ?? ""
-    )
-      .replace(
-        /&/g,
-        "&amp;"
-      )
-      .replace(
-        /</g,
-        "&lt;"
-      )
-      .replace(
-        />/g,
-        "&gt;"
-      )
-      .replace(
-        /"/g,
-        "&quot;"
-      )
-      .replace(
-        /'/g,
-        "&#039;"
-      );
-  }
-
-
-  /* =======================================================
-     VIEW
-     ======================================================= */
-
-  const VIEW_INFO = {
-    grid: ["▦", "Grid"],
-    list: ["☷", "List"],
-    compact: ["▤", "Compact"],
-    large: ["▥", "Large"],
-    mini: ["▪", "Mini"],
-    twoColumn: ["▦", "2 Column"],
-    horizontal: ["▤", "Horizontal"],
-    iconList: ["☷", "Icon List"],
-    timeline: ["◫", "Timeline"],
-    dense: ["≡", "Dense"]
-  };
-
-
-  function viewIcon() {
-    return (
-      VIEW_INFO[
-        state.view
-      ]?.[0] || "▦"
-    );
-  }
-
-
-  /* =======================================================
-     DRAWER
-     ======================================================= */
-
-  function openDrawer() {
-
-    if (!drawer) return;
-
-    state.drawerOpen = true;
-
-    drawer.classList.add(
-      "open"
-    );
-
-    drawer.setAttribute(
-      "aria-hidden",
-      "false"
-    );
-
-    drawerOverlay?.classList.add(
-      "show"
-    );
-
-    menuBtn?.classList.add(
-      "open"
-    );
-
-    menuBtn?.setAttribute(
-      "aria-expanded",
-      "true"
-    );
-  }
-
-
-  function closeDrawer() {
-
-    if (!drawer) return;
-
-    state.drawerOpen = false;
-
-    drawer.classList.remove(
-      "open"
-    );
-
-    drawer.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
-    drawerOverlay?.classList.remove(
-      "show"
-    );
-
-    menuBtn?.classList.remove(
-      "open"
-    );
-
-    menuBtn?.setAttribute(
-      "aria-expanded",
-      "false"
-    );
-  }
-
-
-  menuBtn?.addEventListener(
-    "click",
-    () => {
-
-      if (
-        state.drawerOpen
-      ) {
-        closeDrawer();
-      } else {
-        openDrawer();
-      }
-
-    }
-  );
-
-
-  closeMenu?.addEventListener(
-    "click",
-    closeDrawer
-  );
-
-
-  drawerOverlay?.addEventListener(
-    "click",
-    closeDrawer
-  );
-
-
-  drawer
-    ?.querySelectorAll(
-      "[data-page]"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const page =
-            button.dataset.page;
-
-          closeDrawer();
-
-          navigate(page);
-
-        }
-      );
-
-    });
-
-
-  /* =======================================================
-     THEME
-     ======================================================= */
-
-  function applyTheme() {
-
-    document.body.dataset.theme =
-      state.theme;
-
-    document.documentElement.dataset.theme =
-      state.theme;
-
-    localStorage.setItem(
-      CONFIG.themeKey,
-      state.theme
-    );
-  }
-
-
-  themeBtn?.addEventListener(
-    "click",
-    () => {
-
-      state.theme =
-        state.theme === "dark"
-          ? "light"
-          : "dark";
-
-      applyTheme();
-
-    }
-  );
-
-
-  /* =======================================================
-     LANGUAGE
-     ======================================================= */
-
-  langBtn?.addEventListener(
-    "click",
-    () => {
-
-      state.language =
-        state.language === "hi"
-          ? "en"
-          : "hi";
-
-      localStorage.setItem(
-        CONFIG.languageKey,
-        state.language
-      );
-
-      renderCurrentPage();
-
-    }
-  );
-
-
-  /* =======================================================
-     ROUTE
-     ======================================================= */
-
-  function saveRoute() {
-
-    localStorage.setItem(
-      CONFIG.routeKey,
-      JSON.stringify({
-        page: state.page,
-        stageIndex:
-          state.stageIndex,
-        sectionIndex:
-          state.sectionIndex,
-        itemIndex:
-          state.itemIndex
-      })
-    );
-  }
-
-
-  function restoreRoute() {
-
-    try {
-
-      const raw =
-        localStorage.getItem(
-          CONFIG.routeKey
-        );
-
-      if (!raw) return;
-
-      const route =
-        JSON.parse(raw);
-
-      if (!route) return;
-
-      state.page =
-        route.page || "home";
-
-      state.stageIndex =
-        Number.isInteger(
-          route.stageIndex
-        )
-          ? route.stageIndex
-          : null;
-
-      state.sectionIndex =
-        Number.isInteger(
-          route.sectionIndex
-        )
-          ? route.sectionIndex
-          : null;
-
-      state.itemIndex =
-        Number.isInteger(
-          route.itemIndex
-        )
-          ? route.itemIndex
-          : null;
-
-    } catch {
-
-      state.page = "home";
-
-      state.stageIndex = null;
-      state.sectionIndex = null;
-      state.itemIndex = null;
-
-    }
-  }
-
-
-  /* =======================================================
-     NAVIGATION
-     ======================================================= */
-
-  function snapshot() {
-
-    return {
-      page: state.page,
-      stageIndex:
-        state.stageIndex,
-      sectionIndex:
-        state.sectionIndex,
-      itemIndex:
-        state.itemIndex
-    };
-  }
-
-
-  function navigate(
-    page,
-    historyPush = true
+  function getItem(
+    stageNumber,
+    sectionIndex,
+    itemIndex
   ) {
 
-    if (
-      historyPush &&
-      state.page !== page
-    ) {
+    const sections =
+      getStageSections(stageNumber);
 
-      state.history.push(
-        snapshot()
-      );
+    const section =
+      sections[sectionIndex];
 
+    if (!section) {
+      return null;
     }
 
-    state.page =
-      page || "home";
+    const item =
+      section.items[itemIndex];
 
-    if (
-      page === "home" ||
-      page === "estimate" ||
-      page === "calculator" ||
-      page === "settings"
-    ) {
-
-      state.stageIndex = null;
-      state.sectionIndex = null;
-      state.itemIndex = null;
-      state.selectedItem = null;
-      state.editEstimateIndex = -1;
-
+    if (!Array.isArray(item)) {
+      return null;
     }
 
-    renderCurrentPage();
-
-    saveRoute();
+    return item;
   }
 
 
-  /* =======================================================
-     HOME
-     ======================================================= */
+  function getAllItems() {
 
-  function renderHome() {
+    const result = [];
 
-    main.innerHTML = `
+    window.MATERIALS.forEach(
+      (stage, stageArrayIndex) => {
 
-      <section class="page homePage">
-
-        <div class="hero">
-
-          <div class="heroLogoWrap">
-            <img
-              src="logo.png"
-              class="heroLogo"
-              alt="Sandeep ElectroFix"
-              onerror="this.style.display='none'"
-            >
-          </div>
-
-          <h2>
-            ${esc(
-              CONFIG.businessName
-            )}
-          </h2>
-
-          <p>
-            ${esc(
-              CONFIG.tagline
-            )}
-          </p>
-
-        </div>
-
-
-        <div class="searchBox">
-
-          <span>⌕</span>
-
-          <input
-            id="homeSearch"
-            type="search"
-            autocomplete="off"
-            placeholder="${esc(
-              t("search")
-            )}"
-          >
-
-        </div>
-
-
-        <div class="stageViewSelector">
-
-          <button
-            id="viewToggle"
-            type="button"
-          >
-            ${viewIcon()}
-          </button>
-
-          <div
-            id="viewOptions"
-            hidden
-          >
-
-            ${Object.entries(
-              VIEW_INFO
-            )
-              .map(
-                ([key, value]) => `
-                  <button
-                    type="button"
-                    data-view="${key}"
-                    class="${
-                      state.view ===
-                      key
-                        ? "active"
-                        : ""
-                    }"
-                  >
-                    ${value[0]}
-                    ${value[1]}
-                  </button>
-                `
-              )
-              .join("")}
-
-          </div>
-
-        </div>
-
-
-        <div
-          id="stageGrid"
-          class="stageGrid ${state.view}"
-        >
-
-          ${renderStageCards()}
-
-        </div>
-
-      </section>
-
-    `;
-
-
-    document
-      .getElementById(
-        "homeSearch"
-      )
-      ?.addEventListener(
-        "input",
-        e => {
-
-          state.search =
-            e.target.value
-              .trim()
-              .toLowerCase();
-
-          document
-            .getElementById(
-              "stageGrid"
-            ).innerHTML =
-              renderStageCards();
-
-          bindStageCards();
-
+        if (!Array.isArray(stage)) {
+          return;
         }
-      );
 
+        const stageNumber =
+          String(stage[0])
+            .replace(/\D/g, "");
 
-    const viewToggle =
-      document.getElementById(
-        "viewToggle"
-      );
+        const stageTitle =
+          stage[1] || "";
 
-    const viewOptions =
-      document.getElementById(
-        "viewOptions"
-      );
+        const sections =
+          getStageSections(stageNumber);
 
+        sections.forEach(
+          (section, sectionIndex) => {
 
-    viewToggle?.addEventListener(
-      "click",
-      () => {
+            section.items.forEach(
+              (item, itemIndex) => {
 
-        viewOptions.hidden =
-          !viewOptions.hidden;
-
-      }
-    );
-
-
-    viewOptions
-      ?.querySelectorAll(
-        "[data-view]"
-      )
-      .forEach(button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            state.view =
-              button.dataset.view;
-
-            localStorage.setItem(
-              CONFIG.viewKey,
-              state.view
-            );
-
-            renderHome();
-
-          }
-        );
-
-      });
-
-
-    bindStageCards();
-  }
-
-
-  /* =======================================================
-     STAGE SEARCH
-     ======================================================= */
-
-  function stageMatches(
-    stage
-  ) {
-
-    if (!state.search) {
-      return true;
-    }
-
-    const text = [
-      stage.code,
-      stage.title,
-      stage.category
-    ];
-
-    stage.sections.forEach(
-      section => {
-
-        text.push(
-          section.name
-        );
-
-        section.items.forEach(
-          item => {
-
-            text.push(
-              item.name
-            );
-
-            item.fields.forEach(
-              field => {
-
-                text.push(
-                  field[0]
-                );
-
-                if (
-                  Array.isArray(
-                    field[1]
-                  )
-                ) {
-                  text.push(
-                    ...field[1]
-                  );
+                if (!Array.isArray(item)) {
+                  return;
                 }
+
+                result.push({
+                  stageNumber,
+                  stageArrayIndex,
+                  stageTitle,
+                  sectionIndex,
+                  sectionName: section.name,
+                  itemIndex,
+                  item
+                });
 
               }
             );
@@ -1360,13 +627,42 @@
       }
     );
 
+    return result;
+  }
 
-    return text
-      .join(" ")
-      .toLowerCase()
-      .includes(
-        state.search
-      );
+
+  /* =======================================================
+     ITEM HELPERS
+     ======================================================= */
+
+  function itemName(item) {
+    return Array.isArray(item)
+      ? String(item[0] || "")
+      : "";
+  }
+
+
+  function itemFields(item) {
+    return Array.isArray(item) &&
+      Array.isArray(item[1])
+      ? item[1]
+      : [];
+  }
+
+
+  function itemUnits(item) {
+    return Array.isArray(item) &&
+      Array.isArray(item[2])
+      ? item[2]
+      : [];
+  }
+
+
+  function itemBrands(item) {
+    return Array.isArray(item) &&
+      Array.isArray(item[3])
+      ? item[3]
+      : [];
   }
 
 
@@ -1376,139 +672,368 @@
 
   function renderStageCards() {
 
-    if (!STAGES.length) {
+    if (!stageGrid) return;
 
-      return `
-        <div class="emptyState">
-          Material List Not Loaded
-        </div>
-      `;
+    const allItems =
+      getAllItems();
 
+    const stageMap = {};
+
+    allItems.forEach(data => {
+
+      if (!stageMap[data.stageNumber]) {
+        stageMap[data.stageNumber] = {
+          count: 0,
+          title: data.stageTitle
+        };
+      }
+
+      stageMap[data.stageNumber].count++;
+
+    });
+
+
+    const existingCards =
+      $$(".stage-card", stageGrid);
+
+
+    if (existingCards.length) {
+
+      existingCards.forEach(card => {
+
+        const number =
+          String(
+            card.dataset.stage || ""
+          );
+
+        const data =
+          stageMap[number];
+
+        if (!data) return;
+
+        const count =
+          $(".stage-count", card);
+
+        const title =
+          $(".stage-title", card);
+
+        if (title) {
+
+          if (currentLang === "hi") {
+
+            title.innerHTML =
+              `<span>${translate(data.title)}</span>
+               <small>${data.title}</small>`;
+
+          } else {
+
+            title.innerHTML =
+              `<span>${data.title}</span>`;
+
+          }
+
+        }
+
+        if (count) {
+
+          count.textContent =
+            `${data.count} ${currentLang === "hi" ? "आइटम" : "items"}`;
+
+        }
+
+        card.dataset.search =
+          `${number} ${data.title} ${data.title.toLowerCase()}`;
+
+      });
+
+      attachStageEvents();
+
+      applyStageSearch();
+
+      return;
     }
 
 
-    const html =
-      STAGES
-        .map(
-          (
-            stage,
-            index
-          ) => {
+    stageGrid.innerHTML = "";
 
-            if (
-              !stageMatches(
-                stage
-              )
-            ) {
-              return "";
+    Object.keys(stageMap)
+      .sort(
+        (a, b) =>
+          Number(a) - Number(b)
+      )
+      .forEach(stageNumber => {
+
+        const data =
+          stageMap[stageNumber];
+
+        const card =
+          document.createElement("div");
+
+        card.className =
+          "stage-card";
+
+        card.dataset.stage =
+          stageNumber;
+
+        card.dataset.search =
+          `${stageNumber} ${data.title}`;
+
+        card.innerHTML = `
+
+          <div class="stage-title">
+            ${
+              currentLang === "hi"
+                ? `<span>${translate(data.title)}</span>
+                   <small>${data.title}</small>`
+                : `<span>${data.title}</span>`
             }
+          </div>
 
-            const count =
-              stage.sections.reduce(
-                (
-                  total,
-                  section
-                ) =>
-                  total +
-                  section.items.length,
-                0
-              );
+          <div class="stage-count">
+            ${data.count}
+            ${currentLang === "hi" ? "आइटम" : "items"}
+          </div>
 
+        `;
 
-            return `
+        stageGrid.appendChild(card);
 
-              <button
-                type="button"
-                class="stageCard"
-                data-stage="${index}"
-              >
-
-                <div class="stageNumber">
-                  ${esc(
-                    stage.code
-                  )}
-                </div>
-
-                <div
-                  class="stageCardBody"
-                >
-
-                  <h3>
-                    ${esc(
-                      displayStage(
-                        stage
-                      )
-                    )}
-                  </h3>
-
-                  <p>
-                    ${esc(
-                      displayGroup(
-                        stage.category
-                      )
-                    )}
-                  </p>
-
-                  <small>
-                    ${count}
-                    ${
-                      state.language ===
-                      "hi"
-                        ? " सामग्री"
-                        : " Materials"
-                    }
-                  </small>
-
-                </div>
-
-                <span
-                  class="stageArrow"
-                >
-                  ›
-                </span>
-
-              </button>
-
-            `;
-
-          }
-        )
-        .join("");
+      });
 
 
-    return html ||
-      `
-        <div class="emptyState">
-          ${esc(
-            t("noSearch")
-          )}
-        </div>
-      `;
+    attachStageEvents();
+
+    applyStageSearch();
   }
 
 
-  function bindStageCards() {
+  function attachStageEvents() {
 
-    document
-      .querySelectorAll(
-        "[data-stage]"
-      )
+    $$(".stage-card", stageGrid)
       .forEach(card => {
+
+        if (card.dataset.appBound === "1") {
+          return;
+        }
+
+        card.dataset.appBound = "1";
 
         card.addEventListener(
           "click",
           () => {
 
-            openStage(
-              Number(
-                card.dataset.stage
-              )
-            );
+            const stage =
+              Number(card.dataset.stage);
+
+            openStage(stage);
 
           }
         );
 
       });
+
+  }
+
+
+  /* =======================================================
+     STAGE SEARCH
+     ======================================================= */
+
+  function applyStageSearch() {
+
+    if (!stageGrid) return;
+
+    const query =
+      String(searchText || "")
+        .trim()
+        .toLowerCase();
+
+    let visible = 0;
+
+    $$(".stage-card", stageGrid)
+      .forEach(card => {
+
+        const stage =
+          Number(card.dataset.stage);
+
+        const allItems =
+          getAllItems()
+            .filter(
+              x =>
+                Number(x.stageNumber) === stage
+            );
+
+        const haystack = [
+
+          card.dataset.search || "",
+
+          ...allItems.map(x => {
+
+            const item = x.item;
+
+            return [
+              itemName(item),
+              x.sectionName,
+              ...itemFields(item).flatMap(
+                field =>
+                  Array.isArray(field)
+                    ? [
+                        field[0],
+                        ...(Array.isArray(field[1])
+                          ? field[1]
+                          : [])
+                      ]
+                    : []
+              ),
+              ...itemBrands(item)
+            ].join(" ");
+
+          })
+
+        ]
+          .join(" ")
+          .toLowerCase();
+
+
+        const match =
+          !query ||
+          haystack.includes(query);
+
+
+        let filterMatch = true;
+
+
+        if (
+          selectedFilters.stage &&
+          String(stage) !==
+          String(selectedFilters.stage)
+        ) {
+
+          filterMatch = false;
+
+        }
+
+
+        if (
+          selectedFilters.type
+        ) {
+
+          filterMatch =
+            filterMatch &&
+            allItems.some(
+              x =>
+                x.sectionName
+                  .toLowerCase()
+                  .includes(
+                    selectedFilters.type.toLowerCase()
+                  )
+            );
+
+        }
+
+
+        if (
+          selectedFilters.size
+        ) {
+
+          filterMatch =
+            filterMatch &&
+            allItems.some(
+              x => {
+
+                return itemFields(x.item)
+                  .some(field => {
+
+                    if (
+                      !Array.isArray(field)
+                    ) {
+                      return false;
+                    }
+
+                    const options =
+                      Array.isArray(field[1])
+                        ? field[1]
+                        : [];
+
+                    return options.some(
+                      option =>
+                        String(option)
+                          .toLowerCase()
+                          .includes(
+                            selectedFilters.size
+                              .toLowerCase()
+                          )
+                    );
+
+                  });
+
+              }
+            );
+
+        }
+
+
+        if (
+          selectedFilters.brand
+        ) {
+
+          filterMatch =
+            filterMatch &&
+            allItems.some(
+              x =>
+                itemBrands(x.item)
+                  .some(
+                    brand =>
+                      String(brand)
+                        .toLowerCase()
+                        .includes(
+                          selectedFilters.brand
+                            .toLowerCase()
+                        )
+                  )
+            );
+
+        }
+
+
+        const show =
+          match && filterMatch;
+
+        card.style.display =
+          show ? "" : "none";
+
+        if (show) {
+          visible++;
+        }
+
+      });
+
+
+    if (noResults) {
+
+      noResults.style.display =
+        visible === 0
+          ? ""
+          : "none";
+
+    }
+
+    updateResultsInfo(visible);
+
+  }
+
+
+  function updateResultsInfo(count) {
+
+    if (!resultsInfo) return;
+
+    const total =
+      getAllItems().length;
+
+    resultsInfo.textContent =
+      currentLang === "hi"
+        ? `${count} Stage दिखाई जा रही हैं • ${total} Material`
+        : `${count} stages shown • ${total} materials`;
 
   }
 
@@ -1517,47 +1042,37 @@
      OPEN STAGE
      ======================================================= */
 
-  function openStage(
-    stageIndex
-  ) {
+  function openStage(stageNumber) {
 
-    if (
-      !STAGES[stageIndex]
-    ) {
+    const stage =
+      getStage(stageNumber);
+
+    if (!stage) {
+      showToast(
+        currentLang === "hi"
+          ? "Stage नहीं मिली"
+          : "Stage not found"
+      );
       return;
     }
 
+    saveRoute({
+      page: "stage",
+      stageIndex: Number(stageNumber),
+      sectionIndex: 0,
+      itemIndex: 0
+    });
 
-    state.history.push(
-      snapshot()
+
+    historyStack.push({
+      page: "home"
+    });
+
+
+    renderStagePage(
+      Number(stageNumber)
     );
 
-
-    state.page = "stage";
-
-    state.stageIndex =
-      stageIndex;
-
-    state.sectionIndex =
-      null;
-
-    state.itemIndex =
-      null;
-
-    state.selectedItem =
-      null;
-
-    state.search = "";
-
-
-    renderStage();
-
-    saveRoute();
-
-    window.scrollTo(
-      0,
-      0
-    );
   }
 
 
@@ -1565,356 +1080,380 @@
      STAGE PAGE
      ======================================================= */
 
-  function renderStage() {
+  function renderStagePage(stageNumber) {
+
+    currentStage =
+      Number(stageNumber);
+
+    currentSection = null;
+    currentItem = null;
 
     const stage =
-      STAGES[
-        state.stageIndex
-      ];
+      getStage(stageNumber);
+
+    const sections =
+      getStageSections(stageNumber);
 
 
-    if (!stage) {
-
-      navigate(
-        "home",
-        false
-      );
-
-      return;
-    }
+    if (!home) return;
 
 
-    main.innerHTML = `
+    home.innerHTML = `
 
-      <section
-        class="page stagePage"
-      >
+      <div class="app-page stage-page">
 
-        <button
-          id="stageBack"
-          class="back"
-          type="button"
-        >
-          ← ${esc(
-            t("back")
-          )}
-        </button>
+        <div class="page-header">
 
-
-        <div class="stageHead">
-
-          <div
-            class="stageHeadNumber"
+          <button
+            type="button"
+            class="internal-back"
+            id="stageBackBtn"
           >
-            ${esc(
-              stage.code
-            )}
+            ← ${t("back")}
+          </button>
+
+          <div class="page-title">
+            <strong>
+              ${currentLang === "hi"
+                ? translate(stage[1])
+                : stage[1]}
+            </strong>
+
+            ${
+              currentLang === "hi"
+                ? `<small>${stage[1]}</small>`
+                : ""
+            }
           </div>
 
-          <div>
-
-            <h2>
-              ${esc(
-                displayStage(
-                  stage
-                )
-              )}
-            </h2>
-
-            <p>
-              ${esc(
-                displayGroup(
-                  stage.category
-                )
-              )}
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <div class="stageSearchBox">
-
-          <span>⌕</span>
-
-          <input
-            id="materialSearch"
-            type="search"
-            placeholder="${esc(
-              t("search")
-            )}"
+          <button
+            type="button"
+            class="internal-view-btn"
+            id="stageViewBtn"
           >
+            ◈
+          </button>
 
         </div>
 
 
         <div
-          id="stageSections"
-          class="stageSections"
+          class="stage-section-list ${getViewClass(currentStageView)}"
+          id="sectionList"
         >
 
-          ${renderSections(
-            stage
-          )}
+          ${sections.map(
+            (section, index) => `
+
+              <div
+                class="material-section-card"
+                data-section="${index}"
+              >
+
+                <div class="section-number">
+                  ${index + 1}
+                </div>
+
+                <div class="section-content">
+
+                  <div class="section-title">
+                    ${
+                      currentLang === "hi"
+                        ? translate(section.name)
+                        : section.name
+                    }
+                  </div>
+
+                  ${
+                    currentLang === "hi"
+                      ? `<div class="section-subtitle">
+                           ${section.name}
+                         </div>`
+                      : ""
+                  }
+
+                  <div class="section-count">
+                    ${section.items.length}
+                    ${
+                      currentLang === "hi"
+                        ? " Materials"
+                        : " materials"
+                    }
+                  </div>
+
+                </div>
+
+                <div class="section-arrow">
+                  →
+                </div>
+
+              </div>
+
+            `
+          ).join("")}
 
         </div>
 
-      </section>
+      </div>
 
     `;
 
 
-    document
-      .getElementById(
-        "stageBack"
-      )
+    $("#stageBackBtn")
       ?.addEventListener(
         "click",
-        goBack
+        () => goBack()
       );
 
 
-    document
-      .getElementById(
-        "materialSearch"
-      )
+    $("#stageViewBtn")
       ?.addEventListener(
-        "input",
-        e => {
-
-          state.search =
-            e.target.value
-              .trim()
-              .toLowerCase();
-
-          document
-            .getElementById(
-              "stageSections"
-            ).innerHTML =
-              renderSections(
-                stage
-              );
-
-          bindItemCards();
-
-        }
+        "click",
+        () => openStageViewSelector()
       );
 
 
-    bindItemCards();
-
-    window.scrollTo(
-      0,
-      0
-    );
-  }
-
-
-  /* =======================================================
-     SECTIONS
-     ======================================================= */
-
-  function renderSections(
-    stage
-  ) {
-
-    let output = "";
-
-
-    stage.sections.forEach(
-      (
-        section,
-        sectionIndex
-      ) => {
-
-        const items =
-          section.items.filter(
-            item =>
-              itemMatches(
-                item
-              )
-          );
-
-
-        if (
-          !items.length
-        ) {
-          return;
-        }
-
-
-        output += `
-
-          <section
-            class="materialSection"
-          >
-
-            <div
-              class="sectionTitle"
-            >
-
-              <span>
-                ${
-                  sectionIndex + 1
-                }
-              </span>
-
-              <h3>
-                ${esc(
-                  displayGroup(
-                    section.name
-                  )
-                )}
-              </h3>
-
-            </div>
-
-
-            <div
-              class="itemGrid ${state.view}"
-            >
-
-              ${
-                items
-                  .map(
-                    item => {
-
-                      const itemIndex =
-                        section.items.indexOf(
-                          item
-                        );
-
-                      return `
-                        <button
-                          type="button"
-                          class="itemCard"
-                          data-section="${sectionIndex}"
-                          data-item="${itemIndex}"
-                        >
-
-                          <div
-                            class="itemHead"
-                          >
-
-                            <h3>
-                              ${esc(
-                                displayMaterial(
-                                  item.name
-                                )
-                              )}
-                            </h3>
-
-                          </div>
-
-                          <span
-                            class="itemArrow"
-                          >
-                            ›
-                          </span>
-
-                        </button>
-                      `;
-
-                    }
-                  )
-                  .join("")
-              }
-
-            </div>
-
-          </section>
-
-        `;
-
-      }
-    );
-
-
-    return output ||
-      `
-        <div class="emptyState">
-          ${esc(
-            t("noSearch")
-          )}
-        </div>
-      `;
-  }
-
-
-  function itemMatches(
-    item
-  ) {
-
-    if (!state.search) {
-      return true;
-    }
-
-
-    const values = [
-      item.name,
-      item.section
-    ];
-
-
-    item.fields.forEach(
-      field => {
-
-        values.push(
-          field[0]
-        );
-
-        if (
-          Array.isArray(
-            field[1]
-          )
-        ) {
-
-          values.push(
-            ...field[1]
-          );
-
-        }
-
-      }
-    );
-
-
-    return values
-      .join(" ")
-      .toLowerCase()
-      .includes(
-        state.search
-      );
-  }
-
-
-  function bindItemCards() {
-
-    document
-      .querySelectorAll(
-        "[data-section][data-item]"
-      )
+    $$(".material-section-card")
       .forEach(card => {
 
         card.addEventListener(
           "click",
           () => {
 
-            openItem(
-              state.stageIndex,
-              Number(
-                card.dataset.section
-              ),
-              Number(
-                card.dataset.item
-              )
+            const section =
+              Number(card.dataset.section);
+
+            openSection(
+              stageNumber,
+              section
             );
 
           }
         );
 
       });
+
+  }
+
+
+  /* =======================================================
+     OPEN SECTION
+     ======================================================= */
+
+  function openSection(
+    stageNumber,
+    sectionIndex
+  ) {
+
+    const sections =
+      getStageSections(stageNumber);
+
+    const section =
+      sections[sectionIndex];
+
+    if (!section) return;
+
+
+    historyStack.push({
+      page: "stage",
+      stageIndex: stageNumber
+    });
+
+
+    saveRoute({
+      page: "section",
+      stageIndex: Number(stageNumber),
+      sectionIndex: Number(sectionIndex),
+      itemIndex: 0
+    });
+
+
+    renderMaterialList(
+      stageNumber,
+      sectionIndex
+    );
+
+  }
+
+
+  /* =======================================================
+     MATERIAL LIST
+     ======================================================= */
+
+  function renderMaterialList(
+    stageNumber,
+    sectionIndex
+  ) {
+
+    currentStage =
+      Number(stageNumber);
+
+    currentSection =
+      Number(sectionIndex);
+
+    currentItem = null;
+
+
+    const stage =
+      getStage(stageNumber);
+
+    const sections =
+      getStageSections(stageNumber);
+
+    const section =
+      sections[sectionIndex];
+
+
+    if (!section || !home) return;
+
+
+    home.innerHTML = `
+
+      <div class="app-page material-list-page">
+
+        <div class="page-header">
+
+          <button
+            type="button"
+            class="internal-back"
+            id="materialBackBtn"
+          >
+            ← ${t("back")}
+          </button>
+
+          <div class="page-title">
+
+            <strong>
+              ${
+                currentLang === "hi"
+                  ? translate(section.name)
+                  : section.name
+              }
+            </strong>
+
+            <small>
+              ${
+                currentLang === "hi"
+                  ? translate(stage[1])
+                  : stage[1]
+              }
+            </small>
+
+          </div>
+
+          <button
+            type="button"
+            class="internal-view-btn"
+            id="materialViewBtn"
+          >
+            ◈
+          </button>
+
+        </div>
+
+
+        <div
+          class="material-grid ${getViewClass(currentMaterialView)}"
+          id="materialGrid"
+        >
+
+          ${section.items.map(
+            (item, index) =>
+              renderMaterialCard(
+                item,
+                index
+              )
+          ).join("")}
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    $("#materialBackBtn")
+      ?.addEventListener(
+        "click",
+        () => goBack()
+      );
+
+
+    $("#materialViewBtn")
+      ?.addEventListener(
+        "click",
+        () => openMaterialViewSelector()
+      );
+
+
+    $$(".material-card")
+      .forEach(card => {
+
+        card.addEventListener(
+          "click",
+          () => {
+
+            const itemIndex =
+              Number(card.dataset.item);
+
+            openItem(
+              stageNumber,
+              sectionIndex,
+              itemIndex
+            );
+
+          }
+        );
+
+      });
+
+  }
+
+
+  function renderMaterialCard(
+    item,
+    index
+  ) {
+
+    const name =
+      itemName(item);
+
+    return `
+
+      <div
+        class="material-card"
+        data-item="${index}"
+      >
+
+        <div class="material-icon">
+          ⚡
+        </div>
+
+        <div class="material-name">
+
+          ${
+            currentLang === "hi"
+              ? translate(name)
+              : name
+          }
+
+        </div>
+
+        ${
+          currentLang === "hi"
+            ? `<div class="material-name-en">
+                 ${name}
+               </div>`
+            : ""
+        }
+
+        <div class="material-arrow">
+          →
+        </div>
+
+      </div>
+
+    `;
 
   }
 
@@ -1924,663 +1463,534 @@
      ======================================================= */
 
   function openItem(
-    stageIndex,
+    stageNumber,
     sectionIndex,
-    itemIndex
+    itemIndex,
+    options = {}
   ) {
 
     const item =
       getItem(
-        stageIndex,
+        stageNumber,
         sectionIndex,
         itemIndex
       );
 
+    if (!item) return;
 
-    if (!item) {
 
-      showToast(
-        t("noMaterial")
-      );
+    if (!options.fromEdit) {
 
-      return;
+      historyStack.push({
+        page: "section",
+        stageIndex: Number(stageNumber),
+        sectionIndex: Number(sectionIndex)
+      });
+
     }
 
 
-    state.history.push(
-      snapshot()
+    currentStage =
+      Number(stageNumber);
+
+    currentSection =
+      Number(sectionIndex);
+
+    currentItem =
+      Number(itemIndex);
+
+
+    saveRoute({
+      page: "item",
+      stageIndex: Number(stageNumber),
+      sectionIndex: Number(sectionIndex),
+      itemIndex: Number(itemIndex)
+    });
+
+
+    renderItemEditor(
+      stageNumber,
+      sectionIndex,
+      itemIndex,
+      options
     );
 
-
-    state.page = "item";
-
-    state.stageIndex =
-      stageIndex;
-
-    state.sectionIndex =
-      sectionIndex;
-
-    state.itemIndex =
-      itemIndex;
-
-    state.selectedItem =
-      item;
-
-    state.editEstimateIndex =
-      -1;
-
-
-    renderItem();
-
-    saveRoute();
-
-    window.scrollTo(
-      0,
-      0
-    );
-  }
-
-
-  function getItem(
-    stageIndex,
-    sectionIndex,
-    itemIndex
-  ) {
-
-    const stage =
-      STAGES[
-        stageIndex
-      ];
-
-    if (!stage) {
-      return null;
-    }
-
-
-    const section =
-      stage.sections[
-        sectionIndex
-      ];
-
-    if (!section) {
-      return null;
-    }
-
-
-    return (
-      section.items[
-        itemIndex
-      ] || null
-    );
   }
 
 
   /* =======================================================
-     ITEM PAGE
+     ITEM EDITOR
      ======================================================= */
 
-  function renderItem() {
+  function renderItemEditor(
+    stageNumber,
+    sectionIndex,
+    itemIndex,
+    options = {}
+  ) {
 
     const item =
-      state.selectedItem ||
       getItem(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
+        stageNumber,
+        sectionIndex,
+        itemIndex
       );
 
+    if (!item || !home) return;
 
-    if (!item) {
 
-      navigate(
-        "stage",
-        false
-      );
-
-      return;
-    }
-
+    const editingId =
+      options.editingId || null;
 
     const existing =
-      state.editEstimateIndex >= 0
-        ? state.estimateItems[
-            state.editEstimateIndex
-          ]
+      editingId
+        ? estimateItems.find(
+            x =>
+              String(x.id) ===
+              String(editingId)
+          )
         : null;
 
 
-    const values =
+    const fields =
+      itemFields(item);
+
+    const units =
+      itemUnits(item);
+
+    const brands =
+      itemBrands(item);
+
+
+    const savedValues =
       existing?.values || {};
 
-
-    main.innerHTML = `
-
-      <section
-        class="page itemPage"
-      >
-
-        <button
-          id="itemBack"
-          class="back"
-          type="button"
-        >
-          ← ${esc(
-            t("back")
-          )}
-        </button>
+    const savedUnit =
+      existing?.unit ||
+      localStorage.getItem(
+        STORAGE.unit
+      ) ||
+      units[0] ||
+      "";
 
 
-        <div class="stageHead">
+    home.innerHTML = `
 
-          <div
-            class="stageHeadNumber"
+      <div class="app-page item-editor-page">
+
+        <div class="page-header">
+
+          <button
+            type="button"
+            class="internal-back"
+            id="editorBackBtn"
           >
-            ${esc(
-              STAGES[
-                state.stageIndex
-              ].code
-            )}
-          </div>
+            ← ${t("back")}
+          </button>
 
-          <div>
+          <div class="page-title">
 
-            <h2>
-              ${esc(
-                displayMaterial(
-                  item.name
-                )
-              )}
-            </h2>
+            <strong>
+              ${
+                currentLang === "hi"
+                  ? translate(itemName(item))
+                  : itemName(item)
+              }
+            </strong>
 
-            <p>
-              ${esc(
-                displayGroup(
-                  item.section
-                )
-              )}
-            </p>
+            <small>
+              ${
+                currentLang === "hi"
+                  ? translate(
+                      getStage(stageNumber)?.[1]
+                    )
+                  : getStage(stageNumber)?.[1]
+              }
+            </small>
 
           </div>
 
         </div>
 
 
-        <form
-          id="materialForm"
-          class="materialForm"
-        >
+        <div class="item-editor">
 
-          ${renderFields(
-            item,
-            values
-          )}
+          <div class="editor-section">
 
-
-          <div class="field">
-
-            <label>
-              ${esc(
-                t("quantity")
-              )}
-
-              <span
-                class="required"
-              >
-                *
-              </span>
-            </label>
+            ${
+              fields.map(
+                (field, index) =>
+                  renderField(
+                    field,
+                    index,
+                    savedValues
+                  )
+              ).join("")
+            }
 
 
-            <div class="qtyRow">
+            <div class="form-group">
 
-              <button
-                type="button"
-                id="qtyMinus"
-              >
-                −
-              </button>
+              <label>
+                ${t("quantity")}
+                <span class="required">*</span>
+              </label>
 
-              <input
-                id="quantity"
-                type="number"
-                min="0.01"
-                step="0.01"
-                inputmode="decimal"
-                value="${esc(
-                  values.quantity ||
-                    ""
-                )}"
-              >
+              <div class="quantity-control">
 
-              <button
-                type="button"
-                id="qtyPlus"
-              >
-                +
-              </button>
+                <button
+                  type="button"
+                  class="qty-btn"
+                  id="qtyMinus"
+                >
+                  −
+                </button>
+
+                <input
+                  type="number"
+                  id="itemQuantity"
+                  min="1"
+                  step="1"
+                  inputmode="numeric"
+                  value="${
+                    existing?.quantity || 1
+                  }"
+                >
+
+                <button
+                  type="button"
+                  class="qty-btn"
+                  id="qtyPlus"
+                >
+                  +
+                </button>
+
+              </div>
 
             </div>
 
-          </div>
+
+            <div class="form-group">
+
+              <label>
+                ${t("unit")}
+                <span class="optional">
+                  (${t("optional")})
+                </span>
+              </label>
+
+              <select
+                id="itemUnit"
+              >
+
+                <option value="">
+                  ${t("select")}
+                </option>
+
+                ${units.map(
+                  unit =>
+                    `<option
+                      value="${escapeHtml(unit)}"
+                      ${
+                        String(unit) ===
+                        String(savedUnit)
+                          ? "selected"
+                          : ""
+                      }
+                    >
+                      ${escapeHtml(unit)}
+                    </option>`
+                ).join("")}
+
+              </select>
+
+            </div>
 
 
-          ${renderUnits(
-            item,
-            values
-          )}
+            ${
+              brands.length
+                ? `
+
+                  <div class="form-group">
+
+                    <label>
+                      ${t("brand")}
+                      <span class="optional">
+                        (${t("optional")})
+                      </span>
+                    </label>
+
+                    <select
+                      id="itemBrand"
+                    >
+
+                      <option value="">
+                        ${t("select")}
+                      </option>
+
+                      ${brands.map(
+                        brand =>
+                          `<option
+                            value="${escapeHtml(brand)}"
+                            ${
+                              String(brand) ===
+                              String(
+                                existing?.brand || ""
+                              )
+                                ? "selected"
+                                : ""
+                            }
+                          >
+                            ${escapeHtml(brand)}
+                          </option>`
+                      ).join("")}
+
+                    </select>
+
+                  </div>
+
+                `
+                : ""
+            }
 
 
-          ${renderBrands(
-            item,
-            values
-          )}
+            <div
+              class="form-group price-group"
+              style="display:none"
+            >
 
+              <label>
+                ${t("price")}
+              </label>
 
-          <div
-            class="editorButtons"
-          >
+              <input
+                type="number"
+                id="itemPrice"
+                min="0"
+                step="0.01"
+                value="${
+                  existing?.price || ""
+                }"
+              >
+
+            </div>
+
 
             <button
-              type="submit"
-              class="primary"
+              type="button"
+              class="primary-action"
+              id="addItemBtn"
             >
               ${
                 existing
-                  ? esc(
-                      t("update")
-                    )
-                  : esc(
-                      t("add")
-                    )
+                  ? t("update")
+                  : t("add")
               }
             </button>
 
 
             <button
               type="button"
-              id="nextBtn"
-              class="secondary"
+              class="secondary-action"
+              id="nextItemBtn"
             >
-              ${esc(
-                t("next")
-              )}
-              →
+              ${t("next")} →
             </button>
 
           </div>
 
-        </form>
+        </div>
 
-      </section>
+      </div>
 
     `;
 
 
-    bindItemForm(
-      item
+    bindEditorEvents(
+      stageNumber,
+      sectionIndex,
+      itemIndex,
+      editingId
     );
 
-
-    window.scrollTo(
-      0,
-      0
-    );
   }
 
 
   /* =======================================================
-     FIELDS
+     RENDER FIELD
      ======================================================= */
 
-  function renderFields(
-    item,
-    values
+  function renderField(
+    field,
+    fieldIndex,
+    savedValues
   ) {
 
-    return item.fields
-      .map(
-        (
-          field,
-          index
-        ) => {
+    if (!Array.isArray(field)) {
+      return "";
+    }
 
-          const label =
-            field[0] || "";
+    const label =
+      String(field[0] || "");
 
-          const options =
-            Array.isArray(
-              field[1]
-            )
-              ? field[1]
-              : [];
+    const options =
+      Array.isArray(field[1])
+        ? field[1]
+        : [];
 
 
-          const current =
-            values[
-              `field_${index}`
-            ] || "";
+    const saved =
+      savedValues[label] || "";
 
 
-          return `
+    return `
 
-            <div class="field">
+      <div
+        class="form-group dynamic-field"
+        data-field-index="${fieldIndex}"
+      >
 
-              <label>
-                ${esc(
-                  label
-                )}
+        <label>
+          ${bilingual(label)}
 
-                <span
-                  class="optional"
+          <span class="optional">
+            (${t("optional")})
+          </span>
+        </label>
+
+        <div class="field-control">
+
+          <select
+            class="dynamic-select"
+            data-field="${escapeHtml(label)}"
+          >
+
+            <option value="">
+              ${t("select")}
+            </option>
+
+            ${options.map(
+              option =>
+                `<option
+                  value="${escapeHtml(option)}"
+                  ${
+                    String(option) ===
+                    String(saved)
+                      ? "selected"
+                      : ""
+                  }
                 >
-                  ${esc(
-                    t("optional")
-                  )}
-                </span>
-              </label>
+                  ${escapeHtml(option)}
+                </option>`
+            ).join("")}
 
+          </select>
 
-              <div class="choices">
-
-                ${
-                  options
-                    .map(
-                      option => `
-
-                        <button
-                          type="button"
-                          class="choice ${
-                            current ===
-                            option
-                              ? "selected"
-                              : ""
-                          }"
-                          data-field="${index}"
-                          data-value="${esc(
-                            option
-                          )}"
-                        >
-                          ${esc(
-                            option
-                          )}
-                        </button>
-
-                      `
-                    )
-                    .join("")
-                }
-
-              </div>
-
-
-              <input
-                type="hidden"
-                id="field_${index}"
-                value="${esc(
-                  current
-                )}"
-              >
-
-            </div>
-
-          `;
-
-        }
-      )
-      .join("");
-  }
-
-
-  /* =======================================================
-     UNITS
-     ======================================================= */
-
-  function renderUnits(
-    item,
-    values
-  ) {
-
-    if (
-      !item.units.length
-    ) {
-      return "";
-    }
-
-
-    let selected =
-      values.unit || "";
-
-
-    if (
-      !item.units.includes(
-        selected
-      )
-    ) {
-
-      if (
-        state.lastUnit &&
-        item.units.includes(
-          state.lastUnit
-        )
-      ) {
-        selected =
-          state.lastUnit;
-      } else {
-        selected =
-          item.units[0];
-      }
-
-    }
-
-
-    return `
-
-      <div class="field">
-
-        <label>
-          ${esc(
-            t("unit")
-          )}
-
-          <span
-            class="optional"
+          <button
+            type="button"
+            class="field-clear"
+            title="${t("clear")}"
           >
-            ${esc(
-              t("optional")
-            )}
-          </span>
-        </label>
-
-
-        <div class="choices">
-
-          ${
-            item.units
-              .map(
-                unit => `
-
-                  <button
-                    type="button"
-                    class="choice ${
-                      selected ===
-                      unit
-                        ? "selected"
-                        : ""
-                    }"
-                    data-unit="${esc(
-                      unit
-                    )}"
-                  >
-                    ${esc(
-                      unit
-                    )}
-                  </button>
-
-                `
-              )
-              .join("")
-          }
+            ×
+          </button>
 
         </div>
-
-
-        <input
-          type="hidden"
-          id="unit"
-          value="${esc(
-            selected
-          )}"
-        >
 
       </div>
 
     `;
+
   }
 
 
   /* =======================================================
-     BRANDS
+     EDITOR EVENTS
      ======================================================= */
 
-  function renderBrands(
-    item,
-    values
+  function bindEditorEvents(
+    stageNumber,
+    sectionIndex,
+    itemIndex,
+    editingId
   ) {
 
-    if (
-      !item.brands.length
-    ) {
-      return "";
-    }
-
-
-    return `
-
-      <div class="field">
-
-        <label>
-          ${esc(
-            t("brand")
-          )}
-
-          <span
-            class="optional"
-          >
-            ${esc(
-              t("optional")
-            )}
-          </span>
-        </label>
-
-
-        <div class="choices">
-
-          ${
-            item.brands
-              .map(
-                brand => `
-
-                  <button
-                    type="button"
-                    class="choice ${
-                      values.brand ===
-                      brand
-                        ? "selected"
-                        : ""
-                    }"
-                    data-brand="${esc(
-                      brand
-                    )}"
-                  >
-                    ${esc(
-                      brand
-                    )}
-                  </button>
-
-                `
-              )
-              .join("")
-          }
-
-        </div>
-
-
-        <input
-          type="hidden"
-          id="brand"
-          value="${esc(
-            values.brand || ""
-          )}"
-        >
-
-      </div>
-
-    `;
-  }
-
-
-  /* =======================================================
-     ITEM FORM
-     ======================================================= */
-
-  function bindItemForm(
-    item
-  ) {
-
-    document
-      .getElementById(
-        "itemBack"
-      )
+    $("#editorBackBtn")
       ?.addEventListener(
         "click",
-        goBack
+        () => {
+
+          if (editingId) {
+
+            renderEstimate();
+
+            return;
+
+          }
+
+          goBack();
+
+        }
       );
 
 
-    /* Dynamic fields */
+    $("#qtyMinus")
+      ?.addEventListener(
+        "click",
+        () => {
 
-    document
-      .querySelectorAll(
-        "[data-field]"
-      )
+          const input =
+            $("#itemQuantity");
+
+          let value =
+            Number(input.value || 1);
+
+          value--;
+
+          if (value < 1) {
+            value = 1;
+          }
+
+          input.value = value;
+
+        }
+      );
+
+
+    $("#qtyPlus")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          const input =
+            $("#itemQuantity");
+
+          let value =
+            Number(input.value || 1);
+
+          value++;
+
+          input.value = value;
+
+        }
+      );
+
+
+    $$(".field-clear")
       .forEach(button => {
 
         button.addEventListener(
           "click",
           () => {
 
-            const index =
-              button.dataset.field;
+            const select =
+              button.parentElement
+                ?.querySelector(
+                  ".dynamic-select"
+                );
 
-            const input =
-              document.getElementById(
-                `field_${index}`
-              );
-
-            if (!input) {
-              return;
+            if (select) {
+              select.value = "";
             }
-
-            input.value =
-              button.dataset.value ||
-              "";
-
-
-            document
-              .querySelectorAll(
-                `[data-field="${index}"]`
-              )
-              .forEach(
-                el =>
-                  el.classList.remove(
-                    "selected"
-                  )
-              );
-
-
-            button.classList.add(
-              "selected"
-            );
 
           }
         );
@@ -2588,359 +1998,217 @@
       });
 
 
-    /* Units */
+    $("#addItemBtn")
+      ?.addEventListener(
+        "click",
+        () => {
 
-    document
-      .querySelectorAll(
-        "[data-unit]"
-      )
-      .forEach(button => {
+          saveEstimateItem(
+            stageNumber,
+            sectionIndex,
+            itemIndex,
+            editingId
+          );
 
-        button.addEventListener(
-          "click",
-          () => {
-
-            const input =
-              document.getElementById(
-                "unit"
-              );
-
-            if (!input) {
-              return;
-            }
-
-            input.value =
-              button.dataset.unit;
+        }
+      );
 
 
-            document
-              .querySelectorAll(
-                "[data-unit]"
-              )
-              .forEach(
-                el =>
-                  el.classList.remove(
-                    "selected"
-                  )
-              );
+    $("#nextItemBtn")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          openNextItem(
+            stageNumber,
+            sectionIndex,
+            itemIndex
+          );
+
+        }
+      );
+
+  }
 
 
-            button.classList.add(
-              "selected"
-            );
+  /* =======================================================
+     SAVE ESTIMATE ITEM
+     ======================================================= */
 
-          }
-        );
+  function saveEstimateItem(
+    stageNumber,
+    sectionIndex,
+    itemIndex,
+    editingId
+  ) {
 
-      });
+    const item =
+      getItem(
+        stageNumber,
+        sectionIndex,
+        itemIndex
+      );
 
-
-    /* Brands */
-
-    document
-      .querySelectorAll(
-        "[data-brand]"
-      )
-      .forEach(button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const input =
-              document.getElementById(
-                "brand"
-              );
-
-            if (!input) {
-              return;
-            }
-
-            input.value =
-              button.dataset.brand;
+    if (!item) return;
 
 
-            document
-              .querySelectorAll(
-                "[data-brand]"
-              )
-              .forEach(
-                el =>
-                  el.classList.remove(
-                    "selected"
-                  )
-              );
-
-
-            button.classList.add(
-              "selected"
-            );
-
-          }
-        );
-
-      });
-
-
-    /* Quantity */
+    const quantityInput =
+      $("#itemQuantity");
 
     const quantity =
-      document.getElementById(
-        "quantity"
+      Number(
+        quantityInput?.value || 0
       );
 
 
-    document
-      .getElementById(
-        "qtyMinus"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
+    if (
+      !Number.isFinite(quantity) ||
+      quantity <= 0
+    ) {
 
-          const value =
-            Number(
-              quantity.value || 0
-            );
-
-          quantity.value =
-            value > 1
-              ? value - 1
-              : "";
-
-        }
+      showToast(
+        currentLang === "hi"
+          ? "Quantity डालना जरूरी है"
+          : "Quantity is required"
       );
 
+      quantityInput?.focus();
 
-    document
-      .getElementById(
-        "qtyPlus"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
+      return;
 
-          const value =
-            Number(
-              quantity.value || 0
-            );
-
-          quantity.value =
-            value + 1;
-
-        }
-      );
+    }
 
 
-    /* Submit */
+    const values = {};
 
-    document
-      .getElementById(
-        "materialForm"
-      )
-      ?.addEventListener(
-        "submit",
-        event => {
+    $$(".dynamic-select")
+      .forEach(select => {
 
-          event.preventDefault();
+        const field =
+          select.dataset.field;
 
+        values[field] =
+          select.value || "";
 
-          const qty =
-            Number(
-              quantity?.value || 0
-            );
+      });
 
 
-          if (
-            !qty ||
-            qty <= 0
-          ) {
+    const unit =
+      $("#itemUnit")?.value || "";
 
-            showToast(
-              t(
-                "enterQuantity"
-              )
-            );
+    const brand =
+      $("#itemBrand")?.value || "";
 
-            quantity?.focus();
-
-            return;
-          }
+    const price =
+      $("#itemPrice")?.value || "";
 
 
-          const values = {};
+    const data = {
 
+      id:
+        editingId ||
+        createId(),
 
-          item.fields.forEach(
-            (
-              _field,
-              index
-            ) => {
+      stageIndex:
+        Number(stageNumber),
 
-              values[
-                `field_${index}`
-              ] =
-                document
-                  .getElementById(
-                    `field_${index}`
-                  )
-                  ?.value || "";
+      sectionIndex:
+        Number(sectionIndex),
 
-            }
-          );
+      itemIndex:
+        Number(itemIndex),
 
+      name:
+        itemName(item),
 
-          values.quantity =
-            quantity.value;
+      sectionName:
+        getStageSections(
+          stageNumber
+        )[sectionIndex]?.name || "",
 
+      stageTitle:
+        getStage(stageNumber)?.[1] || "",
 
-          values.unit =
-            document
-              .getElementById(
-                "unit"
-              )
-              ?.value ||
-            "";
+      values,
 
+      quantity,
 
-          values.brand =
-            document
-              .getElementById(
-                "brand"
-              )
-              ?.value ||
-            "";
+      unit,
 
+      brand,
 
-          if (
-            values.unit
-          ) {
+      price,
 
-            state.lastUnit =
-              values.unit;
-
-            localStorage.setItem(
-              CONFIG.unitKey,
-              values.unit
-            );
-
-          }
-
-
-          const record = {
-
-            id:
-              state.editEstimateIndex >=
-              0
-                ? state
-                    .estimateItems[
-                      state
-                        .editEstimateIndex
-                    ].id
-                : Date.now() +
-                  "_" +
-                  Math.random()
-                    .toString(36)
-                    .slice(2),
-
-            stage:
-              STAGES[
-                state.stageIndex
-              ].code,
-
-            stageTitle:
-              STAGES[
-                state.stageIndex
-              ].title,
-
-            stageIndex:
-              state.stageIndex,
-
-            section:
-              item.section,
-
-            sectionIndex:
-              state.sectionIndex,
-
-            material:
-              item.name,
-
-            itemIndex:
-              state.itemIndex,
-
-            values,
-
-            createdAt:
+      createdAt:
+        editingId
+          ? (
+              estimateItems.find(
+                x =>
+                  String(x.id) ===
+                  String(editingId)
+              )?.createdAt ||
               Date.now()
+            )
+          : Date.now()
 
-          };
-
-
-          /* UPDATE */
-
-          if (
-            state.editEstimateIndex >=
-            0
-          ) {
-
-            state.estimateItems[
-              state.editEstimateIndex
-            ] = record;
-
-            saveEstimate();
-
-            showToast(
-              t("updated")
-            );
-
-            state.editEstimateIndex =
-              -1;
-
-            navigate(
-              "estimate"
-            );
-
-            return;
-          }
+    };
 
 
-          /* ADD */
+    if (editingId) {
 
-          state.estimateItems.push(
-            record
-          );
+      const index =
+        estimateItems.findIndex(
+          x =>
+            String(x.id) ===
+            String(editingId)
+        );
 
-          saveEstimate();
+      if (index !== -1) {
 
-          showToast(
-            t("saved")
-          );
+        estimateItems[index] =
+          data;
 
+      }
 
-          /*
-             IMPORTANT:
-             Add के बाद next item.
-             Next अपने आप save नहीं करता.
-          */
-
-          openNextItem();
-
-        }
+      showToast(
+        t("updated")
       );
 
+    } else {
 
-    document
-      .getElementById(
-        "nextBtn"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
+      estimateItems.push(data);
 
-          openNextItem();
-
-        }
+      showToast(
+        t("added")
       );
+
+    }
+
+
+    if (unit) {
+
+      localStorage.setItem(
+        STORAGE.unit,
+        unit
+      );
+
+    }
+
+
+    saveEstimate();
+
+    setTimeout(
+      () => {
+
+        openNextItem(
+          stageNumber,
+          sectionIndex,
+          itemIndex
+        );
+
+      },
+      250
+    );
 
   }
 
@@ -2949,410 +2217,388 @@
      NEXT ITEM
      ======================================================= */
 
-  function getNextItemPosition() {
+  function openNextItem(
+    stageNumber,
+    sectionIndex,
+    itemIndex
+  ) {
 
-    const stage =
-      STAGES[
-        state.stageIndex
-      ];
+    const sections =
+      getStageSections(stageNumber);
 
-    if (!stage) {
-      return null;
-    }
+    const section =
+      sections[sectionIndex];
+
+    if (!section) return;
 
 
-    const currentSection =
-      state.sectionIndex;
-
-    const currentItem =
-      state.itemIndex;
+    const nextIndex =
+      Number(itemIndex) + 1;
 
 
     if (
-      currentSection === null ||
-      currentItem === null
-    ) {
-      return null;
-    }
-
-
-    /*
-      Same section
-    */
-
-    if (
-      stage.sections[
-        currentSection
-      ] &&
-      currentItem + 1 <
-        stage.sections[
-          currentSection
-        ].items.length
+      nextIndex <
+      section.items.length
     ) {
 
-      return {
-        sectionIndex:
-          currentSection,
+      openItem(
+        stageNumber,
+        sectionIndex,
+        nextIndex
+      );
 
-        itemIndex:
-          currentItem + 1
-      };
+      scrollTop();
+
+      return;
 
     }
 
 
     /*
-      Next section
+      Current section complete.
+      Move to next section if available.
     */
 
-    for (
-      let s =
-        currentSection + 1;
-      s <
-      stage.sections.length;
-      s++
+    const nextSection =
+      Number(sectionIndex) + 1;
+
+
+    if (
+      nextSection <
+      sections.length
     ) {
 
-      if (
-        stage.sections[
-          s
-        ].items.length
-      ) {
-
-        return {
-          sectionIndex: s,
-          itemIndex: 0
-        };
-
-      }
-
-    }
-
-
-    return null;
-  }
-
-
-  function openNextItem() {
-
-    const next =
-      getNextItemPosition();
-
-
-    if (!next) {
-
-      showToast(
-        t("complete")
+      openSection(
+        stageNumber,
+        nextSection
       );
 
       return;
+
     }
 
 
-    state.sectionIndex =
-      next.sectionIndex;
+    /*
+      Current stage complete.
+      Move to next stage.
+    */
 
-    state.itemIndex =
-      next.itemIndex;
+    const nextStage =
+      Number(stageNumber) + 1;
 
-    state.selectedItem =
-      getItem(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
+
+    if (getStage(nextStage)) {
+
+      openStage(nextStage);
+
+      showToast(
+        currentLang === "hi"
+          ? "अगले Stage पर जा रहे हैं"
+          : "Moving to next stage"
       );
 
-    state.page =
-      "item";
+      return;
 
-    state.editEstimateIndex =
-      -1;
+    }
 
 
-    renderItem();
-
-    saveRoute();
-
-    window.scrollTo(
-      0,
-      0
+    showToast(
+      currentLang === "hi"
+        ? "यह आखिरी Material है"
+        : "This is the last material"
     );
 
   }
 
 
   /* =======================================================
-     ESTIMATE
+     ESTIMATE STORAGE
+     ======================================================= */
+
+  function loadEstimate() {
+
+    try {
+
+      const data =
+        JSON.parse(
+          localStorage.getItem(
+            STORAGE.estimate
+          ) || "[]"
+        );
+
+      estimateItems =
+        Array.isArray(data)
+          ? data
+          : [];
+
+    } catch (error) {
+
+      console.error(
+        "Estimate load error:",
+        error
+      );
+
+      estimateItems = [];
+
+    }
+
+  }
+
+
+  function saveEstimate() {
+
+    try {
+
+      localStorage.setItem(
+        STORAGE.estimate,
+        JSON.stringify(
+          estimateItems
+        )
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Estimate save error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  function createId() {
+
+    return (
+      Date.now().toString(36) +
+      Math.random()
+        .toString(36)
+        .slice(2)
+    );
+
+  }
+
+
+  /* =======================================================
+     ESTIMATE PAGE
      ======================================================= */
 
   function renderEstimate() {
 
-    main.innerHTML = `
+    historyStack.push({
+      page: "home"
+    });
 
-      <section class="page">
 
-        <div class="pageTitle">
+    if (!home) return;
 
-          <h2>
-            ${esc(
-              t("estimate")
-            )}
-          </h2>
+
+    home.innerHTML = `
+
+      <div class="app-page estimate-page">
+
+        <div class="page-header">
+
+          <button
+            type="button"
+            class="internal-back"
+            id="estimateBackBtn"
+          >
+            ← ${t("back")}
+          </button>
+
+          <div class="page-title">
+            <strong>
+              ${t("estimate")}
+            </strong>
+          </div>
+
+        </div>
+
+
+        <div
+          class="estimate-list"
+          id="estimateList"
+        >
+
+          ${
+            estimateItems.length
+              ? estimateItems
+                  .map(
+                    item =>
+                      renderEstimateCard(
+                        item
+                      )
+                  )
+                  .join("")
+              : `
+                <div class="empty-estimate">
+                  ${t("emptyEstimate")}
+                </div>
+              `
+          }
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    $("#estimateBackBtn")
+      ?.addEventListener(
+        "click",
+        () => goBack()
+      );
+
+
+    $$(".estimate-card")
+      .forEach(card => {
+
+        const id =
+          card.dataset.id;
+
+        $(".estimate-edit", card)
+          ?.addEventListener(
+            "click",
+            () =>
+              editEstimate(id)
+          );
+
+
+        $(".estimate-delete", card)
+          ?.addEventListener(
+            "click",
+            () =>
+              deleteEstimate(id)
+          );
+
+      });
+
+  }
+
+
+  function renderEstimateCard(data) {
+
+    const name =
+      data.name || "";
+
+    const stage =
+      data.stageTitle || "";
+
+    const section =
+      data.sectionName || "";
+
+
+    const values =
+      Object.entries(
+        data.values || {}
+      )
+      .filter(
+        ([, value]) =>
+          value !== ""
+      );
+
+
+    return `
+
+      <div
+        class="estimate-card"
+        data-id="${escapeHtml(data.id)}"
+      >
+
+        <div class="estimate-card-head">
+
+          <strong>
+            ${
+              currentLang === "hi"
+                ? translate(name)
+                : name
+            }
+          </strong>
 
           <span>
-            ${
-              state
-                .estimateItems
-                .length
-            }
+            × ${data.quantity || 1}
+          </span>
+
+        </div>
+
+
+        <div class="estimate-meta">
+
+          <span>
+            ${stage}
+          </span>
+
+          <span>
+            ${section}
           </span>
 
         </div>
 
 
         ${
-          state
-            .estimateItems
-            .length
+          values.length
             ? `
+              <div class="estimate-values">
 
-              <div
-                class="estimateList"
-              >
-
-                ${
-                  state
-                    .estimateItems
-                    .map(
-                      (
-                        record,
-                        index
-                      ) =>
-                        `
-                          <div
-                            class="estimateCard"
-                            data-estimate="${index}"
-                          >
-
-                            <h3>
-                              ${esc(
-                                displayMaterial(
-                                  record.material
-                                )
-                              )}
-                            </h3>
-
-                            <p>
-                              ${esc(
-                                record.stage
-                              )}
-                              •
-                              ${esc(
-                                record.section
-                              )}
-                            </p>
-
-                            <p>
-                              ${esc(
-                                t(
-                                  "quantity"
-                                )
-                              )}
-                              :
-                              ${esc(
-                                record
-                                  .values
-                                  ?.quantity ||
-                                  ""
-                              )}
-                              ${esc(
-                                record
-                                  .values
-                                  ?.unit ||
-                                  ""
-                              )}
-                            </p>
-
-                            ${
-                              record
-                                .values
-                                ?.brand
-                                ? `
-                                  <p>
-                                    ${esc(
-                                      t(
-                                        "brand"
-                                      )
-                                    )}
-                                    :
-                                    ${esc(
-                                      record
-                                        .values
-                                        .brand
-                                    )}
-                                  </p>
-                                `
-                                : ""
-                            }
-
-                            <div
-                              class="estimateActions"
-                            >
-
-                              <button
-                                type="button"
-                                class="secondary"
-                                data-edit="${index}"
-                              >
-                                ${esc(
-                                  t("edit")
-                                )}
-                              </button>
-
-                              <button
-                                type="button"
-                                class="danger"
-                                data-delete="${index}"
-                              >
-                                ${esc(
-                                  t("delete")
-                                )}
-                              </button>
-
-                            </div>
-
-                          </div>
-                        `
-                    )
-                    .join("")
-                }
+                ${values.map(
+                  ([key, value]) =>
+                    `<div>
+                       <b>${bilingual(key)}:</b>
+                       ${escapeHtml(value)}
+                     </div>`
+                ).join("")}
 
               </div>
-
-
-              <button
-                id="clearEstimate"
-                class="danger"
-                type="button"
-              >
-                ${esc(
-                  t("clear")
-                )}
-              </button>
-
             `
-            : `
-
-              <div class="emptyState">
-
-                <div>
-                  ▤
-                </div>
-
-                <h3>
-                  ${esc(
-                    t("empty")
-                  )}
-                </h3>
-
-              </div>
-
-            `
+            : ""
         }
 
-      </section>
+
+        <div class="estimate-meta">
+
+          ${
+            data.unit
+              ? `<span>
+                   ${t("unit")}: ${escapeHtml(data.unit)}
+                 </span>`
+              : ""
+          }
+
+          ${
+            data.brand
+              ? `<span>
+                   ${t("brand")}: ${escapeHtml(data.brand)}
+                 </span>`
+              : ""
+          }
+
+        </div>
+
+
+        <div class="estimate-actions">
+
+          <button
+            type="button"
+            class="estimate-edit"
+          >
+            ${t("edit")}
+          </button>
+
+          <button
+            type="button"
+            class="estimate-delete"
+          >
+            ${t("delete")}
+          </button>
+
+        </div>
+
+      </div>
 
     `;
-
-
-    document
-      .querySelectorAll(
-        "[data-edit]"
-      )
-      .forEach(button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            editEstimate(
-              Number(
-                button.dataset.edit
-              )
-            );
-
-          }
-        );
-
-      });
-
-
-    document
-      .querySelectorAll(
-        "[data-delete]"
-      )
-      .forEach(button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const index =
-              Number(
-                button.dataset.delete
-              );
-
-            state.estimateItems.splice(
-              index,
-              1
-            );
-
-            saveEstimate();
-
-            showToast(
-              t("deleted")
-            );
-
-            renderEstimate();
-
-          }
-        );
-
-      });
-
-
-    document
-      .getElementById(
-        "clearEstimate"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
-
-          if (
-            !confirm(
-              state.language ===
-                "hi"
-                ? "क्या पूरा एस्टिमेट साफ करना है?"
-                : "Clear complete estimate?"
-            )
-          ) {
-            return;
-          }
-
-          state.estimateItems =
-            [];
-
-          saveEstimate();
-
-          showToast(
-            t("cleared")
-          );
-
-          renderEstimate();
-
-        }
-      );
 
   }
 
@@ -3361,141 +2607,1182 @@
      EDIT ESTIMATE
      ======================================================= */
 
-  function editEstimate(
-    index
+  function editEstimate(id) {
+
+    const data =
+      estimateItems.find(
+        item =>
+          String(item.id) ===
+          String(id)
+      );
+
+    if (!data) return;
+
+
+    historyStack.push({
+      page: "estimate"
+    });
+
+
+    openItem(
+      data.stageIndex,
+      data.sectionIndex,
+      data.itemIndex,
+      {
+        fromEdit: true,
+        editingId: data.id
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     DELETE ESTIMATE
+     ======================================================= */
+
+  function deleteEstimate(id) {
+
+    const index =
+      estimateItems.findIndex(
+        item =>
+          String(item.id) ===
+          String(id)
+      );
+
+    if (index === -1) return;
+
+
+    estimateItems.splice(
+      index,
+      1
+    );
+
+    saveEstimate();
+
+    renderEstimate();
+
+    showToast(
+      currentLang === "hi"
+        ? "Item delete हो गया"
+        : "Item deleted"
+    );
+
+  }
+
+
+  /* =======================================================
+     HOME
+     ======================================================= */
+
+  function renderHome() {
+
+    /*
+      Restore original static HTML if
+      stage grid exists.
+    */
+
+    locationReloadHomeIfNeeded();
+
+  }
+
+
+  function locationReloadHomeIfNeeded() {
+
+    /*
+      Current HTML already contains:
+      #stageGrid
+      #main
+      filters etc.
+
+      Do not destroy those elements.
+    */
+
+    renderStageCards();
+
+    bindHomeEvents();
+
+  }
+
+
+  /* =======================================================
+     HOME EVENTS
+     ======================================================= */
+
+  function bindHomeEvents() {
+
+    if (searchInput) {
+
+      searchInput.value =
+        searchText || "";
+
+      searchInput.placeholder =
+        t("search");
+
+      if (
+        searchInput.dataset.appBound !== "1"
+      ) {
+
+        searchInput.dataset.appBound =
+          "1";
+
+        searchInput.addEventListener(
+          "input",
+          event => {
+
+            searchText =
+              event.target.value || "";
+
+            applyStageSearch();
+
+          }
+        );
+
+      }
+
+    }
+
+
+    if (
+      filterBtn &&
+      filterBtn.dataset.appBound !== "1"
+    ) {
+
+      filterBtn.dataset.appBound =
+        "1";
+
+      filterBtn.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+          toggleFilterPanel();
+
+        }
+      );
+
+    }
+
+
+    if (
+      clearFilterBtn &&
+      clearFilterBtn.dataset.appBound !== "1"
+    ) {
+
+      clearFilterBtn.dataset.appBound =
+        "1";
+
+      clearFilterBtn.addEventListener(
+        "click",
+        clearFilters
+      );
+
+    }
+
+
+    bindFilterSelect(
+      stageFilter,
+      "stage"
+    );
+
+    bindFilterSelect(
+      typeFilter,
+      "type"
+    );
+
+    bindFilterSelect(
+      sizeFilter,
+      "size"
+    );
+
+    bindFilterSelect(
+      brandFilter,
+      "brand"
+    );
+
+
+    if (
+      viewTrigger &&
+      viewTrigger.dataset.appBound !== "1"
+    ) {
+
+      viewTrigger.dataset.appBound =
+        "1";
+
+      viewTrigger.addEventListener(
+        "click",
+        event => {
+
+          event.stopPropagation();
+
+          toggleViewSelector();
+
+        }
+      );
+
+    }
+
+
+    $$(".view-option")
+      .forEach(option => {
+
+        if (
+          option.dataset.appBound === "1"
+        ) {
+          return;
+        }
+
+        option.dataset.appBound =
+          "1";
+
+        option.addEventListener(
+          "click",
+          () => {
+
+            const mode =
+              option.dataset.view ||
+              option.dataset.mode ||
+              option.getAttribute(
+                "data-view"
+              );
+
+            if (mode) {
+
+              currentStageView =
+                mode;
+
+              currentMaterialView =
+                mode;
+
+              localStorage.setItem(
+                STORAGE.stageView,
+                mode
+              );
+
+              localStorage.setItem(
+                STORAGE.materialView,
+                mode
+              );
+
+            }
+
+            closeViewSelector();
+
+            applyStageView();
+
+          }
+        );
+
+      });
+
+
+    bindThemeButton();
+
+    bindLanguageButtons();
+
+    bindDrawer();
+
+    bindBottomNav();
+
+  }
+
+
+  /* =======================================================
+     FILTERS
+     ======================================================= */
+
+  function bindFilterSelect(
+    select,
+    key
   ) {
 
-    const record =
-      state.estimateItems[
-        index
-      ];
-
-    if (!record) {
-      return;
-    }
-
-
-    let stageIndex =
-      Number.isInteger(
-        record.stageIndex
-      )
-        ? record.stageIndex
-        : STAGES.findIndex(
-            stage =>
-              stage.code ===
-              record.stage
-          );
-
+    if (!select) return;
 
     if (
-      stageIndex < 0 ||
-      !STAGES[stageIndex]
+      select.dataset.appBound === "1"
     ) {
       return;
     }
 
+    select.dataset.appBound =
+      "1";
 
-    const stage =
-      STAGES[
-        stageIndex
-      ];
+    select.addEventListener(
+      "change",
+      () => {
 
+        selectedFilters[key] =
+          select.value || "";
 
-    let sectionIndex =
-      Number.isInteger(
-        record.sectionIndex
-      )
-        ? record.sectionIndex
-        : -1;
+        applyStageSearch();
 
-
-    if (
-      !stage.sections[
-        sectionIndex
-      ]
-    ) {
-
-      sectionIndex =
-        stage.sections.findIndex(
-          section =>
-            section.name ===
-            record.section
-        );
-
-    }
-
-
-    if (
-      sectionIndex < 0
-    ) {
-      return;
-    }
-
-
-    let itemIndex =
-      Number.isInteger(
-        record.itemIndex
-      )
-        ? record.itemIndex
-        : -1;
-
-
-    if (
-      !stage.sections[
-        sectionIndex
-      ].items[itemIndex]
-    ) {
-
-      itemIndex =
-        stage.sections[
-          sectionIndex
-        ].items.findIndex(
-          item =>
-            item.name ===
-            record.material
-        );
-
-    }
-
-
-    if (
-      itemIndex < 0
-    ) {
-      return;
-    }
-
-
-    state.page =
-      "item";
-
-    state.stageIndex =
-      stageIndex;
-
-    state.sectionIndex =
-      sectionIndex;
-
-    state.itemIndex =
-      itemIndex;
-
-    state.selectedItem =
-      stage.sections[
-        sectionIndex
-      ].items[
-        itemIndex
-      ];
-
-    state.editEstimateIndex =
-      index;
-
-
-    renderItem();
-
-    saveRoute();
-
-    window.scrollTo(
-      0,
-      0
+      }
     );
+
+  }
+
+
+  function buildFilterOptions() {
+
+    if (stageFilter) {
+
+      const current =
+        selectedFilters.stage;
+
+      stageFilter.innerHTML = `
+        <option value="">
+          ${currentLang === "hi"
+            ? "सभी Stage"
+            : "All Stages"}
+        </option>
+
+        ${window.MATERIALS.map(
+          stage => {
+
+            const num =
+              String(stage[0])
+                .replace(/\D/g, "");
+
+            return `
+              <option
+                value="${num}"
+                ${
+                  String(num) ===
+                  String(current)
+                    ? "selected"
+                    : ""
+                }
+              >
+                ${stage[0]} -
+                ${
+                  currentLang === "hi"
+                    ? translate(stage[1])
+                    : stage[1]
+                }
+              </option>
+            `;
+
+          }
+        ).join("")}
+
+      `;
+
+    }
+
+
+    if (typeFilter) {
+
+      const sections =
+        [
+          ...new Set(
+            getAllItems()
+              .map(
+                item =>
+                  item.sectionName
+              )
+          )
+        ];
+
+      typeFilter.innerHTML = `
+        <option value="">
+          ${
+            currentLang === "hi"
+              ? "सभी Sections"
+              : "All Sections"
+          }
+        </option>
+
+        ${sections.map(
+          section =>
+            `<option
+              value="${escapeHtml(section)}"
+            >
+              ${
+                currentLang === "hi"
+                  ? translate(section)
+                  : section
+              }
+            </option>`
+        ).join("")}
+
+      `;
+
+    }
+
+
+    if (sizeFilter) {
+
+      const values =
+        new Set();
+
+      getAllItems()
+        .forEach(data => {
+
+          itemFields(data.item)
+            .forEach(field => {
+
+              if (
+                !Array.isArray(field)
+              ) return;
+
+              if (
+                Array.isArray(field[1])
+              ) {
+
+                field[1].forEach(
+                  value =>
+                    values.add(
+                      String(value)
+                    )
+                );
+
+              }
+
+            });
+
+        });
+
+
+      sizeFilter.innerHTML = `
+        <option value="">
+          ${
+            currentLang === "hi"
+              ? "सभी Size"
+              : "All Sizes"
+          }
+        </option>
+
+        ${Array.from(values)
+          .sort()
+          .map(
+            value =>
+              `<option value="${escapeHtml(value)}">
+                ${escapeHtml(value)}
+              </option>`
+          )
+          .join("")}
+
+      `;
+
+    }
+
+
+    if (brandFilter) {
+
+      const values =
+        new Set();
+
+      getAllItems()
+        .forEach(data => {
+
+          itemBrands(data.item)
+            .forEach(
+              brand =>
+                values.add(
+                  String(brand)
+                )
+            );
+
+        });
+
+
+      brandFilter.innerHTML = `
+        <option value="">
+          ${
+            currentLang === "hi"
+              ? "सभी Brand"
+              : "All Brands"
+          }
+        </option>
+
+        ${Array.from(values)
+          .sort()
+          .map(
+            value =>
+              `<option value="${escapeHtml(value)}">
+                ${escapeHtml(value)}
+              </option>`
+          )
+          .join("")}
+
+      `;
+
+    }
+
+  }
+
+
+  function toggleFilterPanel() {
+
+    filterOpen =
+      !filterOpen;
+
+    if (filterPanel) {
+
+      filterPanel.style.display =
+        filterOpen
+          ? ""
+          : "none";
+
+    }
+
+  }
+
+
+  function clearFilters() {
+
+    selectedFilters = {
+      stage: "",
+      type: "",
+      size: "",
+      brand: ""
+    };
+
+
+    [
+      stageFilter,
+      typeFilter,
+      sizeFilter,
+      brandFilter
+    ].forEach(
+      select => {
+
+        if (select) {
+          select.value = "";
+        }
+
+      }
+    );
+
+
+    if (searchInput) {
+      searchInput.value = "";
+    }
+
+    searchText = "";
+
+    applyStageSearch();
+
+  }
+
+
+  /* =======================================================
+     VIEW
+     ======================================================= */
+
+  function getViewClass(mode) {
+
+    const map = {
+
+      grid: "view-grid",
+      list: "view-list",
+      compact: "view-compact",
+      large: "view-large",
+      mini: "view-mini",
+      "2column": "view-two-column",
+      horizontal: "view-horizontal",
+      icon: "view-icon-list",
+      iconlist: "view-icon-list",
+      timeline: "view-timeline",
+      dense: "view-dense"
+
+    };
+
+    return map[String(mode).toLowerCase()]
+      || "view-grid";
+
+  }
+
+
+  function toggleViewSelector() {
+
+    viewOpen =
+      !viewOpen;
+
+    if (viewOptions) {
+
+      viewOptions.style.display =
+        viewOpen
+          ? ""
+          : "none";
+
+    }
+
+  }
+
+
+  function closeViewSelector() {
+
+    viewOpen = false;
+
+    if (viewOptions) {
+      viewOptions.style.display =
+        "none";
+    }
+
+  }
+
+
+  function applyStageView() {
+
+    if (!stageGrid) return;
+
+    stageGrid.classList.remove(
+      "view-grid",
+      "view-list",
+      "view-compact",
+      "view-large",
+      "view-mini",
+      "view-two-column",
+      "view-horizontal",
+      "view-icon-list",
+      "view-timeline",
+      "view-dense"
+    );
+
+    stageGrid.classList.add(
+      getViewClass(
+        currentStageView
+      )
+    );
+
+  }
+
+
+  function openStageViewSelector() {
+
+    if (viewOptions) {
+
+      viewOptions.style.display =
+        "";
+
+      viewOpen = true;
+
+    }
+
+  }
+
+
+  function openMaterialViewSelector() {
+
+    if (viewOptions) {
+
+      viewOptions.style.display =
+        "";
+
+      viewOpen = true;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     THEME
+     ======================================================= */
+
+  function bindThemeButton() {
+
+    if (!themeButton) return;
+
+    if (
+      themeButton.dataset.appBound === "1"
+    ) {
+      return;
+    }
+
+    themeButton.dataset.appBound =
+      "1";
+
+    themeButton.addEventListener(
+      "click",
+      toggleTheme
+    );
+
+  }
+
+
+  function applyTheme() {
+
+    document.documentElement
+      .setAttribute(
+        "data-theme",
+        currentTheme
+      );
+
+
+    document.body.classList.toggle(
+      "light-mode",
+      currentTheme === "light"
+    );
+
+
+    document.body.classList.toggle(
+      "dark-mode",
+      currentTheme !== "light"
+    );
+
+
+    if (themeIcon) {
+
+      themeIcon.textContent =
+        currentTheme === "dark"
+          ? "☀"
+          : "☾";
+
+    }
+
+
+    if (themeTitle) {
+
+      themeTitle.textContent =
+        currentTheme === "dark"
+          ? t("light")
+          : t("dark");
+
+    }
+
+
+    if (themeState) {
+
+      themeState.textContent =
+        currentTheme === "dark"
+          ? "Dark"
+          : "Light";
+
+    }
+
+  }
+
+
+  function toggleTheme() {
+
+    currentTheme =
+      currentTheme === "dark"
+        ? "light"
+        : "dark";
+
+    localStorage.setItem(
+      STORAGE.theme,
+      currentTheme
+    );
+
+    applyTheme();
+
+  }
+
+
+  /* =======================================================
+     LANGUAGE
+     ======================================================= */
+
+  function bindLanguageButtons() {
+
+    const hi =
+      $("#langHi");
+
+    const en =
+      $("#langEn");
+
+
+    if (
+      hi &&
+      hi.dataset.appBound !== "1"
+    ) {
+
+      hi.dataset.appBound =
+        "1";
+
+      hi.addEventListener(
+        "click",
+        () => setLanguage("hi")
+      );
+
+    }
+
+
+    if (
+      en &&
+      en.dataset.appBound !== "1"
+    ) {
+
+      en.dataset.appBound =
+        "1";
+
+      en.addEventListener(
+        "click",
+        () => setLanguage("en")
+      );
+
+    }
+
+  }
+
+
+  function setLanguage(lang) {
+
+    if (
+      lang !== "hi" &&
+      lang !== "en"
+    ) {
+      return;
+    }
+
+    currentLang =
+      lang;
+
+    localStorage.setItem(
+      STORAGE.lang,
+      currentLang
+    );
+
+
+    applyTheme();
+
+    buildFilterOptions();
+
+
+    if (
+      currentStage !== null &&
+      currentSection !== null &&
+      currentItem !== null
+    ) {
+
+      renderItemEditor(
+        currentStage,
+        currentSection,
+        currentItem
+      );
+
+      return;
+
+    }
+
+
+    if (
+      currentStage !== null &&
+      currentSection !== null
+    ) {
+
+      renderMaterialList(
+        currentStage,
+        currentSection
+      );
+
+      return;
+
+    }
+
+
+    if (
+      currentStage !== null
+    ) {
+
+      renderStagePage(
+        currentStage
+      );
+
+      return;
+
+    }
+
+
+    renderStageCards();
+
+    bindHomeEvents();
+
+  }
+
+
+  /* =======================================================
+     DRAWER
+     ======================================================= */
+
+  function bindDrawer() {
+
+    if (
+      menuBtn &&
+      menuBtn.dataset.appBound !== "1"
+    ) {
+
+      menuBtn.dataset.appBound =
+        "1";
+
+      menuBtn.addEventListener(
+        "click",
+        toggleDrawer
+      );
+
+    }
+
+
+    if (
+      drawerOverlay &&
+      drawerOverlay.dataset.appBound !== "1"
+    ) {
+
+      drawerOverlay.dataset.appBound =
+        "1";
+
+      drawerOverlay.addEventListener(
+        "click",
+        closeDrawer
+      );
+
+    }
+
+
+    $$(".drawer-item")
+      .forEach(item => {
+
+        if (
+          item.dataset.appBound === "1"
+        ) {
+          return;
+        }
+
+        item.dataset.appBound =
+          "1";
+
+        item.addEventListener(
+          "click",
+          () => {
+
+            const page =
+              item.dataset.page;
+
+            closeDrawer();
+
+            navigate(
+              page
+            );
+
+          }
+        );
+
+      });
+
+  }
+
+
+  function toggleDrawer() {
+
+    drawerOpen =
+      !drawerOpen;
+
+    updateDrawer();
+
+  }
+
+
+  function closeDrawer() {
+
+    drawerOpen = false;
+
+    updateDrawer();
+
+  }
+
+
+  function updateDrawer() {
+
+    if (drawer) {
+
+      drawer.classList.toggle(
+        "open",
+        drawerOpen
+      );
+
+      drawer.classList.toggle(
+        "active",
+        drawerOpen
+      );
+
+    }
+
+
+    if (drawerOverlay) {
+
+      drawerOverlay.classList.toggle(
+        "open",
+        drawerOpen
+      );
+
+      drawerOverlay.classList.toggle(
+        "active",
+        drawerOpen
+      );
+
+    }
+
+
+    if (menuBtn) {
+
+      menuBtn.classList.toggle(
+        "active",
+        drawerOpen
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     NAVIGATION
+     ======================================================= */
+
+  function bindBottomNav() {
+
+    $$(".bottom-item")
+      .forEach(item => {
+
+        if (
+          item.dataset.appBound === "1"
+        ) {
+          return;
+        }
+
+        item.dataset.appBound =
+          "1";
+
+        item.addEventListener(
+          "click",
+          () => {
+
+            const page =
+              item.dataset.nav;
+
+            navigate(page);
+
+          }
+        );
+
+      });
+
+  }
+
+
+  function navigate(page) {
+
+    if (!page) return;
+
+
+    if (page === "home") {
+
+      currentStage = null;
+      currentSection = null;
+      currentItem = null;
+
+      saveRoute({
+        page: "home"
+      });
+
+      restoreOriginalHome();
+
+      return;
+
+    }
+
+
+    if (page === "estimate") {
+
+      currentStage = null;
+      currentSection = null;
+      currentItem = null;
+
+      saveRoute({
+        page: "estimate"
+      });
+
+      renderEstimate();
+
+      return;
+
+    }
+
+
+    if (page === "calculator") {
+
+      currentStage = null;
+      currentSection = null;
+      currentItem = null;
+
+      saveRoute({
+        page: "calculator"
+      });
+
+      renderCalculator();
+
+      return;
+
+    }
+
+
+    if (page === "settings") {
+
+      currentStage = null;
+      currentSection = null;
+      currentItem = null;
+
+      saveRoute({
+        page: "settings"
+      });
+
+      renderSettings();
+
+      return;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     RESTORE HOME
+     ======================================================= */
+
+  let originalHomeHTML = null;
+
+  function saveOriginalHome() {
+
+    if (
+      home &&
+      originalHomeHTML === null
+    ) {
+
+      originalHomeHTML =
+        home.innerHTML;
+
+    }
+
+  }
+
+
+  function restoreOriginalHome() {
+
+    if (!home) return;
+
+
+    if (
+      originalHomeHTML !== null
+    ) {
+
+      home.innerHTML =
+        originalHomeHTML;
+
+    }
+
+
+    renderStageCards();
+
+    bindHomeEvents();
+
+    updateBottomNav(
+      "home"
+    );
+
   }
 
 
@@ -3505,242 +3792,285 @@
 
   function renderCalculator() {
 
-    main.innerHTML = `
+    if (!home) return;
 
-      <section class="page">
 
-        <div class="pageTitle">
+    home.innerHTML = `
 
-          <h2>
-            ${esc(
-              t("calculator")
-            )}
-          </h2>
+      <div class="app-page calculator-page">
+
+        <div class="page-header">
+
+          <button
+            type="button"
+            class="internal-back"
+            id="calculatorBack"
+          >
+            ← ${t("back")}
+          </button>
+
+          <div class="page-title">
+            <strong>
+              ${t("calculatorTitle")}
+            </strong>
+          </div>
 
         </div>
 
 
-        <div
-          class="calculatorGrid"
-        >
+        <div class="calculator-card">
 
-          <div class="calcCard">
+          <div class="calc-formula">
 
-            <h3>
+            <button data-formula="P=V×I">
+              P = V × I
+            </button>
+
+            <button data-formula="V=I×R">
               V = I × R
-            </h3>
-
-            <input
-              id="calcI"
-              type="number"
-              step="any"
-              placeholder="Current (I)"
-            >
-
-            <input
-              id="calcR"
-              type="number"
-              step="any"
-              placeholder="Resistance (R)"
-            >
-
-            <button
-              id="calcV"
-              class="primary"
-              type="button"
-            >
-              Calculate V
             </button>
 
-            <div
-              id="calcVResult"
-              class="calcResult"
-            >
-              —
-            </div>
-
-          </div>
-
-
-          <div class="calcCard">
-
-            <h3>
+            <button data-formula="I=V÷R">
               I = V ÷ R
-            </h3>
-
-            <input
-              id="calcV2"
-              type="number"
-              step="any"
-              placeholder="Voltage (V)"
-            >
-
-            <input
-              id="calcR2"
-              type="number"
-              step="any"
-              placeholder="Resistance (R)"
-            >
-
-            <button
-              id="calcI"
-              class="primary"
-              type="button"
-            >
-              Calculate I
             </button>
 
-            <div
-              id="calcIResult"
-              class="calcResult"
-            >
-              —
-            </div>
+            <button data-formula="R=V÷I">
+              R = V ÷ I
+            </button>
 
           </div>
 
 
-          <div class="calcCard">
+          <div class="calc-inputs">
 
-            <h3>
-              R = V ÷ I
-            </h3>
+            <label>
+              ${t("voltage")}
+              <input
+                id="calcV"
+                type="number"
+                inputmode="decimal"
+              >
+            </label>
 
-            <input
-              id="calcV3"
-              type="number"
-              step="any"
-              placeholder="Voltage (V)"
-            >
+            <label>
+              ${t("current")}
+              <input
+                id="calcI"
+                type="number"
+                inputmode="decimal"
+              >
+            </label>
 
-            <input
-              id="calcI3"
-              type="number"
-              step="any"
-              placeholder="Current (I)"
-            >
+            <label>
+              ${t("resistance")}
+              <input
+                id="calcR"
+                type="number"
+                inputmode="decimal"
+              >
+            </label>
 
-            <button
-              id="calcR"
-              class="primary"
-              type="button"
-            >
-              Calculate R
-            </button>
+            <label>
+              ${t("power")}
+              <input
+                id="calcP"
+                type="number"
+                inputmode="decimal"
+              >
+            </label>
 
-            <div
-              id="calcRResult"
-              class="calcResult"
-            >
-              —
-            </div>
+          </div>
 
+
+          <button
+            type="button"
+            class="primary-action"
+            id="calculateBtn"
+          >
+            ${t("calculate")}
+          </button>
+
+
+          <div
+            class="calc-result"
+            id="calcResult"
+          >
+            ${t("result")}
           </div>
 
         </div>
 
-      </section>
+
+        <div class="calculator-card inverter-card">
+
+          <h3>
+            ${t("inverter")}
+          </h3>
+
+          <label>
+            DC Voltage
+
+            <select id="inverterVoltage">
+              <option value="12">
+                12V
+              </option>
+
+              <option value="24">
+                24V
+              </option>
+            </select>
+
+          </label>
+
+
+          <label>
+            AC Output
+
+            <input
+              value="230V"
+              disabled
+            >
+
+          </label>
+
+        </div>
+
+      </div>
 
     `;
 
 
-    document
-      .getElementById(
-        "calcV"
-      )
+    $("#calculatorBack")
+      ?.addEventListener(
+        "click",
+        () => goBack()
+      );
+
+
+    $$(".calc-formula button")
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            calculateFormula(
+              button.dataset.formula
+            );
+
+          }
+        );
+
+      });
+
+
+    $("#calculateBtn")
       ?.addEventListener(
         "click",
         () => {
 
-          const I =
-            Number(
-              document.getElementById(
-                "calcI"
-              )?.value
-            );
-
-          const R =
-            Number(
-              document.getElementById(
-                "calcR"
-              )?.value
-            );
-
-          document.getElementById(
-            "calcVResult"
-          ).textContent =
-            I && R
-              ? `${I * R} V`
-              : "—";
+          calculateFormula(
+            "auto"
+          );
 
         }
       );
 
+  }
 
-    document
-      .getElementById(
-        "calcI"
+
+  function calculateFormula(
+    formula
+  ) {
+
+    const V =
+      Number($("#calcV")?.value);
+
+    const I =
+      Number($("#calcI")?.value);
+
+    const R =
+      Number($("#calcR")?.value);
+
+    const P =
+      Number($("#calcP")?.value);
+
+
+    let result = "";
+
+
+    if (
+      formula === "P=V×I" ||
+      (
+        formula === "auto" &&
+        V &&
+        I
       )
-      ?.addEventListener(
-        "click",
-        () => {
+    ) {
 
-          const V =
-            Number(
-              document.getElementById(
-                "calcV2"
-              )?.value
-            );
+      result =
+        `P = ${formatNumber(V * I)} W`;
 
-          const R =
-            Number(
-              document.getElementById(
-                "calcR2"
-              )?.value
-            );
+    } else if (
+      formula === "V=I×R"
+    ) {
 
-          document.getElementById(
-            "calcIResult"
-          ).textContent =
-            V && R
-              ? `${V / R} A`
-              : "—";
+      result =
+        `V = ${formatNumber(I * R)} V`;
 
-        }
-      );
+    } else if (
+      formula === "I=V÷R"
+    ) {
+
+      result =
+        R
+          ? `I = ${formatNumber(V / R)} A`
+          : "R required";
+
+    } else if (
+      formula === "R=V÷I"
+    ) {
+
+      result =
+        I
+          ? `R = ${formatNumber(V / I)} Ω`
+          : "I required";
+
+    } else if (
+      formula === "auto" &&
+      V &&
+      R
+    ) {
+
+      result =
+        `I = ${formatNumber(V / R)} A`;
+
+    } else if (
+      formula === "auto" &&
+      P &&
+      V
+    ) {
+
+      result =
+        `I = ${formatNumber(P / V)} A`;
+
+    } else {
+
+      result =
+        currentLang === "hi"
+          ? "Required values डालें"
+          : "Enter required values";
+
+    }
 
 
-    document
-      .getElementById(
-        "calcR"
-      )
-      ?.addEventListener(
-        "click",
-        () => {
+    const output =
+      $("#calcResult");
 
-          const V =
-            Number(
-              document.getElementById(
-                "calcV3"
-              )?.value
-            );
-
-          const I =
-            Number(
-              document.getElementById(
-                "calcI3"
-              )?.value
-            );
-
-          document.getElementById(
-            "calcRResult"
-          ).textContent =
-            V && I
-              ? `${V / I} Ω`
-              : "—";
-
-        }
-      );
+    if (output) {
+      output.textContent =
+        result;
+    }
 
   }
 
@@ -3751,164 +4081,136 @@
 
   function renderSettings() {
 
-    main.innerHTML = `
-
-      <section class="page">
-
-        <div class="pageTitle">
-
-          <h2>
-            ${esc(
-              t("settings")
-            )}
-          </h2>
-
-        </div>
+    if (!home) return;
 
 
-        <div class="settingsCard">
+    home.innerHTML = `
 
-          <div class="settingRow">
+      <div class="app-page settings-page">
 
-            <b>
-              Language
-            </b>
+        <div class="page-header">
 
-            <button
-              id="settingLanguage"
-              class="secondary"
-              type="button"
-            >
-              ${
-                state.language ===
-                "hi"
-                  ? "English"
-                  : "हिन्दी"
-              }
-            </button>
+          <button
+            type="button"
+            class="internal-back"
+            id="settingsBack"
+          >
+            ← ${t("back")}
+          </button>
 
-          </div>
-
-
-          <div class="settingRow">
-
-            <b>
-              Theme
-            </b>
-
-            <button
-              id="settingTheme"
-              class="secondary"
-              type="button"
-            >
-              ${
-                state.theme ===
-                "dark"
-                  ? "☀️"
-                  : "🌙"
-              }
-            </button>
-
-          </div>
-
-
-          <div class="settingRow">
-
-            <b>
-              View
-            </b>
-
-            <button
-              id="settingView"
-              class="secondary"
-              type="button"
-            >
-              ${viewIcon()}
-            </button>
-
+          <div class="page-title">
+            <strong>
+              ${t("settings")}
+            </strong>
           </div>
 
         </div>
 
-      </section>
+
+        <div class="settings-card">
+
+          <button
+            type="button"
+            class="settings-row"
+            id="settingsTheme"
+          >
+
+            <span>
+              ${t("dark")} / ${t("light")}
+            </span>
+
+            <span>
+              ${
+                currentTheme === "dark"
+                  ? "☀"
+                  : "☾"
+              }
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            class="settings-row"
+            id="settingsHi"
+          >
+            हिन्दी
+          </button>
+
+
+          <button
+            type="button"
+            class="settings-row"
+            id="settingsEn"
+          >
+            English
+          </button>
+
+
+          <button
+            type="button"
+            class="settings-row"
+            id="settingsClearEstimate"
+          >
+
+            ${
+              currentLang === "hi"
+                ? "पूरा Estimate Clear करें"
+                : "Clear Entire Estimate"
+            }
+
+          </button>
+
+        </div>
+
+      </div>
 
     `;
 
 
-    document
-      .getElementById(
-        "settingLanguage"
-      )
+    $("#settingsBack")
       ?.addEventListener(
         "click",
-        () => {
-
-          state.language =
-            state.language ===
-            "hi"
-              ? "en"
-              : "hi";
-
-          localStorage.setItem(
-            CONFIG.languageKey,
-            state.language
-          );
-
-          renderSettings();
-
-        }
+        () => goBack()
       );
 
 
-    document
-      .getElementById(
-        "settingTheme"
-      )
+    $("#settingsTheme")
       ?.addEventListener(
         "click",
-        () => {
-
-          state.theme =
-            state.theme ===
-            "dark"
-              ? "light"
-              : "dark";
-
-          applyTheme();
-
-          renderSettings();
-
-        }
+        toggleTheme
       );
 
 
-    document
-      .getElementById(
-        "settingView"
-      )
+    $("#settingsHi")
+      ?.addEventListener(
+        "click",
+        () => setLanguage("hi")
+      );
+
+
+    $("#settingsEn")
+      ?.addEventListener(
+        "click",
+        () => setLanguage("en")
+      );
+
+
+    $("#settingsClearEstimate")
       ?.addEventListener(
         "click",
         () => {
 
-          const current =
-            VIEWS.indexOf(
-              state.view
-            );
+          estimateItems = [];
 
-          state.view =
-            VIEWS[
-              (
-                current + 1
-              ) %
-                VIEWS.length
-            ];
+          saveEstimate();
 
-          localStorage.setItem(
-            CONFIG.viewKey,
-            state.view
+          showToast(
+            currentLang === "hi"
+              ? "Estimate clear हो गया"
+              : "Estimate cleared"
           );
-
-          renderSettings();
 
         }
       );
@@ -3917,178 +4219,443 @@
 
 
   /* =======================================================
-     BOTTOM NAV
+     ROUTE STORAGE
      ======================================================= */
 
-  function updateBottomNav() {
+  function saveRoute(route) {
 
-    bottomNav
-      ?.querySelectorAll(
-        "[data-page], [data-nav]"
-      )
-      .forEach(button => {
+    try {
 
-        const page =
-          button.dataset.page ||
-          button.dataset.nav ||
-          "";
+      localStorage.setItem(
+        STORAGE.route,
+        JSON.stringify(route)
+      );
 
-        button.classList.toggle(
-          "active",
-          page === state.page
-        );
+    } catch (error) {
 
-      });
+      console.error(
+        "Route save error:",
+        error
+      );
+
+    }
 
   }
 
 
-  bottomNav
-    ?.querySelectorAll(
-      "[data-page], [data-nav]"
-    )
-    .forEach(button => {
+  function loadRoute() {
 
-      button.addEventListener(
-        "click",
-        () => {
+    try {
 
-          const page =
-            button.dataset.page ||
-            button.dataset.nav;
-
-          if (page) {
-            navigate(page);
-          }
-
-        }
+      return JSON.parse(
+        localStorage.getItem(
+          STORAGE.route
+        ) || "null"
       );
 
-    });
+    } catch {
+      return null;
+    }
+
+  }
+
+
+  function restoreRoute() {
+
+    const route =
+      loadRoute();
+
+    if (!route) {
+
+      restoreOriginalHome();
+
+      return;
+
+    }
+
+
+    if (route.page === "stage") {
+
+      if (
+        getStage(route.stageIndex)
+      ) {
+
+        renderStagePage(
+          route.stageIndex
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    if (route.page === "section") {
+
+      if (
+        getStage(route.stageIndex)
+      ) {
+
+        renderMaterialList(
+          route.stageIndex,
+          route.sectionIndex || 0
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    if (route.page === "item") {
+
+      if (
+        getItem(
+          route.stageIndex,
+          route.sectionIndex,
+          route.itemIndex
+        )
+      ) {
+
+        openItem(
+          route.stageIndex,
+          route.sectionIndex,
+          route.itemIndex,
+          {
+            restore: true
+          }
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    if (route.page === "estimate") {
+
+      renderEstimate();
+
+      return;
+
+    }
+
+
+    if (route.page === "calculator") {
+
+      renderCalculator();
+
+      return;
+
+    }
+
+
+    if (route.page === "settings") {
+
+      renderSettings();
+
+      return;
+
+    }
+
+
+    restoreOriginalHome();
+
+  }
 
 
   /* =======================================================
-     BACK
+     BACK NAVIGATION
      ======================================================= */
 
   function goBack() {
 
-    if (
-      state.drawerOpen
-    ) {
-      closeDrawer();
+    closeDrawer();
+    closeViewSelector();
+
+
+    if (filterOpen) {
+
+      filterOpen = false;
+
+      if (filterPanel) {
+        filterPanel.style.display =
+          "none";
+      }
+
       return;
+
     }
 
 
     if (
-      state.history.length
+      historyStack.length
     ) {
 
       const previous =
-        state.history.pop();
+        historyStack.pop();
 
-      state.page =
-        previous.page;
-
-      state.stageIndex =
-        previous.stageIndex;
-
-      state.sectionIndex =
-        previous.sectionIndex;
-
-      state.itemIndex =
-        previous.itemIndex;
-
-      state.selectedItem =
-        getItem(
-          state.stageIndex,
-          state.sectionIndex,
-          state.itemIndex
-        );
-
-
-      renderCurrentPage();
-
-      saveRoute();
-
-      return;
-    }
-
-
-    if (
-      state.page === "item"
-    ) {
-
-      state.page = "stage";
-      state.itemIndex = null;
-
-      renderStage();
-
-      saveRoute();
-
-      return;
-    }
-
-
-    if (
-      state.page === "stage"
-    ) {
-
-      state.page = "home";
-
-      state.stageIndex = null;
-      state.sectionIndex = null;
-      state.itemIndex = null;
-
-      renderHome();
-
-      saveRoute();
-
-      return;
-    }
-
-
-    if (
-      state.page !== "home"
-    ) {
-
-      navigate(
-        "home",
-        false
+      restoreHistoryPage(
+        previous
       );
 
       return;
+
     }
 
 
-    showToast(
-      t("close")
-    );
+    const route =
+      loadRoute();
+
+
+    if (
+      route &&
+      route.page !== "home"
+    ) {
+
+      restoreOriginalHome();
+
+      saveRoute({
+        page: "home"
+      });
+
+      return;
+
+    }
+
+
+    showExitConfirm();
 
   }
 
 
-  window.addEventListener(
-    "popstate",
-    () => {
+  function restoreHistoryPage(
+    page
+  ) {
 
-      goBack();
+    if (!page) {
 
-      try {
+      restoreOriginalHome();
+
+      return;
+
+    }
+
+
+    if (
+      page.page === "home"
+    ) {
+
+      currentStage = null;
+      currentSection = null;
+      currentItem = null;
+
+      restoreOriginalHome();
+
+      return;
+
+    }
+
+
+    if (
+      page.page === "stage"
+    ) {
+
+      renderStagePage(
+        page.stageIndex
+      );
+
+      return;
+
+    }
+
+
+    if (
+      page.page === "section"
+    ) {
+
+      renderMaterialList(
+        page.stageIndex,
+        page.sectionIndex
+      );
+
+      return;
+
+    }
+
+
+    if (
+      page.page === "estimate"
+    ) {
+
+      renderEstimate();
+
+      return;
+
+    }
+
+
+    restoreOriginalHome();
+
+  }
+
+
+  /* =======================================================
+     BROWSER / ANDROID BACK
+     ======================================================= */
+
+  function bindBrowserBack() {
+
+    window.addEventListener(
+      "popstate",
+      () => {
+
+        goBack();
 
         history.pushState(
           {
-            electroFix: true
+            app: true
           },
           "",
           location.href
         );
 
-      } catch {}
+      }
+    );
 
-    }
-  );
+
+    history.replaceState(
+      {
+        app: true
+      },
+      "",
+      location.href
+    );
+
+
+    history.pushState(
+      {
+        app: true
+      },
+      "",
+      location.href
+    );
+
+  }
+
+
+  /* =======================================================
+     EXIT CONFIRM
+     ======================================================= */
+
+  function showExitConfirm() {
+
+    const old =
+      document.querySelector(
+        ".app-exit-confirm"
+      );
+
+    if (old) return;
+
+
+    const overlay =
+      document.createElement("div");
+
+    overlay.className =
+      "app-exit-confirm";
+
+    overlay.innerHTML = `
+
+      <div class="exit-box">
+
+        <h3>
+          ${t("leaveTitle")}
+        </h3>
+
+        <p>
+          ${t("leaveText")}
+        </p>
+
+        <div class="exit-actions">
+
+          <button
+            type="button"
+            id="exitNo"
+          >
+            ${t("no")}
+          </button>
+
+          <button
+            type="button"
+            id="exitYes"
+          >
+            ${t("yes")}
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    document.body.appendChild(
+      overlay
+    );
+
+
+    $("#exitNo", overlay)
+      ?.addEventListener(
+        "click",
+        () => overlay.remove()
+      );
+
+
+    $("#exitYes", overlay)
+      ?.addEventListener(
+        "click",
+        () => {
+
+          overlay.remove();
+
+          /*
+            Browser security normally prevents
+            JavaScript from force-closing a tab
+            that was not opened by script.
+
+            Going back is the closest safe behavior.
+          */
+
+          history.back();
+
+        }
+      );
+
+  }
+
+
+  /* =======================================================
+     BOTTOM NAV ACTIVE
+     ======================================================= */
+
+  function updateBottomNav(
+    page
+  ) {
+
+    $$(".bottom-item")
+      .forEach(item => {
+
+        item.classList.toggle(
+          "active",
+          item.dataset.nav === page
+        );
+
+      });
+
+  }
 
 
   /* =======================================================
@@ -4098,38 +4665,14 @@
   let toastTimer = null;
 
 
-  function showToast(
-    message
-  ) {
+  function showToast(message) {
 
-    let toast =
-      document.getElementById(
-        "appToast"
-      );
-
-
-    if (!toast) {
-
-      toast =
-        document.createElement(
-          "div"
-        );
-
-      toast.id =
-        "appToast";
-
-      toast.className =
-        "toast";
-
-      document.body.appendChild(
-        toast
-      );
-
-    }
+    if (!toast) return;
 
 
     toast.textContent =
       message;
+
 
     toast.classList.add(
       "show"
@@ -4157,165 +4700,163 @@
 
 
   /* =======================================================
-     RENDER
+     SCROLL
      ======================================================= */
 
-  function renderCurrentPage() {
+  function scrollTop() {
 
-    switch (
-      state.page
-    ) {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
 
-      case "stage":
-        renderStage();
-        break;
+  }
 
-      case "item":
-        renderItem();
-        break;
 
-      case "estimate":
-        renderEstimate();
-        break;
+  /* =======================================================
+     HTML ESCAPE
+     ======================================================= */
 
-      case "calculator":
-        renderCalculator();
-        break;
+  function escapeHtml(value) {
 
-      case "settings":
-        renderSettings();
-        break;
+    return String(
+      value ?? ""
+    )
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
 
-      default:
-        state.page = "home";
-        renderHome();
-        break;
+  }
 
+
+  /* =======================================================
+     NUMBER FORMAT
+     ======================================================= */
+
+  function formatNumber(
+    number
+  ) {
+
+    if (!Number.isFinite(number)) {
+      return "0";
     }
 
+    return Number(
+      number.toFixed(4)
+    ).toString();
 
-    updateBottomNav();
+  }
+
+
+  /* =======================================================
+     CLOSE OUTSIDE PANELS
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    event => {
+
+      if (
+        viewOpen &&
+        viewOptions &&
+        !viewOptions.contains(event.target) &&
+        event.target !== viewTrigger
+      ) {
+
+        closeViewSelector();
+
+      }
+
+
+      if (
+        filterOpen &&
+        filterPanel &&
+        !filterPanel.contains(event.target) &&
+        event.target !== filterBtn
+      ) {
+
+        filterOpen = false;
+
+        filterPanel.style.display =
+          "none";
+
+      }
+
+    }
+  );
+
+
+  /* =======================================================
+     INITIALIZATION
+     ======================================================= */
+
+  function init() {
+
+    saveOriginalHome();
+
+    loadEstimate();
 
     applyTheme();
 
-    saveRoute();
-  }
+    buildFilterOptions();
+
+    bindBrowserBack();
+
+    restoreRoute();
 
 
-  /* =======================================================
-     RESTORE
-     ======================================================= */
+    /*
+      If restoreRoute opened a dynamic page,
+      home events are not needed.
+    */
 
-  restoreRoute();
+    if (
+      !currentStage
+    ) {
 
-
-  /*
-     Invalid saved route होने पर
-     Home पर जाएँ।
-  */
-
-  if (
-    state.stageIndex !== null &&
-    !STAGES[
-      state.stageIndex
-    ]
-  ) {
-
-    state.page = "home";
-
-    state.stageIndex = null;
-    state.sectionIndex = null;
-    state.itemIndex = null;
-
-  }
-
-
-  if (
-    state.page === "item"
-  ) {
-
-    const item =
-      getItem(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
-      );
-
-    if (!item) {
-
-      state.page = "stage";
-      state.itemIndex = null;
-
-    } else {
-
-      state.selectedItem =
-        item;
+      bindHomeEvents();
 
     }
 
   }
-
-
-  /* =======================================================
-     INITIAL HISTORY
-     ======================================================= */
-
-  try {
-
-    history.replaceState(
-      {
-        electroFix: true
-      },
-      "",
-      location.href
-    );
-
-    history.pushState(
-      {
-        electroFix: true
-      },
-      "",
-      location.href
-    );
-
-  } catch {}
 
 
   /* =======================================================
      START
      ======================================================= */
 
-  renderCurrentPage();
+  if (
+    document.readyState ===
+    "loading"
+  ) {
 
+    document.addEventListener(
+      "DOMContentLoaded",
+      init
+    );
 
-  console.log(
-    "Estimate List READY"
-  );
+  } else {
 
-  console.log(
-    "Total stages:",
-    STAGES.length
-  );
+    init();
 
-  console.log(
-    "Total materials:",
-    STAGES.reduce(
-      (
-        total,
-        stage
-      ) =>
-        total +
-        stage.sections.reduce(
-          (
-            n,
-            section
-          ) =>
-            n +
-            section.items.length,
-          0
-        ),
-      0
-    )
-  );
+  }
+
 
 })();

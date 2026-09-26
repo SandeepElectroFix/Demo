@@ -316,37 +316,291 @@ button:disabled {
 
 /* =========================================================
    SEARCH
+   PREMIUM CYBER ROTATING BORDER
    ========================================================= */
 
 .searchBox {
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  align-items: center;
+
+  width: min(100%, 700px);
+  height: 70px;
+
+  margin: 8px auto 18px;
+  padding: 3px;
+
+  border: 0;
+  border-radius: 18px;
+
+  background: #03070d;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 0 22px rgba(14, 165, 233, .12);
+}
+
+
+/* =========================================================
+   ROTATING BORDER
+   ========================================================= */
+
+.searchBox::before {
+  content: "";
+
+  position: absolute;
+
+  width: 180%;
+  height: 500%;
+
+  left: -40%;
+  top: -200%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+
+      transparent 0deg,
+      transparent 35deg,
+
+      #0ea5e9 70deg,
+      #38bdf8 105deg,
+
+      transparent 145deg,
+      transparent 190deg,
+
+      #facc15 225deg,
+      #f59e0b 255deg,
+
+      transparent 295deg,
+      transparent 360deg
+    );
+
+  animation:
+    searchBorderRotate 4s linear infinite;
+
+  z-index: -2;
+}
+
+
+/* =========================================================
+   SOFT GLOW
+   ========================================================= */
+
+.searchBox::after {
+  content: "";
+
+  position: absolute;
+
+  inset: -10px;
+
+  border-radius: 25px;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      #0ea5e9,
+      transparent 25%,
+      #facc15 50%,
+      transparent 75%,
+      #0ea5e9
+    );
+
+  filter: blur(14px);
+
+  opacity: .28;
+
+  animation:
+    searchBorderRotate 4s linear infinite;
+
+  z-index: -3;
+}
+
+
+@keyframes searchBorderRotate {
+
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+
+/* =========================================================
+   SEARCH INPUT
+   ========================================================= */
+
+.searchBox input {
+  position: relative;
+  z-index: 2;
+
+  flex: 1 1 auto;
+
+  width: auto;
+  min-width: 0;
+
+  height: 100%;
+
+  border: 0;
+  outline: 0;
+
+  background:
+    linear-gradient(
+      145deg,
+      #07182e,
+      #03070d
+    );
+
+  color: #e0f2fe;
+
+  padding: 0 10px 0 18px;
+
+  text-align: center;
+
+  border-radius: 15px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, .7);
+}
+
+.searchBox input::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+
+/* =========================================================
+   FILTER BUTTON
+   RIGHT SIDE FIXED
+   ========================================================= */
+
+.searchBox button {
+  position: relative;
+  z-index: 5;
+
+  flex: 0 0 42px;
+
+  width: 42px;
+  height: 42px;
+
+  min-width: 42px;
+
+  margin-right: 8px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: min(100%, 700px);
-  margin: 8px auto 18px;
-  background: #020611;
-  border: 1px solid #0ea5e955;
-  border-radius: 16px;
-  padding: 5px 10px;
-  box-shadow: 0 0 22px #0ea5e91c;
-}
 
-.searchBox input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #fff;
-  padding: 12px;
-  text-align: center;
-}
+  border: 1px solid rgba(250, 204, 21, .30);
 
-.searchBox button {
-  border: 0;
-  background: transparent;
-  color: var(--gold);
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #0a2140,
+      #050d1c
+    );
+
+  color: #facc15;
+
   font-size: 20px;
+
+  cursor: pointer;
+
+  transition:
+    .25s ease;
+}
+
+.searchBox button:hover {
+
+  border-color: #facc15;
+
+  box-shadow:
+    0 0 12px
+    rgba(250, 204, 21, .30);
+}
+
+.searchBox button:active {
+  transform: scale(.92);
+}
+
+
+/* =========================================================
+   FILTER ACTIVE
+   ========================================================= */
+
+.searchBox button.active {
+
+  border-color: #38bdf8;
+
+  color: #38bdf8;
+
+  box-shadow:
+    0 0 12px
+    rgba(14, 165, 233, .30);
+}
+
+
+/* =========================================================
+   SEARCH SVG
+   ========================================================= */
+
+.searchBox button svg {
+
+  width: 20px;
+  height: 20px;
+
+  display: block;
+
+  color: #facc15;
+
+  stroke: currentColor;
+}
+
+
+/* =========================================================
+   SEARCH MOBILE
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+  .searchBox {
+    height: 64px;
+  }
+
+  .searchBox input {
+    padding-left: 8px;
+    padding-right: 5px;
+  }
+
+  .searchBox button {
+
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+
+    flex-basis: 38px;
+
+    margin-right: 7px;
+  }
+
+  .searchBox button svg {
+    width: 18px;
+    height: 18px;
+  }
+
 }
 
 /* =========================================================
@@ -2219,3 +2473,438 @@ body[data-theme="light"] .segmentedSwitch button.active {
   }
 
 }
+
+
+
+
+/* =========================================================
+   LIGHT THEME - TEXT VISIBILITY FIX
+   ========================================================= */
+
+body[data-theme="light"] {
+
+  --text: #0f172a;
+  --muted: #475569;
+
+}
+
+
+/* =========================================================
+   SEARCH LIGHT MODE
+   ========================================================= */
+
+body[data-theme="light"] .searchBox {
+
+  background: #e2e8f0;
+
+  border-color: transparent;
+
+  box-shadow:
+    0 0 20px
+    rgba(14, 165, 233, .12);
+}
+
+body[data-theme="light"] .searchBox input {
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #eef6fb
+    );
+
+  color: #0f172a;
+
+  box-shadow:
+    inset 0 0 12px
+    rgba(15, 23, 42, .10);
+}
+
+body[data-theme="light"] .searchBox input::placeholder {
+
+  color: #64748b;
+
+  opacity: 1;
+}
+
+body[data-theme="light"] .searchBox button {
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #eef6fb
+    );
+
+  color: #b45309;
+
+  border-color:
+    rgba(180, 83, 9, .30);
+}
+
+body[data-theme="light"] .searchBox button svg {
+
+  color: #b45309;
+
+  stroke: #b45309;
+}
+
+
+/* =========================================================
+   HERO TEXT
+   ========================================================= */
+
+body[data-theme="light"] .hero h1 {
+
+  color: #0f172a;
+
+  text-shadow: none;
+}
+
+body[data-theme="light"] .hero p {
+
+  color: #475569;
+}
+
+body[data-theme="light"] .tagline {
+
+  color: #b45309;
+}
+
+
+/* =========================================================
+   STAGE CARDS
+   ========================================================= */
+
+body[data-theme="light"] .stageCard {
+
+  color: #0f172a;
+}
+
+body[data-theme="light"] .stageCard b {
+
+  color: #075985;
+}
+
+body[data-theme="light"] .stageCard small {
+
+  color: #0284c7;
+}
+
+body[data-theme="light"] .stageCard span {
+
+  color: #475569;
+}
+
+body[data-theme="light"] .stageNo {
+
+  color: #b45309;
+}
+
+
+/* =========================================================
+   STAGE CARD INNER
+   ========================================================= */
+
+body[data-theme="light"] .stageCard::after {
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   STAGE HEAD
+   ========================================================= */
+
+body[data-theme="light"] .stageHead h1 {
+
+  color: #0f172a;
+}
+
+body[data-theme="light"] .stageHead p {
+
+  color: #475569;
+}
+
+
+/* =========================================================
+   ITEM CARDS
+   ========================================================= */
+
+body[data-theme="light"] .itemCard {
+
+  color: #0f172a;
+  background: #ffffff;
+}
+
+body[data-theme="light"] .itemCard b {
+
+  color: #075985;
+}
+
+body[data-theme="light"] .itemCard span {
+
+  color: #475569;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+body[data-theme="light"] .formCard {
+
+  color: #0f172a;
+  background: #ffffff;
+}
+
+body[data-theme="light"] .field > span {
+
+  color: #1e293b;
+}
+
+body[data-theme="light"] .field em {
+
+  color: #64748b;
+}
+
+body[data-theme="light"] .field input,
+body[data-theme="light"] .field select {
+
+  background: #eef4fb;
+
+  color: #0f172a;
+
+  border-color:
+    rgba(14, 165, 233, .22);
+}
+
+body[data-theme="light"] .field input::placeholder {
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   CHOICES
+   ========================================================= */
+
+body[data-theme="light"] .choice {
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  border-color:
+    rgba(15, 23, 42, .12);
+}
+
+body[data-theme="light"] .choice.selected {
+
+  background: #e0f2fe;
+
+  color: #075985;
+
+  border-color: #0ea5e9;
+}
+
+
+/* =========================================================
+   QUANTITY
+   ========================================================= */
+
+body[data-theme="light"] .qtyRow button {
+
+  background: #f8fafc;
+
+  color: #b45309;
+
+  border-color:
+    rgba(14, 165, 233, .22);
+}
+
+body[data-theme="light"] .qtyQuick button {
+
+  background: #f8fafc;
+
+  color: #334155;
+
+  border-color:
+    rgba(15, 23, 42, .12);
+}
+
+
+/* =========================================================
+   ESTIMATE
+   ========================================================= */
+
+body[data-theme="light"] .estimateItem {
+
+  color: #0f172a;
+
+  background: #ffffff;
+}
+
+body[data-theme="light"] .estimateItem b {
+
+  color: #075985;
+}
+
+body[data-theme="light"] .estimateMeta {
+
+  color: #475569;
+}
+
+body[data-theme="light"] .estimateActions button {
+
+  background: #f8fafc;
+
+  color: #334155;
+}
+
+
+/* =========================================================
+   CALCULATOR
+   ========================================================= */
+
+body[data-theme="light"] .calcResult {
+
+  background: #eef4fb;
+
+  color: #075985;
+}
+
+body[data-theme="light"] .formula {
+
+  background: #eef4fb;
+
+  color: #334155;
+}
+
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+
+body[data-theme="light"] .settingRow {
+
+  color: #0f172a;
+
+  background: #ffffff;
+}
+
+body[data-theme="light"] .settingRow b {
+
+  color: #075985;
+}
+
+body[data-theme="light"] .settingRow small {
+
+  color: #475569;
+}
+
+
+/* =========================================================
+   BACK / SECONDARY
+   ========================================================= */
+
+body[data-theme="light"] .back,
+body[data-theme="light"] .secondary {
+
+  background: #ffffff;
+
+  color: #0f172a;
+
+  border-color:
+    rgba(14, 165, 233, .25);
+}
+
+
+/* =========================================================
+   DRAWER
+   ========================================================= */
+
+body[data-theme="light"] .drawer {
+
+  background: #ffffff;
+
+  color: #0f172a;
+}
+
+body[data-theme="light"] .drawer h2 {
+
+  color: #b45309;
+}
+
+body[data-theme="light"] .drawer > button[data-page] {
+
+  color: #1e293b;
+}
+
+body[data-theme="light"] .drawerBrand small {
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   BOTTOM NAV
+   ========================================================= */
+
+body[data-theme="light"] .bottomNav {
+
+  background: #ffffff;
+
+  border-top-color:
+    rgba(14, 165, 233, .20);
+
+  box-shadow:
+    0 -5px 25px
+    rgba(15, 23, 42, .12);
+}
+
+body[data-theme="light"] .bottomNav button {
+
+  color: #475569;
+}
+
+body[data-theme="light"] .bottomNav button.active {
+
+  color: #0284c7;
+
+  background:
+    rgba(14, 165, 233, .10);
+}
+
+
+/* =========================================================
+   EMPTY / HINT
+   ========================================================= */
+
+body[data-theme="light"] .empty,
+body[data-theme="light"] .hint {
+
+  color: #64748b;
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+body[data-theme="light"] .toast {
+
+  background: #ffffff;
+
+  color: #0f172a;
+
+  border-color: #0ea5e9;
+
+  box-shadow:
+    0 8px 30px
+    rgba(15, 23, 42, .18);
+}
+
+
+
+

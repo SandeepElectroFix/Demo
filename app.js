@@ -1,44 +1,9 @@
 /* =========================================================
    SANDEEP ELECTROFIX - ESTIMATE LIST
    app.js
+   FINAL MATERIAL LIST FIX
    ---------------------------------------------------------
-   FINAL VERSION
-   MATCHED WITH CURRENT material.js
-
-   material.js structure:
-
-   [
-     "STAGE 1",
-     "Stage Name",
-     "Category",
-     [ item list ],
-     [ "Group Name", [ item list ] ],
-     ...
-   ]
-
-   FEATURES
-   ---------------------------------------------------------
-   ✓ Stage 1 - Stage 5
-   ✓ Category / Group
-   ✓ Dynamic Material Fields
-   ✓ Hindi / English
-   ✓ Material Search
-   ✓ Stage Search
-   ✓ 10 Material View Modes
-   ✓ Quantity Required
-   ✓ Unit Carry Forward
-   ✓ Optional Brand
-   ✓ Add / Edit / Delete
-   ✓ Add -> Next Material
-   ✓ Next NEVER auto-adds
-   ✓ Estimate Storage
-   ✓ Refresh Restore
-   ✓ Stage / Section / Item Restore
-   ✓ Dark / Light
-   ✓ Drawer Compatibility
-   ✓ Bottom Navigation Compatibility
-   ✓ Android / Browser Back
-   ✓ Toast
+   material.js is NOT modified
    ========================================================= */
 
 (() => {
@@ -48,53 +13,36 @@
      CONFIG
      ======================================================= */
 
-  const CFG = window.APP_CONFIG || window.AppConfig || {};
+  const CFG = window.APP_CONFIG || {};
 
   const CONFIG = {
-    appName:
-      CFG.appName ||
-      "Estimate List",
-
-    appNameHi:
-      CFG.appNameHi ||
-      "एस्टिमेट लिस्ट",
-
-    businessName:
-      CFG.businessName ||
-      "Sandeep ElectroFix",
-
-    tagline:
-      CFG.tagline ||
-      "Powering Your Trust",
+    appName: CFG.appName || "Estimate List",
+    appNameHi: CFG.appNameHi || "एस्टिमेट लिस्ट",
+    businessName: CFG.businessName || "Sandeep ElectroFix",
+    tagline: CFG.tagline || "Powering Your Trust",
 
     defaultLanguage:
-      CFG.defaultLanguage === "en"
-        ? "en"
-        : "hi",
+      CFG.defaultLanguage === "en" ? "en" : "hi",
 
     storageKey:
-      CFG.storageKey ||
-      "sandeepEstimateItems",
+      CFG.storageKey || "sandeepEstimateItems",
 
     languageKey:
-      CFG.languageKey ||
-      "sandeepMaterialLang",
+      CFG.languageKey || "sandeepMaterialLang",
 
     themeKey:
-      CFG.themeKey ||
-      "sandeepTheme",
+      CFG.themeKey || "sandeepTheme",
 
     viewKey:
-      CFG.viewKey ||
-      "sandeepMaterialView",
+      CFG.viewKey || "sandeepMaterialView",
 
     routeKey:
-      CFG.routeKey ||
-      "sandeepEstimateRoute",
+      CFG.routeKey || "sandeepEstimateRoute",
 
     unitKey:
       "sandeepLastUnit"
   };
+
 
   /* =======================================================
      DOM
@@ -105,7 +53,7 @@
 
   if (!main) {
     console.error(
-      "Sandeep ElectroFix: #main not found."
+      "Estimate List: #main not found"
     );
     return;
   }
@@ -117,18 +65,14 @@
     document.getElementById("drawer");
 
   const drawerOverlay =
-    document.getElementById(
-      "drawerOverlay"
-    );
+    document.getElementById("drawerOverlay");
 
   const closeMenu =
     document.getElementById("closeMenu");
 
   const themeBtn =
     document.getElementById("themeBtn") ||
-    document.getElementById(
-      "themeButton"
-    );
+    document.getElementById("themeButton");
 
   const langBtn =
     document.getElementById("langBtn");
@@ -136,6 +80,7 @@
   const bottomNav =
     document.getElementById("bottomNav") ||
     document.querySelector(".bottom-nav");
+
 
   /* =======================================================
      MATERIAL DATA
@@ -146,11 +91,11 @@
       ? window.MATERIALS
       : [];
 
-  if (!RAW_MATERIALS.length) {
-    console.error(
-      "Sandeep ElectroFix: MATERIALS not found."
-    );
-  }
+  console.log(
+    "MATERIALS loaded:",
+    RAW_MATERIALS
+  );
+
 
   /* =======================================================
      STATE
@@ -179,100 +124,42 @@
 
     drawerOpen: false,
 
-    viewSelectorOpen: false,
-
-    estimateItems:
-      loadEstimate(),
-
     history: [],
 
     lastUnit:
-      safeGet(
-        CONFIG.unitKey,
-        ""
-      )
+      localStorage.getItem(
+        CONFIG.unitKey
+      ) || ""
   };
 
-  /* =======================================================
-     STORAGE HELPERS
-     ======================================================= */
-
-  function safeGet(
-    key,
-    fallback = null
-  ) {
-    try {
-      const value =
-        localStorage.getItem(key);
-
-      return value === null
-        ? fallback
-        : value;
-    } catch (error) {
-      return fallback;
-    }
-  }
-
-  function safeSet(
-    key,
-    value
-  ) {
-    try {
-      localStorage.setItem(
-        key,
-        value
-      );
-    } catch (error) {
-      console.warn(
-        "Storage error:",
-        error
-      );
-    }
-  }
-
-  function safeRemove(key) {
-    try {
-      localStorage.removeItem(key);
-    } catch (error) {}
-  }
 
   /* =======================================================
-     LOAD LANGUAGE
+     STORAGE
      ======================================================= */
 
   function loadLanguage() {
-    const saved =
-      safeGet(
-        CONFIG.languageKey,
-        CONFIG.defaultLanguage
-      );
-
-    return saved === "en"
+    return (
+      localStorage.getItem(
+        CONFIG.languageKey
+      ) || CONFIG.defaultLanguage
+    ) === "en"
       ? "en"
       : "hi";
   }
 
-  /* =======================================================
-     LOAD THEME
-     ======================================================= */
 
   function loadTheme() {
-    const saved =
-      safeGet(
-        CONFIG.themeKey,
-        "dark"
-      );
-
-    return saved === "light"
+    return (
+      localStorage.getItem(
+        CONFIG.themeKey
+      ) || "dark"
+    ) === "light"
       ? "light"
       : "dark";
   }
 
-  /* =======================================================
-     LOAD VIEW
-     ======================================================= */
 
-  const ALLOWED_VIEWS = [
+  const VIEWS = [
     "grid",
     "list",
     "compact",
@@ -285,54 +172,53 @@
     "dense"
   ];
 
+
   function loadView() {
-    const saved =
-      safeGet(
-        CONFIG.viewKey,
-        "grid"
+    const value =
+      localStorage.getItem(
+        CONFIG.viewKey
       );
 
-    return ALLOWED_VIEWS.includes(
-      saved
-    )
-      ? saved
+    return VIEWS.includes(value)
+      ? value
       : "grid";
   }
 
-  /* =======================================================
-     LOAD ESTIMATE
-     ======================================================= */
 
   function loadEstimate() {
     try {
-      const raw =
+      const value =
         localStorage.getItem(
           CONFIG.storageKey
         );
 
-      if (!raw) {
-        return [];
-      }
+      if (!value) return [];
 
       const parsed =
-        JSON.parse(raw);
+        JSON.parse(value);
 
       return Array.isArray(parsed)
         ? parsed
         : [];
-    } catch (error) {
+    } catch {
       return [];
     }
   }
 
+
+  state.estimateItems =
+    loadEstimate();
+
+
   function saveEstimate() {
-    safeSet(
+    localStorage.setItem(
       CONFIG.storageKey,
       JSON.stringify(
         state.estimateItems
       )
     );
   }
+
 
   /* =======================================================
      TRANSLATION
@@ -347,55 +233,32 @@
 
       search: "Search material",
 
-      stage: "Stage",
-      materials: "Materials",
-      groups: "Groups",
-
       back: "Back",
-
       add: "Add to Estimate",
       update: "Update Estimate",
-
       next: "Next",
-      previous: "Previous",
 
       quantity: "Quantity",
       unit: "Unit",
       brand: "Brand",
 
-      select: "Select",
-      required: "Required",
       optional: "Optional",
+      required: "Required",
 
-      noMaterials:
-        "No materials found.",
+      noMaterial:
+        "No material found",
 
       noSearch:
-        "No material found for this search.",
+        "No material found",
 
-      estimateEmpty:
-        "No items added yet.",
+      empty:
+        "No items added yet",
 
-      clearEstimate:
+      clear:
         "Clear Estimate",
 
-      delete:
-        "Delete",
-
-      edit:
-        "Edit",
-
-      calculatorTitle:
-        "Electrical Calculator",
-
-      settingsTitle:
-        "Settings",
-
-      chooseView:
-        "Choose View",
-
-      dark: "Dark",
-      light: "Light",
+      edit: "Edit",
+      delete: "Delete",
 
       saved:
         "Added to Estimate",
@@ -409,17 +272,14 @@
       cleared:
         "Estimate Cleared",
 
-      stageComplete:
+      complete:
         "This stage is complete",
 
       enterQuantity:
         "Please enter quantity",
 
-      noMaterial:
-        "Material not found",
-
-      closeWarning:
-        "Press back again to exit the app."
+      close:
+        "Press back again to exit"
     },
 
     hi: {
@@ -428,87 +288,58 @@
       calculator: "कैलकुलेटर",
       settings: "सेटिंग्स",
 
-      search:
-        "सामग्री खोजें",
-
-      stage: "स्टेज",
-      materials: "सामग्री",
-      groups: "ग्रुप",
+      search: "सामग्री खोजें",
 
       back: "वापस",
-
-      add:
-        "एस्टिमेट में जोड़ें",
-
-      update:
-        "एस्टिमेट अपडेट करें",
-
+      add: "एस्टिमेट में जोड़ें",
+      update: "एस्टिमेट अपडेट करें",
       next: "अगला",
-      previous: "पिछला",
 
       quantity: "मात्रा",
       unit: "यूनिट",
       brand: "ब्रांड",
 
-      select: "चुनें",
-      required: "जरूरी",
       optional: "वैकल्पिक",
+      required: "जरूरी",
 
-      noMaterials:
-        "कोई सामग्री नहीं मिली।",
+      noMaterial:
+        "सामग्री नहीं मिली",
 
       noSearch:
-        "इस खोज के लिए कोई सामग्री नहीं मिली।",
+        "कोई सामग्री नहीं मिली",
 
-      estimateEmpty:
-        "अभी कोई आइटम नहीं जोड़ा गया।",
+      empty:
+        "अभी कोई आइटम नहीं जोड़ा गया",
 
-      clearEstimate:
+      clear:
         "एस्टिमेट साफ करें",
 
-      delete:
-        "डिलीट",
-
-      edit:
-        "एडिट",
-
-      calculatorTitle:
-        "इलेक्ट्रिकल कैलकुलेटर",
-
-      settingsTitle:
-        "सेटिंग्स",
-
-      chooseView:
-        "व्यू चुनें",
-
-      dark: "डार्क",
-      light: "लाइट",
+      edit: "एडिट",
+      delete: "डिलीट",
 
       saved:
-        "एस्टिमेट में जोड़ा गया",
+        "एस्टिमेट में जोड़ दिया गया",
 
       updated:
-        "एस्टिमेट अपडेट किया गया",
+        "एस्टिमेट अपडेट हो गया",
 
       deleted:
-        "आइटम डिलीट किया गया",
+        "आइटम डिलीट हो गया",
 
       cleared:
-        "एस्टिमेट साफ कर दिया गया",
+        "एस्टिमेट साफ हो गया",
 
-      stageComplete:
+      complete:
         "यह स्टेज पूरा हो गया",
 
       enterQuantity:
         "कृपया मात्रा डालें",
 
-      noMaterial:
-        "सामग्री नहीं मिली",
-
-      closeWarning:
-        "ऐप बंद करने के लिए फिर से Back दबाएँ।"
+      close:
+        "ऐप बंद करने के लिए फिर से Back दबाएँ"
     }
   };
+
 
   function t(key) {
     return (
@@ -518,221 +349,71 @@
     );
   }
 
+
   /* =======================================================
-     MATERIAL HINDI
+     HINDI NAMES
      ======================================================= */
 
-  const MATERIAL_HI = {
-    "Pipe":
-      "पाइप",
-
-    "Bend":
-      "बेंड",
-
-    "Junction Box":
-      "जंक्शन बॉक्स",
-
-    "Fan Box":
-      "फैन बॉक्स",
-
+  const HI = {
+    Pipe: "पाइप",
+    Bend: "बेंड",
+    "Junction Box": "जंक्शन बॉक्स",
+    "Fan Box": "फैन बॉक्स",
     "Concealed Light Box":
       "कंसील्ड लाइट बॉक्स",
 
-    "Tape (Shuttering & Joint Sealing)":
-      "शटरिंग एवं जॉइंट सीलिंग टेप",
+    Wire: "वायर",
+    "Flexible Pipe": "फ्लेक्सिबल पाइप",
+    "Electrical Tape": "इलेक्ट्रिकल टेप",
+    Fastener: "फास्टनर",
 
-    "Solvent Cement":
-      "सॉल्वेंट सीमेंट",
-
-    "Neel Powder (Marking Powder)":
-      "नील पाउडर",
-
-    "Binding Wire":
-      "बाइंडिंग वायर",
-
-    "Cable Tie / Zip Tie":
-      "केबल टाई / जिप टाई",
-
-    "Modular Board (Concealed Metal/PVC Box)":
-      "मॉड्यूलर बोर्ड",
-
-    "MCB Box (Distribution Board)":
-      "एमसीबी बॉक्स",
-
-    "Tape (Masking & Plaster Protection)":
-      "मास्किंग एवं प्लास्टर प्रोटेक्शन टेप",
-
-    "Cable Clip":
-      "केबल क्लिप",
-
-    "Wire":
-      "वायर",
-
-    "Flexible Pipe":
-      "फ्लेक्सिबल पाइप",
-
-    "Electrical Tape":
-      "इलेक्ट्रिकल टेप",
-
-    "Fastener":
-      "फास्टनर",
-
-    "Steel Wire / Spring Wire (Fish Tape)":
-      "स्टील वायर / स्प्रिंग वायर",
-
-    "Switch Plate":
-      "स्विच प्लेट",
-
+    "Switch Plate": "स्विच प्लेट",
     "Switch Board (Surface Gang Box)":
       "स्विच बोर्ड",
+    Switch: "स्विच",
+    Socket: "सॉकेट",
+    "Fan Regulator": "फैन रेगुलेटर",
+    "2 Way Switch": "2 वे स्विच",
+    "Bell Push": "बेल पुश",
+    "Neon Indicator": "नियॉन इंडिकेटर",
 
-    "Switch":
-      "स्विच",
+    "Mini MCB": "मिनी एमसीबी",
+    "SP MCB": "एसपी एमसीबी",
+    "DP MCB": "डीपी एमसीबी",
+    "TPN MCB": "टीपीएन एमसीबी",
+    "DP Isolator": "डीपी आइसोलेटर",
+    "TPN Isolator": "टीपीएन आइसोलेटर",
+    "RCCB / RCD": "आरसीसीबी / आरसीडी",
+    "MCB Box": "एमसीबी बॉक्स",
 
-    "Socket":
-      "सॉकेट",
+    "Fan Sheet": "फैन शीट",
+    "Round Sheet": "राउंड शीट",
+    "Fan Rod": "फैन रॉड",
+    "Fan Clamp": "फैन क्लैंप",
+    Holder: "होल्डर",
+    "Ceiling Rose": "सीलिंग रोज",
+    Chain: "चेन",
 
-    "Fan Regulator":
-      "फैन रेगुलेटर",
+    "LED Bulb": "एलईडी बल्ब",
+    "LED Tube Light": "एलईडी ट्यूब लाइट",
+    "Foot Light": "फुट लाइट",
+    "Panel Light": "पैनल लाइट",
+    "Surface Light": "सरफेस लाइट",
+    "COB Light": "सीओबी लाइट",
+    "Down Light": "डाउन लाइट",
+    "Strip Light": "स्ट्रिप लाइट",
+    "Rope Light": "रोप लाइट",
 
-    "2 Way Switch":
-      "2 वे स्विच",
-
-    "Bell Push":
-      "बेल पुश",
-
-    "Neon Indicator":
-      "नियॉन इंडिकेटर",
-
-    "Blank Plate / Dummy Switch":
-      "ब्लैंक प्लेट / डमी स्विच",
-
-    "DP Switch (Double Pole Switch)":
-      "डीपी स्विच",
-
-    "Mini MCB":
-      "मिनी एमसीबी",
-
-    "SP MCB (Single Pole)":
-      "एसपी एमसीबी",
-
-    "DP MCB (Double Pole)":
-      "डीपी एमसीबी",
-
-    "TPN MCB (Three Pole with Neutral)":
-      "टीपीएन एमसीबी",
-
-    "MCB Changeover":
-      "एमसीबी चेंजओवर",
-
-    "DP Isolator":
-      "डीपी आइसोलेटर",
-
-    "TPN Isolator (3P / 4P)":
-      "टीपीएन आइसोलेटर",
-
-    "RCCB / RCD":
-      "आरसीसीबी / आरसीडी",
-
-    "MCB Box":
-      "एमसीबी बॉक्स",
-
-    "Kit Kat Fuse":
-      "किटकैट फ्यूज",
-
-    "Fan Sheet":
-      "फैन शीट",
-
-    "Round Sheet":
-      "राउंड शीट",
-
-    "Fan Rod":
-      "फैन रॉड",
-
-    "Fan Clamp":
-      "फैन क्लैंप",
-
-    "Holder":
-      "होल्डर",
-
-    "Ceiling Rose":
-      "सीलिंग रोज",
-
-    "Chain":
-      "चेन",
-
-    "LED Bulb":
-      "एलईडी बल्ब",
-
-    "LED Tube Light":
-      "एलईडी ट्यूब लाइट",
-
-    "Foot Light":
-      "फुट लाइट",
-
-    "Up Down Light":
-      "अप डाउन लाइट",
-
-    "Panel Light":
-      "पैनल लाइट",
-
-    "Surface Light":
-      "सरफेस लाइट",
-
-    "COB Light":
-      "सीओबी लाइट",
-
-    "COB Spot Light":
-      "सीओबी स्पॉट लाइट",
-
-    "Down Light":
-      "डाउन लाइट",
-
-    "Strip Light":
-      "स्ट्रिप लाइट",
-
-    "Rope Light":
-      "रोप लाइट",
-
-    "LED Profile Channel":
-      "एलईडी प्रोफाइल चैनल",
-
-    "LED Strip Driver (SMPS)":
-      "एलईडी स्ट्रिप ड्राइवर",
-
-    "Door Bell":
-      "डोर बेल",
-
-    "Tape (Mounting / Double Sided)":
-      "माउंटिंग / डबल साइडेड टेप",
-
-    "Instant Glue":
-      "इंस्टेंट ग्लू",
-
-    "Araldite Glue (Epoxy)":
-      "अरालडाइट ग्लू",
-
-    "POP (Plaster of Paris)":
-      "पीओपी",
-
-    "Putty Blade / Patta":
-      "पुट्टी ब्लेड / पट्टा",
-
-    "Screw":
-      "स्क्रू",
-
-    "Lug (Cable Terminal Lug)":
-      "केबल लग",
-
-    "Washer":
-      "वॉशर",
-
-    "Saddle (Pipe Clamp)":
-      "सैडल / पाइप क्लैंप",
-
-    "PVC Wall Plug / Gulli / Gitti":
-      "पीवीसी वॉल प्लग / गुल्ली / गिट्टी"
+    "Door Bell": "डोर बेल",
+    "Instant Glue": "इंस्टेंट ग्लू",
+    POP: "पीओपी",
+    Screw: "स्क्रू",
+    Washer: "वॉशर",
+    "Cable Clip": "केबल क्लिप",
+    "Cable Tie": "केबल टाई",
+    Saddle: "सैडल"
   };
+
 
   const GROUP_HI = {
     "Conduit & Box":
@@ -756,7 +437,7 @@
     "Fan & Ceiling":
       "फैन एवं सीलिंग",
 
-    "Lighting":
+    Lighting:
       "लाइटिंग",
 
     "Installation & Finishing":
@@ -769,17 +450,19 @@
       "इंस्टॉलेशन एवं फास्टनिंग"
   };
 
-  function materialName(name) {
+
+  function displayMaterial(name) {
     if (state.language !== "hi") {
       return name;
     }
 
-    return MATERIAL_HI[name]
-      ? `${MATERIAL_HI[name]} / ${name}`
+    return HI[name]
+      ? `${HI[name]} / ${name}`
       : name;
   }
 
-  function groupName(name) {
+
+  function displayGroup(name) {
     if (state.language !== "hi") {
       return name;
     }
@@ -789,83 +472,31 @@
       : name;
   }
 
-  /* =======================================================
-     STAGE HINDI
-     ======================================================= */
-
-  const STAGE_HI = {
-    "Slab Conduit Installation":
-      "स्लैब कंड्यूट इंस्टॉलेशन",
-
-    "Wall Conduit Installation":
-      "वॉल कंड्यूट इंस्टॉलेशन",
-
-    "Wiring Installation":
-      "वायरिंग इंस्टॉलेशन",
-
-    "Final Electrical Fittings":
-      "फाइनल इलेक्ट्रिकल फिटिंग्स",
-
-    "False Ceiling Wiring Material":
-      "फॉल्स सीलिंग वायरिंग मटेरियल"
-  };
-
-  function stageTitle(stage) {
-    if (state.language !== "hi") {
-      return stage.title;
-    }
-
-    return STAGE_HI[stage.title]
-      ? `${STAGE_HI[stage.title]} / ${stage.title}`
-      : stage.title;
-  }
 
   /* =======================================================
-     ESCAPE
+     IMPORTANT MATERIAL PARSER
+     -------------------------------------------------------
+     This is the main fix.
+     It accepts the existing material.js structure
+     without requiring units/brands to be present.
      ======================================================= */
 
-  function esc(value) {
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
+  function isMaterialItem(item) {
 
-  /* =======================================================
-     MATERIAL VALIDATION
-     ======================================================= */
-
-  function isMaterialItem(value) {
     return (
-      Array.isArray(value) &&
-      typeof value[0] === "string" &&
-      Array.isArray(value[1]) &&
-      Array.isArray(value[2]) &&
-      Array.isArray(value[3])
+      Array.isArray(item) &&
+      typeof item[0] === "string" &&
+      Array.isArray(item[1])
     );
   }
 
-  function isItemList(value) {
-    return (
-      Array.isArray(value) &&
-      value.length > 0 &&
-      value.every(
-        isMaterialItem
-      )
-    );
-  }
 
-  /* =======================================================
-     NORMALIZE MATERIAL
-     ======================================================= */
-
-  function normalizeItem(
+  function parseMaterialItem(
     item,
     stageIndex,
     sectionName
   ) {
+
     return {
       name:
         item[0] || "",
@@ -892,261 +523,303 @@
     };
   }
 
-  /* =======================================================
-     PARSE MATERIALS
-     ======================================================= */
+
+  function parseItemArray(
+    array,
+    stageIndex,
+    sectionName
+  ) {
+
+    if (!Array.isArray(array)) {
+      return [];
+    }
+
+    return array
+      .filter(isMaterialItem)
+      .map(item =>
+        parseMaterialItem(
+          item,
+          stageIndex,
+          sectionName
+        )
+      );
+  }
+
 
   function parseMaterials() {
-    return RAW_MATERIALS.map(
+
+    const stages = [];
+
+    RAW_MATERIALS.forEach(
       (
-        rawStage,
+        raw,
         stageIndex
       ) => {
 
         if (
-          !Array.isArray(
-            rawStage
-          )
+          !Array.isArray(raw)
         ) {
-          return {
-            code:
-              `STAGE ${
-                stageIndex + 1
-              }`,
-
-            title:
-              `Stage ${
-                stageIndex + 1
-              }`,
-
-            category: "",
-
-            sections: []
-          };
+          return;
         }
 
         const code =
-          rawStage[0] ||
-          `STAGE ${
-            stageIndex + 1
-          }`;
+          typeof raw[0] === "string"
+            ? raw[0]
+            : `STAGE ${stageIndex + 1}`;
 
         const title =
-          rawStage[1] ||
-          code;
+          typeof raw[1] === "string"
+            ? raw[1]
+            : code;
 
         const category =
-          rawStage[2] ||
-          "";
+          typeof raw[2] === "string"
+            ? raw[2]
+            : "";
 
         const sections = [];
 
-        /* Main item list */
 
-        if (
-          isItemList(
-            rawStage[3]
-          )
-        ) {
+        /* -----------------------------------------------
+           Main category items
+           ----------------------------------------------- */
+
+        const mainItems =
+          parseItemArray(
+            raw[3],
+            stageIndex,
+            category
+          );
+
+        if (mainItems.length) {
+
           sections.push({
             name: category,
-
-            items:
-              rawStage[3].map(
-                item =>
-                  normalizeItem(
-                    item,
-                    stageIndex,
-                    category
-                  )
-              )
+            items: mainItems
           });
+
         }
 
-        /* Grouped sections */
+
+        /* -----------------------------------------------
+           Additional grouped sections
+
+           Example:
+
+           [
+             "Installation Material",
+             [
+               ["Tape", ...],
+               ["Solvent Cement", ...]
+             ]
+           ]
+           ----------------------------------------------- */
 
         for (
           let i = 4;
-          i < rawStage.length;
+          i < raw.length;
           i++
         ) {
-          const part =
-            rawStage[i];
+
+          const group =
+            raw[i];
 
           if (
-            Array.isArray(part) &&
-            typeof part[0] ===
-              "string" &&
-            isItemList(part[1])
+            !Array.isArray(group)
           ) {
-            sections.push({
-              name: part[0],
+            continue;
+          }
 
-              items:
-                part[1].map(
-                  item =>
-                    normalizeItem(
-                      item,
-                      stageIndex,
-                      part[0]
-                    )
-                )
+          if (
+            typeof group[0] !==
+            "string"
+          ) {
+            continue;
+          }
+
+          const groupItems =
+            parseItemArray(
+              group[1],
+              stageIndex,
+              group[0]
+            );
+
+          if (
+            groupItems.length
+          ) {
+
+            sections.push({
+              name: group[0],
+              items: groupItems
             });
+
           }
         }
 
-        return {
+
+        stages.push({
           code,
           title,
           category,
           sections
-        };
+        });
+
       }
     );
+
+    return stages;
   }
+
 
   const STAGES =
     parseMaterials();
 
-  /* =======================================================
-     FLAT MATERIAL LIST
-     ======================================================= */
-
-  function getAllItems() {
-    const all = [];
-
-    STAGES.forEach(
-      (
-        stage,
-        stageIndex
-      ) => {
-
-        stage.sections.forEach(
-          (
-            section,
-            sectionIndex
-          ) => {
-
-            section.items.forEach(
-              (
-                item,
-                itemIndex
-              ) => {
-
-                all.push({
-                  ...item,
-
-                  stageIndex,
-
-                  sectionIndex,
-
-                  itemIndex,
-
-                  stageCode:
-                    stage.code,
-
-                  stageTitle:
-                    stage.title,
-
-                  sectionName:
-                    section.name
-                });
-              }
-            );
-          }
-        );
-      }
-    );
-
-    return all;
-  }
 
   /* =======================================================
-     VIEW MODES
+     DEBUG
      ======================================================= */
 
-  const VIEW_MODES = [
-    [
-      "grid",
-      "▦",
-      "Grid"
-    ],
-    [
-      "list",
-      "☷",
-      "List"
-    ],
-    [
-      "compact",
-      "▤",
-      "Compact"
-    ],
-    [
-      "large",
-      "▥",
-      "Large"
-    ],
-    [
-      "mini",
-      "▪",
-      "Mini"
-    ],
-    [
-      "twoColumn",
-      "▦",
-      "2 Column"
-    ],
-    [
-      "horizontal",
-      "▤",
-      "Horizontal"
-    ],
-    [
-      "iconList",
-      "☷",
-      "Icon List"
-    ],
-    [
-      "timeline",
-      "◫",
-      "Timeline"
-    ],
-    [
-      "dense",
-      "≡",
-      "Dense"
+  console.log(
+    "================================"
+  );
+
+  console.log(
+    "Estimate List Parser"
+  );
+
+  console.log(
+    "RAW MATERIALS:",
+    RAW_MATERIALS.length
+  );
+
+  console.log(
+    "PARSED STAGES:",
+    STAGES.length
+  );
+
+  STAGES.forEach(
+    (
+      stage,
+      index
+    ) => {
+
+      console.log(
+        index,
+        stage.code,
+        stage.title,
+        stage.sections
+      );
+
+    }
+  );
+
+  console.log(
+    "================================"
+  );
+
+
+  /* =======================================================
+     STAGE HINDI
+     ======================================================= */
+
+  const STAGE_HI = {
+    "Slab Conduit Installation":
+      "स्लैब कंड्यूट इंस्टॉलेशन",
+
+    "Wall Conduit Installation":
+      "वॉल कंड्यूट इंस्टॉलेशन",
+
+    "Wiring Installation":
+      "वायरिंग इंस्टॉलेशन",
+
+    "Final Electrical Fittings":
+      "फाइनल इलेक्ट्रिकल फिटिंग्स",
+
+    "False Ceiling Wiring Material":
+      "फॉल्स सीलिंग वायरिंग मटेरियल"
+  };
+
+
+  function displayStage(stage) {
+
+    if (
+      state.language !== "hi"
+    ) {
+      return stage.title;
+    }
+
+    return STAGE_HI[
+      stage.title
     ]
-  ];
-
-  function viewIcon(view) {
-    const found =
-      VIEW_MODES.find(
-        item =>
-          item[0] === view
-      );
-
-    return found
-      ? found[1]
-      : "▦";
+      ? `${STAGE_HI[stage.title]} / ${stage.title}`
+      : stage.title;
   }
 
-  function viewLabel(view) {
-    const found =
-      VIEW_MODES.find(
-        item =>
-          item[0] === view
-      );
 
-    return found
-      ? found[2]
-      : "Grid";
+  /* =======================================================
+     ESCAPE
+     ======================================================= */
+
+  function esc(value) {
+    return String(
+      value ?? ""
+    )
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
   }
+
+
+  /* =======================================================
+     VIEW
+     ======================================================= */
+
+  const VIEW_INFO = {
+    grid: ["▦", "Grid"],
+    list: ["☷", "List"],
+    compact: ["▤", "Compact"],
+    large: ["▥", "Large"],
+    mini: ["▪", "Mini"],
+    twoColumn: ["▦", "2 Column"],
+    horizontal: ["▤", "Horizontal"],
+    iconList: ["☷", "Icon List"],
+    timeline: ["◫", "Timeline"],
+    dense: ["≡", "Dense"]
+  };
+
+
+  function viewIcon() {
+    return (
+      VIEW_INFO[
+        state.view
+      ]?.[0] || "▦"
+    );
+  }
+
 
   /* =======================================================
      DRAWER
      ======================================================= */
 
   function openDrawer() {
+
     if (!drawer) return;
 
     state.drawerOpen = true;
@@ -1160,25 +833,23 @@
       "false"
     );
 
-    if (drawerOverlay) {
-      drawerOverlay.classList.add(
-        "show"
-      );
-    }
+    drawerOverlay?.classList.add(
+      "show"
+    );
 
-    if (menuBtn) {
-      menuBtn.classList.add(
-        "open"
-      );
+    menuBtn?.classList.add(
+      "open"
+    );
 
-      menuBtn.setAttribute(
-        "aria-expanded",
-        "true"
-      );
-    }
+    menuBtn?.setAttribute(
+      "aria-expanded",
+      "true"
+    );
   }
 
+
   function closeDrawer() {
+
     if (!drawer) return;
 
     state.drawerOpen = false;
@@ -1192,251 +863,158 @@
       "true"
     );
 
-    if (drawerOverlay) {
-      drawerOverlay.classList.remove(
-        "show"
-      );
-    }
+    drawerOverlay?.classList.remove(
+      "show"
+    );
 
-    if (menuBtn) {
-      menuBtn.classList.remove(
-        "open"
-      );
+    menuBtn?.classList.remove(
+      "open"
+    );
 
-      menuBtn.setAttribute(
-        "aria-expanded",
-        "false"
-      );
-    }
+    menuBtn?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
   }
 
-  if (menuBtn) {
-    menuBtn.addEventListener(
-      "click",
-      () => {
-        if (
-          state.drawerOpen
-        ) {
-          closeDrawer();
-        } else {
-          openDrawer();
-        }
+
+  menuBtn?.addEventListener(
+    "click",
+    () => {
+
+      if (
+        state.drawerOpen
+      ) {
+        closeDrawer();
+      } else {
+        openDrawer();
       }
-    );
-  }
 
-  if (closeMenu) {
-    closeMenu.addEventListener(
-      "click",
-      closeDrawer
-    );
-  }
+    }
+  );
 
-  if (drawerOverlay) {
-    drawerOverlay.addEventListener(
-      "click",
-      closeDrawer
-    );
-  }
 
-  if (drawer) {
-    drawer
-      .querySelectorAll(
-        "[data-page]"
-      )
-      .forEach(button => {
+  closeMenu?.addEventListener(
+    "click",
+    closeDrawer
+  );
 
-        button.addEventListener(
-          "click",
-          () => {
 
-            const page =
-              button.dataset.page;
+  drawerOverlay?.addEventListener(
+    "click",
+    closeDrawer
+  );
 
-            closeDrawer();
 
-            navigate(page);
-          }
-        );
-      });
-  }
+  drawer
+    ?.querySelectorAll(
+      "[data-page]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            button.dataset.page;
+
+          closeDrawer();
+
+          navigate(page);
+
+        }
+      );
+
+    });
+
 
   /* =======================================================
      THEME
      ======================================================= */
 
   function applyTheme() {
+
     document.body.dataset.theme =
       state.theme;
 
     document.documentElement.dataset.theme =
       state.theme;
 
-    if (themeBtn) {
-      themeBtn.setAttribute(
-        "aria-pressed",
-        state.theme === "light"
-          ? "true"
-          : "false"
-      );
-
-      const icon =
-        themeBtn.querySelector(
-          ".themeIcon"
-        );
-
-      if (icon) {
-        icon.textContent =
-          state.theme === "light"
-            ? "🌙"
-            : "☀️";
-      }
-    }
-
-    safeSet(
+    localStorage.setItem(
       CONFIG.themeKey,
       state.theme
     );
   }
 
-  if (themeBtn) {
-    themeBtn.addEventListener(
-      "click",
-      () => {
 
-        state.theme =
-          state.theme === "dark"
-            ? "light"
-            : "dark";
+  themeBtn?.addEventListener(
+    "click",
+    () => {
 
-        applyTheme();
-      }
-    );
-  }
+      state.theme =
+        state.theme === "dark"
+          ? "light"
+          : "dark";
+
+      applyTheme();
+
+    }
+  );
+
 
   /* =======================================================
      LANGUAGE
      ======================================================= */
 
-  function applyLanguage() {
-    safeSet(
-      CONFIG.languageKey,
-      state.language
-    );
+  langBtn?.addEventListener(
+    "click",
+    () => {
 
-    if (langBtn) {
-      langBtn.textContent =
+      state.language =
         state.language === "hi"
-          ? "EN"
-          : "हि";
+          ? "en"
+          : "hi";
+
+      localStorage.setItem(
+        CONFIG.languageKey,
+        state.language
+      );
+
+      renderCurrentPage();
+
     }
+  );
 
-    renderCurrentPage();
-  }
-
-  if (langBtn) {
-    langBtn.addEventListener(
-      "click",
-      () => {
-
-        state.language =
-          state.language === "hi"
-            ? "en"
-            : "hi";
-
-        applyLanguage();
-      }
-    );
-  }
 
   /* =======================================================
-     BOTTOM NAV
+     ROUTE
      ======================================================= */
-
-  function getNavPage(button) {
-    return (
-      button.dataset.page ||
-      button.dataset.nav ||
-      ""
-    );
-  }
-
-  function updateBottomNav() {
-    if (!bottomNav) return;
-
-    bottomNav
-      .querySelectorAll(
-        "[data-page], [data-nav]"
-      )
-      .forEach(button => {
-
-        const page =
-          getNavPage(button);
-
-        button.classList.toggle(
-          "active",
-          page === state.page
-        );
-      });
-  }
-
-  if (bottomNav) {
-    bottomNav
-      .querySelectorAll(
-        "[data-page], [data-nav]"
-      )
-      .forEach(button => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const page =
-              getNavPage(button);
-
-            if (page) {
-              navigate(page);
-            }
-          }
-        );
-      });
-  }
-
-  /* =======================================================
-     ROUTE SNAPSHOT
-     ======================================================= */
-
-  function getRoute() {
-    return {
-      page:
-        state.page,
-
-      stageIndex:
-        state.stageIndex,
-
-      sectionIndex:
-        state.sectionIndex,
-
-      itemIndex:
-        state.itemIndex
-    };
-  }
 
   function saveRoute() {
-    safeSet(
+
+    localStorage.setItem(
       CONFIG.routeKey,
-      JSON.stringify(
-        getRoute()
-      )
+      JSON.stringify({
+        page: state.page,
+        stageIndex:
+          state.stageIndex,
+        sectionIndex:
+          state.sectionIndex,
+        itemIndex:
+          state.itemIndex
+      })
     );
   }
 
+
   function restoreRoute() {
+
     try {
+
       const raw =
-        safeGet(
-          CONFIG.routeKey,
-          null
+        localStorage.getItem(
+          CONFIG.routeKey
         );
 
       if (!raw) return;
@@ -1446,161 +1024,116 @@
 
       if (!route) return;
 
-      const allowedPages = [
-        "home",
-        "stage",
-        "item",
-        "estimate",
-        "calculator",
-        "settings"
-      ];
-
-      if (
-        allowedPages.includes(
-          route.page
-        )
-      ) {
-        state.page =
-          route.page;
-      }
+      state.page =
+        route.page || "home";
 
       state.stageIndex =
-        validIndex(
-          route.stageIndex,
-          STAGES.length
+        Number.isInteger(
+          route.stageIndex
         )
           ? route.stageIndex
           : null;
 
-      if (
-        state.stageIndex !== null
-      ) {
-        const sections =
-          STAGES[
-            state.stageIndex
-          ]?.sections || [];
+      state.sectionIndex =
+        Number.isInteger(
+          route.sectionIndex
+        )
+          ? route.sectionIndex
+          : null;
 
-        state.sectionIndex =
-          validIndex(
-            route.sectionIndex,
-            sections.length
-          )
-            ? route.sectionIndex
-            : null;
+      state.itemIndex =
+        Number.isInteger(
+          route.itemIndex
+        )
+          ? route.itemIndex
+          : null;
 
-        if (
-          state.sectionIndex !== null
-        ) {
-          const items =
-            sections[
-              state.sectionIndex
-            ]?.items || [];
+    } catch {
 
-          state.itemIndex =
-            validIndex(
-              route.itemIndex,
-              items.length
-            )
-              ? route.itemIndex
-              : null;
-        }
-      }
-    } catch (error) {
-      console.warn(
-        "Route restore error:",
-        error
-      );
+      state.page = "home";
+
+      state.stageIndex = null;
+      state.sectionIndex = null;
+      state.itemIndex = null;
+
     }
   }
 
-  function validIndex(
-    value,
-    length
-  ) {
-    return (
-      Number.isInteger(value) &&
-      value >= 0 &&
-      value < length
-    );
-  }
 
   /* =======================================================
      NAVIGATION
      ======================================================= */
 
-  function pushHistory() {
-    state.history.push(
-      getRoute()
-    );
+  function snapshot() {
 
-    /*
-      Keep history manageable.
-    */
-
-    if (
-      state.history.length > 50
-    ) {
-      state.history.shift();
-    }
+    return {
+      page: state.page,
+      stageIndex:
+        state.stageIndex,
+      sectionIndex:
+        state.sectionIndex,
+      itemIndex:
+        state.itemIndex
+    };
   }
+
 
   function navigate(
     page,
-    addHistory = true
+    historyPush = true
   ) {
-    if (!page) {
-      page = "home";
-    }
 
     if (
-      addHistory &&
-      page !== state.page
+      historyPush &&
+      state.page !== page
     ) {
-      pushHistory();
+
+      state.history.push(
+        snapshot()
+      );
+
     }
 
-    state.page = page;
+    state.page =
+      page || "home";
 
     if (
-      page === "home"
-    ) {
-      state.stageIndex = null;
-      state.sectionIndex = null;
-      state.itemIndex = null;
-      state.selectedItem = null;
-      state.editEstimateIndex = -1;
-    }
-
-    if (
+      page === "home" ||
       page === "estimate" ||
       page === "calculator" ||
       page === "settings"
     ) {
+
       state.stageIndex = null;
       state.sectionIndex = null;
       state.itemIndex = null;
       state.selectedItem = null;
       state.editEstimateIndex = -1;
+
     }
 
     renderCurrentPage();
+
     saveRoute();
   }
+
 
   /* =======================================================
      HOME
      ======================================================= */
 
   function renderHome() {
+
     main.innerHTML = `
+
       <section class="page homePage">
 
         <div class="hero">
 
           <div class="heroLogoWrap">
             <img
-              class="heroLogo"
               src="logo.png"
+              class="heroLogo"
               alt="Sandeep ElectroFix"
               onerror="this.style.display='none'"
             >
@@ -1620,6 +1153,7 @@
 
         </div>
 
+
         <div class="searchBox">
 
           <span>⌕</span>
@@ -1631,226 +1165,156 @@
             placeholder="${esc(
               t("search")
             )}"
-            value="${esc(
-              state.search
-            )}"
           >
 
-          ${
-            state.search
-              ? `
-                <button
-                  id="clearHomeSearch"
-                  type="button"
-                  aria-label="Clear"
-                >
-                  ×
-                </button>
-              `
-              : ""
-          }
-
         </div>
+
 
         <div class="stageViewSelector">
 
           <button
             id="viewToggle"
-            class="stageViewBtn"
             type="button"
-            aria-expanded="false"
-            aria-label="${esc(
-              t("chooseView")
-            )}"
           >
-            ${viewIcon(
-              state.view
-            )}
+            ${viewIcon()}
           </button>
 
           <div
             id="viewOptions"
-            class="stageViewOptions"
             hidden
           >
 
-            ${VIEW_MODES.map(
-              view => `
-                <button
-                  type="button"
-                  class="stageViewOption ${
-                    view[0] ===
-                    state.view
-                      ? "active"
-                      : ""
-                  }"
-                  data-view="${
-                    view[0]
-                  }"
-                >
-                  <span>
-                    ${view[1]}
-                  </span>
-
-                  <b>
-                    ${view[2]}
-                  </b>
-                </button>
-              `
-            ).join("")}
+            ${Object.entries(
+              VIEW_INFO
+            )
+              .map(
+                ([key, value]) => `
+                  <button
+                    type="button"
+                    data-view="${key}"
+                    class="${
+                      state.view ===
+                      key
+                        ? "active"
+                        : ""
+                    }"
+                  >
+                    ${value[0]}
+                    ${value[1]}
+                  </button>
+                `
+              )
+              .join("")}
 
           </div>
 
         </div>
 
+
         <div
           id="stageGrid"
-          class="stageGrid ${
-            state.view
-          }"
+          class="stageGrid ${state.view}"
         >
+
           ${renderStageCards()}
+
         </div>
 
       </section>
+
     `;
 
-    bindHomeEvents();
-  }
 
-  function bindHomeEvents() {
-    const search =
-      document.getElementById(
+    document
+      .getElementById(
         "homeSearch"
-      );
-
-    if (search) {
-      search.addEventListener(
+      )
+      ?.addEventListener(
         "input",
-        event => {
+        e => {
 
           state.search =
-            String(
-              event.target.value ||
-                ""
-            )
+            e.target.value
               .trim()
               .toLowerCase();
 
-          renderStageCardsOnly();
-        }
-      );
-    }
-
-    const clear =
-      document.getElementById(
-        "clearHomeSearch"
-      );
-
-    if (clear) {
-      clear.addEventListener(
-        "click",
-        () => {
-
-          state.search = "";
-
-          renderHome();
-
           document
             .getElementById(
-              "homeSearch"
-            )
-            ?.focus();
+              "stageGrid"
+            ).innerHTML =
+              renderStageCards();
+
+          bindStageCards();
+
         }
       );
-    }
 
-    const toggle =
+
+    const viewToggle =
       document.getElementById(
         "viewToggle"
       );
 
-    const options =
+    const viewOptions =
       document.getElementById(
         "viewOptions"
       );
 
-    if (
-      toggle &&
-      options
-    ) {
-      toggle.addEventListener(
-        "click",
-        () => {
 
-          const open =
-            !options.hasAttribute(
-              "hidden"
+    viewToggle?.addEventListener(
+      "click",
+      () => {
+
+        viewOptions.hidden =
+          !viewOptions.hidden;
+
+      }
+    );
+
+
+    viewOptions
+      ?.querySelectorAll(
+        "[data-view]"
+      )
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            state.view =
+              button.dataset.view;
+
+            localStorage.setItem(
+              CONFIG.viewKey,
+              state.view
             );
 
-          if (open) {
-            options.setAttribute(
-              "hidden",
-              ""
-            );
-          } else {
-            options.removeAttribute(
-              "hidden"
-            );
+            renderHome();
+
           }
+        );
 
-          toggle.setAttribute(
-            "aria-expanded",
-            String(!open)
-          );
-        }
-      );
+      });
 
-      options
-        .querySelectorAll(
-          "[data-view]"
-        )
-        .forEach(button => {
-
-          button.addEventListener(
-            "click",
-            () => {
-
-              state.view =
-                button.dataset.view;
-
-              safeSet(
-                CONFIG.viewKey,
-                state.view
-              );
-
-              options.setAttribute(
-                "hidden",
-                ""
-              );
-
-              renderStageCardsOnly();
-            }
-          );
-        });
-    }
 
     bindStageCards();
   }
 
+
   /* =======================================================
-     SEARCH STAGE
+     STAGE SEARCH
      ======================================================= */
 
-  function stageMatchesSearch(
-    stage,
-    query
+  function stageMatches(
+    stage
   ) {
-    if (!query) {
+
+    if (!state.search) {
       return true;
     }
 
-    const parts = [
+    const text = [
       stage.code,
       stage.title,
       stage.category
@@ -1859,21 +1323,21 @@
     stage.sections.forEach(
       section => {
 
-        parts.push(
+        text.push(
           section.name
         );
 
         section.items.forEach(
           item => {
 
-            parts.push(
+            text.push(
               item.name
             );
 
             item.fields.forEach(
               field => {
 
-                parts.push(
+                text.push(
                   field[0]
                 );
 
@@ -1882,186 +1346,152 @@
                     field[1]
                   )
                 ) {
-                  parts.push(
+                  text.push(
                     ...field[1]
                   );
                 }
+
               }
             );
 
-            parts.push(
-              ...item.units
-            );
-
-            parts.push(
-              ...item.brands
-            );
           }
         );
+
       }
     );
 
-    return parts
+
+    return text
       .join(" ")
       .toLowerCase()
-      .includes(query);
+      .includes(
+        state.search
+      );
   }
+
 
   /* =======================================================
      STAGE CARDS
      ======================================================= */
 
-  function renderStageCardsOnly() {
-    const grid =
-      document.getElementById(
-        "stageGrid"
-      );
-
-    if (!grid) {
-      return;
-    }
-
-    grid.className =
-      `stageGrid ${state.view}`;
-
-    grid.innerHTML =
-      renderStageCards();
-
-    bindStageCards();
-  }
-
   function renderStageCards() {
+
     if (!STAGES.length) {
+
       return `
         <div class="emptyState">
-          <h3>
-            Material List Not Found
-          </h3>
+          Material List Not Loaded
         </div>
       `;
+
     }
 
-    const query =
-      state.search;
 
     const html =
-      STAGES.map(
-        (
-          stage,
-          index
-        ) => {
+      STAGES
+        .map(
+          (
+            stage,
+            index
+          ) => {
 
-          if (
-            !stageMatchesSearch(
-              stage,
-              query
-            )
-          ) {
-            return "";
-          }
+            if (
+              !stageMatches(
+                stage
+              )
+            ) {
+              return "";
+            }
 
-          const total =
-            stage.sections.reduce(
-              (
-                total,
-                section
-              ) =>
-                total +
-                section.items.length,
-              0
-            );
+            const count =
+              stage.sections.reduce(
+                (
+                  total,
+                  section
+                ) =>
+                  total +
+                  section.items.length,
+                0
+              );
 
-          return `
-            <button
-              type="button"
-              class="stageCard"
-              data-stage-index="${index}"
-            >
 
-              <div
-                class="stageNumber"
-              >
-                ${esc(
-                  stage.code
-                )}
-              </div>
+            return `
 
-              <div
-                class="stageCardBody"
+              <button
+                type="button"
+                class="stageCard"
+                data-stage="${index}"
               >
 
-                <h3>
+                <div class="stageNumber">
                   ${esc(
-                    stageTitle(
-                      stage
-                    )
+                    stage.code
                   )}
-                </h3>
-
-                <p>
-                  ${esc(
-                    groupName(
-                      stage.category
-                    )
-                  )}
-                </p>
+                </div>
 
                 <div
-                  class="stageMeta"
+                  class="stageCardBody"
                 >
 
-                  <span>
-                    ${total}
+                  <h3>
+                    ${esc(
+                      displayStage(
+                        stage
+                      )
+                    )}
+                  </h3>
+
+                  <p>
+                    ${esc(
+                      displayGroup(
+                        stage.category
+                      )
+                    )}
+                  </p>
+
+                  <small>
+                    ${count}
                     ${
                       state.language ===
                       "hi"
                         ? " सामग्री"
                         : " Materials"
                     }
-                  </span>
-
-                  <span>
-                    ${
-                      stage.sections
-                        .length
-                    }
-                    ${t("groups")}
-                  </span>
+                  </small>
 
                 </div>
 
-              </div>
+                <span
+                  class="stageArrow"
+                >
+                  ›
+                </span>
 
-              <span
-                class="stageArrow"
-              >
-                ›
-              </span>
+              </button>
 
-            </button>
-          `;
-        }
-      ).join("");
+            `;
 
-    if (!html.trim()) {
-      return `
+          }
+        )
+        .join("");
+
+
+    return html ||
+      `
         <div class="emptyState">
-          <h3>
-            ${esc(
-              t("noSearch")
-            )}
-          </h3>
+          ${esc(
+            t("noSearch")
+          )}
         </div>
       `;
-    }
-
-    return html;
   }
 
+
   function bindStageCards() {
+
     document
       .querySelectorAll(
-        "[data-stage-index]"
+        "[data-stage]"
       )
       .forEach(card => {
 
@@ -2071,14 +1501,17 @@
 
             openStage(
               Number(
-                card.dataset
-                  .stageIndex
+                card.dataset.stage
               )
             );
+
           }
         );
+
       });
+
   }
+
 
   /* =======================================================
      OPEN STAGE
@@ -2087,16 +1520,20 @@
   function openStage(
     stageIndex
   ) {
+
     if (
       !STAGES[stageIndex]
     ) {
       return;
     }
 
-    pushHistory();
 
-    state.page =
-      "stage";
+    state.history.push(
+      snapshot()
+    );
+
+
+    state.page = "stage";
 
     state.stageIndex =
       stageIndex;
@@ -2110,27 +1547,34 @@
     state.selectedItem =
       null;
 
-    state.editEstimateIndex =
-      -1;
+    state.search = "";
+
 
     renderStage();
 
     saveRoute();
 
-    scrollTop();
+    window.scrollTo(
+      0,
+      0
+    );
   }
+
 
   /* =======================================================
      STAGE PAGE
      ======================================================= */
 
   function renderStage() {
+
     const stage =
       STAGES[
         state.stageIndex
       ];
 
+
     if (!stage) {
+
       navigate(
         "home",
         false
@@ -2139,7 +1583,9 @@
       return;
     }
 
+
     main.innerHTML = `
+
       <section
         class="page stagePage"
       >
@@ -2154,9 +1600,8 @@
           )}
         </button>
 
-        <div
-          class="stageHead"
-        >
+
+        <div class="stageHead">
 
           <div
             class="stageHeadNumber"
@@ -2167,9 +1612,10 @@
           </div>
 
           <div>
+
             <h2>
               ${esc(
-                stageTitle(
+                displayStage(
                   stage
                 )
               )}
@@ -2177,25 +1623,24 @@
 
             <p>
               ${esc(
-                groupName(
+                displayGroup(
                   stage.category
                 )
               )}
             </p>
+
           </div>
 
         </div>
 
-        <div
-          class="stageSearchBox"
-        >
+
+        <div class="stageSearchBox">
 
           <span>⌕</span>
 
           <input
             id="materialSearch"
             type="search"
-            autocomplete="off"
             placeholder="${esc(
               t("search")
             )}"
@@ -2203,17 +1648,22 @@
 
         </div>
 
+
         <div
-          class="stageSections"
           id="stageSections"
+          class="stageSections"
         >
+
           ${renderSections(
             stage
           )}
+
         </div>
 
       </section>
+
     `;
+
 
     document
       .getElementById(
@@ -2221,52 +1671,56 @@
       )
       ?.addEventListener(
         "click",
-        () => {
-          goBack();
-        }
+        goBack
       );
 
-    const search =
-      document.getElementById(
+
+    document
+      .getElementById(
         "materialSearch"
-      );
-
-    if (search) {
-      search.addEventListener(
+      )
+      ?.addEventListener(
         "input",
-        event => {
+        e => {
 
           state.search =
-            String(
-              event.target.value ||
-                ""
-            )
+            e.target.value
               .trim()
               .toLowerCase();
 
-          renderSectionsOnly(
-            stage
-          );
+          document
+            .getElementById(
+              "stageSections"
+            ).innerHTML =
+              renderSections(
+                stage
+              );
+
+          bindItemCards();
+
         }
       );
-    }
+
 
     bindItemCards();
 
-    scrollTop();
+    window.scrollTo(
+      0,
+      0
+    );
   }
 
+
   /* =======================================================
-     RENDER SECTIONS
+     SECTIONS
      ======================================================= */
 
   function renderSections(
     stage
   ) {
-    const query =
-      state.search;
 
-    let sectionHTML = "";
+    let output = "";
+
 
     stage.sections.forEach(
       (
@@ -2274,23 +1728,24 @@
         sectionIndex
       ) => {
 
-        const matchingItems =
+        const items =
           section.items.filter(
             item =>
-              itemMatchesSearch(
-                item,
-                query
+              itemMatches(
+                item
               )
           );
 
+
         if (
-          query &&
-          !matchingItems.length
+          !items.length
         ) {
           return;
         }
 
-        sectionHTML += `
+
+        output += `
+
           <section
             class="materialSection"
           >
@@ -2307,7 +1762,7 @@
 
               <h3>
                 ${esc(
-                  groupName(
+                  displayGroup(
                     section.name
                   )
                 )}
@@ -2315,27 +1770,52 @@
 
             </div>
 
+
             <div
-              class="itemGrid ${
-                state.view
-              }"
+              class="itemGrid ${state.view}"
             >
 
               ${
-                matchingItems
+                items
                   .map(
                     item => {
 
-                      const realIndex =
+                      const itemIndex =
                         section.items.indexOf(
                           item
                         );
 
-                      return renderItemCard(
-                        item,
-                        sectionIndex,
-                        realIndex
-                      );
+                      return `
+                        <button
+                          type="button"
+                          class="itemCard"
+                          data-section="${sectionIndex}"
+                          data-item="${itemIndex}"
+                        >
+
+                          <div
+                            class="itemHead"
+                          >
+
+                            <h3>
+                              ${esc(
+                                displayMaterial(
+                                  item.name
+                                )
+                              )}
+                            </h3>
+
+                          </div>
+
+                          <span
+                            class="itemArrow"
+                          >
+                            ›
+                          </span>
+
+                        </button>
+                      `;
+
                     }
                   )
                   .join("")
@@ -2344,63 +1824,38 @@
             </div>
 
           </section>
+
         `;
+
       }
     );
 
-    if (!sectionHTML) {
-      return `
-        <div
-          class="emptyState"
-        >
-          <h3>
-            ${esc(
-              t("noSearch")
-            )}
-          </h3>
+
+    return output ||
+      `
+        <div class="emptyState">
+          ${esc(
+            t("noSearch")
+          )}
         </div>
       `;
-    }
-
-    return sectionHTML;
   }
 
-  function renderSectionsOnly(
-    stage
+
+  function itemMatches(
+    item
   ) {
-    const container =
-      document.getElementById(
-        "stageSections"
-      );
 
-    if (!container) {
-      return;
-    }
-
-    container.innerHTML =
-      renderSections(
-        stage
-      );
-
-    bindItemCards();
-  }
-
-  /* =======================================================
-     ITEM SEARCH
-     ======================================================= */
-
-  function itemMatchesSearch(
-    item,
-    query
-  ) {
-    if (!query) {
+    if (!state.search) {
       return true;
     }
+
 
     const values = [
       item.name,
       item.section
     ];
+
 
     item.fields.forEach(
       field => {
@@ -2414,120 +1869,31 @@
             field[1]
           )
         ) {
+
           values.push(
             ...field[1]
           );
+
         }
+
       }
     );
 
-    values.push(
-      ...item.units
-    );
-
-    values.push(
-      ...item.brands
-    );
 
     return values
       .join(" ")
       .toLowerCase()
-      .includes(query);
+      .includes(
+        state.search
+      );
   }
 
-  /* =======================================================
-     ITEM CARD
-     ======================================================= */
-
-  function renderItemCard(
-    item,
-    sectionIndex,
-    itemIndex
-  ) {
-    const firstField =
-      item.fields?.[0];
-
-    let preview = "";
-
-    if (
-      firstField &&
-      Array.isArray(
-        firstField[1]
-      ) &&
-      firstField[1].length
-    ) {
-      preview =
-        `${firstField[0]}: ${firstField[1][0]}`;
-    }
-
-    return `
-      <button
-        type="button"
-        class="itemCard"
-        data-section-index="${sectionIndex}"
-        data-item-index="${itemIndex}"
-      >
-
-        <div
-          class="itemIcon"
-        >
-          ⚡
-        </div>
-
-        <div
-          class="itemHead"
-        >
-
-          <h3>
-            ${esc(
-              materialName(
-                item.name
-              )
-            )}
-          </h3>
-
-          <small>
-            ${
-              item.fields.length
-            }
-            ${
-              state.language ===
-              "hi"
-                ? " विकल्प"
-                : " options"
-            }
-          </small>
-
-        </div>
-
-        ${
-          preview
-            ? `
-              <div
-                class="itemPreview"
-              >
-                ${esc(
-                  preview
-                )}
-              </div>
-            `
-            : ""
-        }
-
-        <span
-          class="itemArrow"
-        >
-          ›
-        </span>
-
-      </button>
-    `;
-  }
 
   function bindItemCards() {
+
     document
       .querySelectorAll(
-        "[data-section-index][data-item-index]"
+        "[data-section][data-item]"
       )
       .forEach(card => {
 
@@ -2538,18 +1904,20 @@
             openItem(
               state.stageIndex,
               Number(
-                card.dataset
-                  .sectionIndex
+                card.dataset.section
               ),
               Number(
-                card.dataset
-                  .itemIndex
+                card.dataset.item
               )
             );
+
           }
         );
+
       });
+
   }
+
 
   /* =======================================================
      OPEN ITEM
@@ -2560,6 +1928,7 @@
     sectionIndex,
     itemIndex
   ) {
+
     const item =
       getItem(
         stageIndex,
@@ -2567,7 +1936,9 @@
         itemIndex
       );
 
+
     if (!item) {
+
       showToast(
         t("noMaterial")
       );
@@ -2575,10 +1946,13 @@
       return;
     }
 
-    pushHistory();
 
-    state.page =
-      "item";
+    state.history.push(
+      snapshot()
+    );
+
+
+    state.page = "item";
 
     state.stageIndex =
       stageIndex;
@@ -2595,22 +1969,24 @@
     state.editEstimateIndex =
       -1;
 
-    renderItemEditor();
+
+    renderItem();
 
     saveRoute();
 
-    scrollTop();
+    window.scrollTo(
+      0,
+      0
+    );
   }
 
-  /* =======================================================
-     GET ITEM
-     ======================================================= */
 
   function getItem(
     stageIndex,
     sectionIndex,
     itemIndex
   ) {
+
     const stage =
       STAGES[
         stageIndex
@@ -2619,6 +1995,7 @@
     if (!stage) {
       return null;
     }
+
 
     const section =
       stage.sections[
@@ -2629,23 +2006,21 @@
       return null;
     }
 
-    const item =
+
+    return (
       section.items[
         itemIndex
-      ];
-
-    if (!item) {
-      return null;
-    }
-
-    return item;
+      ] || null
+    );
   }
 
+
   /* =======================================================
-     ITEM EDITOR
+     ITEM PAGE
      ======================================================= */
 
-  function renderItemEditor() {
+  function renderItem() {
+
     const item =
       state.selectedItem ||
       getItem(
@@ -2654,7 +2029,9 @@
         state.itemIndex
       );
 
+
     if (!item) {
+
       navigate(
         "stage",
         false
@@ -2663,6 +2040,7 @@
       return;
     }
 
+
     const existing =
       state.editEstimateIndex >= 0
         ? state.estimateItems[
@@ -2670,10 +2048,13 @@
           ]
         : null;
 
+
     const values =
       existing?.values || {};
 
+
     main.innerHTML = `
+
       <section
         class="page itemPage"
       >
@@ -2688,9 +2069,8 @@
           )}
         </button>
 
-        <div
-          class="stageHead"
-        >
+
+        <div class="stageHead">
 
           <div
             class="stageHeadNumber"
@@ -2706,7 +2086,7 @@
 
             <h2>
               ${esc(
-                materialName(
+                displayMaterial(
                   item.name
                 )
               )}
@@ -2714,7 +2094,7 @@
 
             <p>
               ${esc(
-                groupName(
+                displayGroup(
                   item.section
                 )
               )}
@@ -2724,92 +2104,138 @@
 
         </div>
 
+
         <form
           id="materialForm"
           class="materialForm"
-          novalidate
         >
 
-          <div
-            class="formCard"
-          >
+          ${renderFields(
+            item,
+            values
+          )}
 
-            ${renderFields(
-              item,
-              values
-            )}
 
-            ${renderQuantity(
-              values
-            )}
+          <div class="field">
 
-            ${renderUnit(
-              item,
-              values
-            )}
+            <label>
+              ${esc(
+                t("quantity")
+              )}
 
-            ${renderBrand(
-              item,
-              values
-            )}
-
-            <div
-              class="editorButtons"
-            >
-
-              <button
-                type="submit"
-                class="primary"
+              <span
+                class="required"
               >
-                ${
-                  existing
-                    ? esc(
-                        t("update")
-                      )
-                    : esc(
-                        t("add")
-                      )
-                }
-              </button>
+                *
+              </span>
+            </label>
+
+
+            <div class="qtyRow">
 
               <button
                 type="button"
-                id="nextBtn"
-                class="secondary"
+                id="qtyMinus"
               >
-                ${esc(
-                  t("next")
-                )}
-                →
+                −
+              </button>
+
+              <input
+                id="quantity"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputmode="decimal"
+                value="${esc(
+                  values.quantity ||
+                    ""
+                )}"
+              >
+
+              <button
+                type="button"
+                id="qtyPlus"
+              >
+                +
               </button>
 
             </div>
 
           </div>
 
+
+          ${renderUnits(
+            item,
+            values
+          )}
+
+
+          ${renderBrands(
+            item,
+            values
+          )}
+
+
+          <div
+            class="editorButtons"
+          >
+
+            <button
+              type="submit"
+              class="primary"
+            >
+              ${
+                existing
+                  ? esc(
+                      t("update")
+                    )
+                  : esc(
+                      t("add")
+                    )
+              }
+            </button>
+
+
+            <button
+              type="button"
+              id="nextBtn"
+              class="secondary"
+            >
+              ${esc(
+                t("next")
+              )}
+              →
+            </button>
+
+          </div>
+
         </form>
 
       </section>
+
     `;
 
-    bindEditor(
+
+    bindItemForm(
       item
     );
 
-    scrollTop();
+
+    window.scrollTo(
+      0,
+      0
+    );
   }
 
+
   /* =======================================================
-     DYNAMIC FIELDS
+     FIELDS
      ======================================================= */
 
   function renderFields(
     item,
     values
   ) {
-    if (!item.fields.length) {
-      return "";
-    }
 
     return item.fields
       .map(
@@ -2819,10 +2245,7 @@
         ) => {
 
           const label =
-            field[0] ||
-            `Option ${
-              index + 1
-            }`;
+            field[0] || "";
 
           const options =
             Array.isArray(
@@ -2831,15 +2254,16 @@
               ? field[1]
               : [];
 
+
           const current =
             values[
               `field_${index}`
             ] || "";
 
+
           return `
-            <div
-              class="field"
-            >
+
+            <div class="field">
 
               <label>
                 ${esc(
@@ -2855,14 +2279,14 @@
                 </span>
               </label>
 
-              <div
-                class="choices"
-              >
+
+              <div class="choices">
 
                 ${
                   options
                     .map(
                       option => `
+
                         <button
                           type="button"
                           class="choice ${
@@ -2880,12 +2304,14 @@
                             option
                           )}
                         </button>
+
                       `
                     )
                     .join("")
                 }
 
               </div>
+
 
               <input
                 type="hidden"
@@ -2896,120 +2322,60 @@
               >
 
             </div>
+
           `;
+
         }
       )
       .join("");
   }
 
-  /* =======================================================
-     QUANTITY
-     ======================================================= */
-
-  function renderQuantity(
-    values
-  ) {
-    return `
-      <div
-        class="field quantityField"
-      >
-
-        <label>
-          ${esc(
-            t("quantity")
-          )}
-
-          <span
-            class="required"
-          >
-            *
-          </span>
-        </label>
-
-        <div
-          class="qtyRow"
-        >
-
-          <button
-            type="button"
-            id="qtyMinus"
-            class="qtyMinus"
-          >
-            −
-          </button>
-
-          <input
-            id="quantity"
-            type="number"
-            min="0.01"
-            step="0.01"
-            inputmode="decimal"
-            value="${esc(
-              values.quantity ||
-                ""
-            )}"
-            required
-          >
-
-          <button
-            type="button"
-            id="qtyPlus"
-            class="qtyPlus"
-          >
-            +
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
 
   /* =======================================================
-     UNIT
+     UNITS
      ======================================================= */
 
-  function getDefaultUnit(
+  function renderUnits(
     item,
     values
   ) {
-    if (
-      values.unit &&
-      item.units.includes(
-        values.unit
-      )
-    ) {
-      return values.unit;
-    }
 
     if (
-      state.lastUnit &&
-      item.units.includes(
-        state.lastUnit
-      )
+      !item.units.length
     ) {
-      return state.lastUnit;
+      return "";
     }
 
-    return (
-      item.units[0] || ""
-    );
-  }
 
-  function renderUnit(
-    item,
-    values
-  ) {
-    const unit =
-      getDefaultUnit(
-        item,
-        values
-      );
+    let selected =
+      values.unit || "";
+
+
+    if (
+      !item.units.includes(
+        selected
+      )
+    ) {
+
+      if (
+        state.lastUnit &&
+        item.units.includes(
+          state.lastUnit
+        )
+      ) {
+        selected =
+          state.lastUnit;
+      } else {
+        selected =
+          item.units[0];
+      }
+
+    }
+
 
     return `
-      <div
-        class="field"
-      >
+
+      <div class="field">
 
         <label>
           ${esc(
@@ -3025,30 +2391,31 @@
           </span>
         </label>
 
-        <div
-          class="choices"
-        >
+
+        <div class="choices">
 
           ${
             item.units
               .map(
-                option => `
+                unit => `
+
                   <button
                     type="button"
-                    class="choice unitChoice ${
-                      unit ===
-                      option
+                    class="choice ${
+                      selected ===
+                      unit
                         ? "selected"
                         : ""
                     }"
                     data-unit="${esc(
-                      option
+                      unit
                     )}"
                   >
                     ${esc(
-                      option
+                      unit
                     )}
                   </button>
+
                 `
               )
               .join("")
@@ -3056,39 +2423,40 @@
 
         </div>
 
+
         <input
           type="hidden"
           id="unit"
           value="${esc(
-            unit
+            selected
           )}"
         >
 
       </div>
+
     `;
   }
 
+
   /* =======================================================
-     BRAND
+     BRANDS
      ======================================================= */
 
-  function renderBrand(
+  function renderBrands(
     item,
     values
   ) {
+
     if (
       !item.brands.length
     ) {
       return "";
     }
 
-    const brand =
-      values.brand || "";
 
     return `
-      <div
-        class="field"
-      >
+
+      <div class="field">
 
         <label>
           ${esc(
@@ -3104,30 +2472,31 @@
           </span>
         </label>
 
-        <div
-          class="choices"
-        >
+
+        <div class="choices">
 
           ${
             item.brands
               .map(
-                option => `
+                brand => `
+
                   <button
                     type="button"
-                    class="choice brandChoice ${
-                      brand ===
-                      option
+                    class="choice ${
+                      values.brand ===
+                      brand
                         ? "selected"
                         : ""
                     }"
                     data-brand="${esc(
-                      option
+                      brand
                     )}"
                   >
                     ${esc(
-                      option
+                      brand
                     )}
                   </button>
+
                 `
               )
               .join("")
@@ -3135,29 +2504,28 @@
 
         </div>
 
+
         <input
           type="hidden"
           id="brand"
           value="${esc(
-            brand
+            values.brand || ""
           )}"
         >
 
       </div>
+
     `;
   }
 
+
   /* =======================================================
-     EDITOR BIND
+     ITEM FORM
      ======================================================= */
 
-  function bindEditor(
+  function bindItemForm(
     item
   ) {
-    const form =
-      document.getElementById(
-        "materialForm"
-      );
 
     document
       .getElementById(
@@ -3165,10 +2533,9 @@
       )
       ?.addEventListener(
         "click",
-        () => {
-          goBack();
-        }
+        goBack
       );
+
 
     /* Dynamic fields */
 
@@ -3176,141 +2543,144 @@
       .querySelectorAll(
         "[data-field]"
       )
-      .forEach(
-        button => {
+      .forEach(button => {
 
-          button.addEventListener(
-            "click",
-            () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-              const index =
-                button.dataset
-                  .field;
+            const index =
+              button.dataset.field;
 
-              const hidden =
-                document.getElementById(
-                  `field_${index}`
-                );
-
-              if (!hidden) {
-                return;
-              }
-
-              hidden.value =
-                button.dataset
-                  .value ||
-                "";
-
-              document
-                .querySelectorAll(
-                  `[data-field="${index}"]`
-                )
-                .forEach(
-                  element =>
-                    element.classList.remove(
-                      "selected"
-                    )
-                );
-
-              button.classList.add(
-                "selected"
+            const input =
+              document.getElementById(
+                `field_${index}`
               );
-            }
-          );
-        }
-      );
 
-    /* Unit */
+            if (!input) {
+              return;
+            }
+
+            input.value =
+              button.dataset.value ||
+              "";
+
+
+            document
+              .querySelectorAll(
+                `[data-field="${index}"]`
+              )
+              .forEach(
+                el =>
+                  el.classList.remove(
+                    "selected"
+                  )
+              );
+
+
+            button.classList.add(
+              "selected"
+            );
+
+          }
+        );
+
+      });
+
+
+    /* Units */
 
     document
       .querySelectorAll(
         "[data-unit]"
       )
-      .forEach(
-        button => {
+      .forEach(button => {
 
-          button.addEventListener(
-            "click",
-            () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-              const input =
-                document.getElementById(
-                  "unit"
-                );
-
-              if (!input) {
-                return;
-              }
-
-              input.value =
-                button.dataset
-                  .unit ||
-                "";
-
-              document
-                .querySelectorAll(
-                  "[data-unit]"
-                )
-                .forEach(
-                  element =>
-                    element.classList.remove(
-                      "selected"
-                    )
-                );
-
-              button.classList.add(
-                "selected"
+            const input =
+              document.getElementById(
+                "unit"
               );
-            }
-          );
-        }
-      );
 
-    /* Brand */
+            if (!input) {
+              return;
+            }
+
+            input.value =
+              button.dataset.unit;
+
+
+            document
+              .querySelectorAll(
+                "[data-unit]"
+              )
+              .forEach(
+                el =>
+                  el.classList.remove(
+                    "selected"
+                  )
+              );
+
+
+            button.classList.add(
+              "selected"
+            );
+
+          }
+        );
+
+      });
+
+
+    /* Brands */
 
     document
       .querySelectorAll(
         "[data-brand]"
       )
-      .forEach(
-        button => {
+      .forEach(button => {
 
-          button.addEventListener(
-            "click",
-            () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-              const input =
-                document.getElementById(
-                  "brand"
-                );
-
-              if (!input) {
-                return;
-              }
-
-              input.value =
-                button.dataset
-                  .brand ||
-                "";
-
-              document
-                .querySelectorAll(
-                  "[data-brand]"
-                )
-                .forEach(
-                  element =>
-                    element.classList.remove(
-                      "selected"
-                    )
-                );
-
-              button.classList.add(
-                "selected"
+            const input =
+              document.getElementById(
+                "brand"
               );
+
+            if (!input) {
+              return;
             }
-          );
-        }
-      );
+
+            input.value =
+              button.dataset.brand;
+
+
+            document
+              .querySelectorAll(
+                "[data-brand]"
+              )
+              .forEach(
+                el =>
+                  el.classList.remove(
+                    "selected"
+                  )
+              );
+
+
+            button.classList.add(
+              "selected"
+            );
+
+          }
+        );
+
+      });
+
 
     /* Quantity */
 
@@ -3319,82 +2689,73 @@
         "quantity"
       );
 
-    const minus =
-      document.getElementById(
+
+    document
+      .getElementById(
         "qtyMinus"
-      );
-
-    const plus =
-      document.getElementById(
-        "qtyPlus"
-      );
-
-    if (
-      minus &&
-      quantity
-    ) {
-      minus.addEventListener(
+      )
+      ?.addEventListener(
         "click",
         () => {
 
-          let value =
+          const value =
             Number(
-              quantity.value ||
-                0
-            );
-
-          value =
-            Math.max(
-              0,
-              value - 1
+              quantity.value || 0
             );
 
           quantity.value =
-            value > 0
-              ? value
+            value > 1
+              ? value - 1
               : "";
+
         }
       );
-    }
 
-    if (
-      plus &&
-      quantity
-    ) {
-      plus.addEventListener(
+
+    document
+      .getElementById(
+        "qtyPlus"
+      )
+      ?.addEventListener(
         "click",
         () => {
 
-          let value =
+          const value =
             Number(
-              quantity.value ||
-                0
+              quantity.value || 0
             );
 
-          value += 1;
-
           quantity.value =
-            value;
+            value + 1;
+
         }
       );
-    }
+
 
     /* Submit */
 
-    if (form) {
-      form.addEventListener(
+    document
+      .getElementById(
+        "materialForm"
+      )
+      ?.addEventListener(
         "submit",
         event => {
 
           event.preventDefault();
 
-          if (
-            !quantity ||
-            !quantity.value ||
+
+          const qty =
             Number(
-              quantity.value
-            ) <= 0
+              quantity?.value || 0
+            );
+
+
+          if (
+            !qty ||
+            qty <= 0
           ) {
+
             showToast(
               t(
                 "enterQuantity"
@@ -3406,7 +2767,9 @@
             return;
           }
 
+
           const values = {};
+
 
           item.fields.forEach(
             (
@@ -3414,66 +2777,71 @@
               index
             ) => {
 
-              const input =
-                document.getElementById(
-                  `field_${index}`
-                );
-
               values[
                 `field_${index}`
               ] =
-                input?.value ||
-                "";
+                document
+                  .getElementById(
+                    `field_${index}`
+                  )
+                  ?.value || "";
+
             }
           );
+
 
           values.quantity =
             quantity.value;
 
-          const unitInput =
-            document.getElementById(
-              "unit"
-            );
 
           values.unit =
-            unitInput?.value ||
-            item.units[0] ||
+            document
+              .getElementById(
+                "unit"
+              )
+              ?.value ||
             "";
 
-          const brandInput =
-            document.getElementById(
-              "brand"
-            );
 
           values.brand =
-            brandInput?.value ||
+            document
+              .getElementById(
+                "brand"
+              )
+              ?.value ||
             "";
 
-          /*
-            Carry unit forward.
-          */
 
           if (
             values.unit
           ) {
+
             state.lastUnit =
               values.unit;
 
-            safeSet(
+            localStorage.setItem(
               CONFIG.unitKey,
               values.unit
             );
+
           }
 
+
           const record = {
+
             id:
-              state.editEstimateIndex >= 0
+              state.editEstimateIndex >=
+              0
                 ? state
                     .estimateItems[
                       state
                         .editEstimateIndex
                     ].id
-                : createId(),
+                : Date.now() +
+                  "_" +
+                  Math.random()
+                    .toString(36)
+                    .slice(2),
 
             stage:
               STAGES[
@@ -3503,15 +2871,10 @@
             values,
 
             createdAt:
-              state.editEstimateIndex >=
-              0
-                ? state
-                    .estimateItems[
-                      state
-                        .editEstimateIndex
-                    ].createdAt
-                : Date.now()
+              Date.now()
+
           };
+
 
           /* UPDATE */
 
@@ -3519,6 +2882,7 @@
             state.editEstimateIndex >=
             0
           ) {
+
             state.estimateItems[
               state.editEstimateIndex
             ] = record;
@@ -3532,16 +2896,13 @@
             state.editEstimateIndex =
               -1;
 
-            /*
-              After edit go to estimate.
-            */
-
             navigate(
               "estimate"
             );
 
             return;
           }
+
 
           /* ADD */
 
@@ -3555,17 +2916,18 @@
             t("saved")
           );
 
+
           /*
-            Add completed.
-            Open next item.
+             IMPORTANT:
+             Add के बाद next item.
+             Next अपने आप save नहीं करता.
           */
 
           openNextItem();
+
         }
       );
-    }
 
-    /* Next */
 
     document
       .getElementById(
@@ -3575,35 +2937,20 @@
         "click",
         () => {
 
-          /*
-            IMPORTANT:
-            Next NEVER saves current data.
-          */
-
           openNextItem();
+
         }
       );
+
   }
 
-  /* =======================================================
-     CREATE ID
-     ======================================================= */
-
-  function createId() {
-    return (
-      Date.now() +
-      "_" +
-      Math.random()
-        .toString(36)
-        .slice(2)
-    );
-  }
 
   /* =======================================================
      NEXT ITEM
      ======================================================= */
 
-  function getNextPosition() {
+  function getNextItemPosition() {
+
     const stage =
       STAGES[
         state.stageIndex
@@ -3613,92 +2960,94 @@
       return null;
     }
 
-    let sectionIndex =
+
+    const currentSection =
       state.sectionIndex;
 
-    let itemIndex =
+    const currentItem =
       state.itemIndex;
 
+
     if (
-      sectionIndex === null ||
-      itemIndex === null
+      currentSection === null ||
+      currentItem === null
     ) {
       return null;
     }
 
+
     /*
-      Next item in same section.
+      Same section
     */
 
     if (
       stage.sections[
-        sectionIndex
+        currentSection
       ] &&
-      itemIndex + 1 <
+      currentItem + 1 <
         stage.sections[
-          sectionIndex
+          currentSection
         ].items.length
     ) {
+
       return {
-        sectionIndex,
+        sectionIndex:
+          currentSection,
+
         itemIndex:
-          itemIndex + 1
+          currentItem + 1
       };
+
     }
 
+
     /*
-      Next section.
+      Next section
     */
 
     for (
-      let si =
-        sectionIndex + 1;
-      si <
+      let s =
+        currentSection + 1;
+      s <
       stage.sections.length;
-      si++
+      s++
     ) {
+
       if (
         stage.sections[
-          si
+          s
         ].items.length
       ) {
+
         return {
-          sectionIndex: si,
+          sectionIndex: s,
           itemIndex: 0
         };
+
       }
+
     }
+
 
     return null;
   }
 
+
   function openNextItem() {
+
     const next =
-      getNextPosition();
+      getNextItemPosition();
+
 
     if (!next) {
-      showToast(
-        t(
-          "stageComplete"
-        )
-      );
 
-      /*
-        Stay on current item.
-        User can press Back.
-      */
+      showToast(
+        t("complete")
+      );
 
       return;
     }
 
-    /*
-      DO NOT push another
-      useless browser-history
-      entry here.
-    */
-
-    state.stageIndex =
-      state.stageIndex;
 
     state.sectionIndex =
       next.sectionIndex;
@@ -3713,128 +3062,36 @@
         state.itemIndex
       );
 
-    state.editEstimateIndex =
-      -1;
-
     state.page =
       "item";
-
-    renderItemEditor();
-
-    saveRoute();
-
-    scrollTop();
-  }
-
-  /* =======================================================
-     PREVIOUS ITEM
-     ======================================================= */
-
-  function openPreviousItem() {
-    const stage =
-      STAGES[
-        state.stageIndex
-      ];
-
-    if (!stage) {
-      return;
-    }
-
-    let sectionIndex =
-      state.sectionIndex;
-
-    let itemIndex =
-      state.itemIndex;
-
-    if (
-      itemIndex > 0
-    ) {
-      openItemWithoutHistory(
-        state.stageIndex,
-        sectionIndex,
-        itemIndex - 1
-      );
-
-      return;
-    }
-
-    for (
-      let si =
-        sectionIndex - 1;
-      si >= 0;
-      si--
-    ) {
-      const items =
-        stage.sections[
-          si
-        ].items;
-
-      if (items.length) {
-        openItemWithoutHistory(
-          state.stageIndex,
-          si,
-          items.length - 1
-        );
-
-        return;
-      }
-    }
-
-    goBack();
-  }
-
-  function openItemWithoutHistory(
-    stageIndex,
-    sectionIndex,
-    itemIndex
-  ) {
-    const item =
-      getItem(
-        stageIndex,
-        sectionIndex,
-        itemIndex
-      );
-
-    if (!item) {
-      return;
-    }
-
-    state.page =
-      "item";
-
-    state.stageIndex =
-      stageIndex;
-
-    state.sectionIndex =
-      sectionIndex;
-
-    state.itemIndex =
-      itemIndex;
-
-    state.selectedItem =
-      item;
 
     state.editEstimateIndex =
       -1;
 
-    renderItemEditor();
+
+    renderItem();
 
     saveRoute();
+
+    window.scrollTo(
+      0,
+      0
+    );
+
   }
 
+
   /* =======================================================
-     ESTIMATE PAGE
+     ESTIMATE
      ======================================================= */
 
   function renderEstimate() {
-    main.innerHTML = `
-      <section
-        class="page estimatePage"
-      >
 
-        <div
-          class="pageTitle"
-        >
+    main.innerHTML = `
+
+      <section class="page">
+
+        <div class="pageTitle">
 
           <h2>
             ${esc(
@@ -3852,10 +3109,13 @@
 
         </div>
 
+
         ${
-          state.estimateItems
+          state
+            .estimateItems
             .length
             ? `
+
               <div
                 class="estimateList"
               >
@@ -3868,15 +3128,107 @@
                         record,
                         index
                       ) =>
-                        renderEstimateRecord(
-                          record,
-                          index
-                        )
+                        `
+                          <div
+                            class="estimateCard"
+                            data-estimate="${index}"
+                          >
+
+                            <h3>
+                              ${esc(
+                                displayMaterial(
+                                  record.material
+                                )
+                              )}
+                            </h3>
+
+                            <p>
+                              ${esc(
+                                record.stage
+                              )}
+                              •
+                              ${esc(
+                                record.section
+                              )}
+                            </p>
+
+                            <p>
+                              ${esc(
+                                t(
+                                  "quantity"
+                                )
+                              )}
+                              :
+                              ${esc(
+                                record
+                                  .values
+                                  ?.quantity ||
+                                  ""
+                              )}
+                              ${esc(
+                                record
+                                  .values
+                                  ?.unit ||
+                                  ""
+                              )}
+                            </p>
+
+                            ${
+                              record
+                                .values
+                                ?.brand
+                                ? `
+                                  <p>
+                                    ${esc(
+                                      t(
+                                        "brand"
+                                      )
+                                    )}
+                                    :
+                                    ${esc(
+                                      record
+                                        .values
+                                        .brand
+                                    )}
+                                  </p>
+                                `
+                                : ""
+                            }
+
+                            <div
+                              class="estimateActions"
+                            >
+
+                              <button
+                                type="button"
+                                class="secondary"
+                                data-edit="${index}"
+                              >
+                                ${esc(
+                                  t("edit")
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                class="danger"
+                                data-delete="${index}"
+                              >
+                                ${esc(
+                                  t("delete")
+                                )}
+                              </button>
+
+                            </div>
+
+                          </div>
+                        `
                     )
                     .join("")
                 }
 
               </div>
+
 
               <button
                 id="clearEstimate"
@@ -3884,59 +3236,90 @@
                 type="button"
               >
                 ${esc(
-                  t(
-                    "clearEstimate"
-                  )
+                  t("clear")
                 )}
               </button>
+
             `
             : `
-              <div
-                class="emptyState"
-              >
 
-                <div
-                  class="emptyIcon"
-                >
+              <div class="emptyState">
+
+                <div>
                   ▤
                 </div>
 
                 <h3>
                   ${esc(
-                    t(
-                      "estimateEmpty"
-                    )
+                    t("empty")
                   )}
                 </h3>
 
               </div>
+
             `
         }
 
       </section>
+
     `;
+
 
     document
       .querySelectorAll(
-        "[data-estimate-index]"
+        "[data-edit]"
       )
-      .forEach(
-        card => {
+      .forEach(button => {
 
-          card.addEventListener(
-            "click",
-            () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-              editEstimate(
-                Number(
-                  card.dataset
-                    .estimateIndex
-                )
+            editEstimate(
+              Number(
+                button.dataset.edit
+              )
+            );
+
+          }
+        );
+
+      });
+
+
+    document
+      .querySelectorAll(
+        "[data-delete]"
+      )
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const index =
+              Number(
+                button.dataset.delete
               );
-            }
-          );
-        }
-      );
+
+            state.estimateItems.splice(
+              index,
+              1
+            );
+
+            saveEstimate();
+
+            showToast(
+              t("deleted")
+            );
+
+            renderEstimate();
+
+          }
+        );
+
+      });
+
 
     document
       .getElementById(
@@ -3944,256 +3327,79 @@
       )
       ?.addEventListener(
         "click",
-        clearEstimate
-      );
+        () => {
 
-    scrollTop();
-  }
-
-  /* =======================================================
-     ESTIMATE RECORD
-     ======================================================= */
-
-  function renderEstimateRecord(
-    record,
-    index
-  ) {
-    const values =
-      record.values || {};
-
-    return `
-      <div
-        class="estimateCard"
-        data-estimate-index="${index}"
-      >
-
-        <div
-          class="estimateCardTop"
-        >
-
-          <span>
-            ${esc(
-              record.stage ||
-                ""
-            )}
-          </span>
-
-          <b>
-            ${esc(
-              materialName(
-                record.material ||
-                  ""
-              )
-            )}
-          </b>
-
-        </div>
-
-        <div
-          class="estimateDetails"
-        >
-
-          <span>
-            ${esc(
-              t("quantity")
-            )}:
-            ${esc(
-              values.quantity ||
-                ""
-            )}
-          </span>
-
-          <span>
-            ${esc(
-              t("unit")
-            )}:
-            ${esc(
-              values.unit ||
-                ""
-            )}
-          </span>
-
-          ${
-            values.brand
-              ? `
-                <span>
-                  ${esc(
-                    t("brand")
-                  )}:
-                  ${esc(
-                    values.brand
-                  )}
-                </span>
-              `
-              : ""
+          if (
+            !confirm(
+              state.language ===
+                "hi"
+                ? "क्या पूरा एस्टिमेट साफ करना है?"
+                : "Clear complete estimate?"
+            )
+          ) {
+            return;
           }
 
-        </div>
+          state.estimateItems =
+            [];
 
-        <div
-          class="estimateActions"
-        >
+          saveEstimate();
 
-          <button
-            type="button"
-            class="secondary editEstimate"
-            data-estimate-edit="${index}"
-          >
-            ${esc(
-              t("edit")
-            )}
-          </button>
-
-          <button
-            type="button"
-            class="danger deleteEstimate"
-            data-estimate-delete="${index}"
-          >
-            ${esc(
-              t("delete")
-            )}
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  /* =======================================================
-     ESTIMATE ACTIONS
-     ======================================================= */
-
-  function bindEstimateActions() {
-    document
-      .querySelectorAll(
-        "[data-estimate-edit]"
-      )
-      .forEach(
-        button => {
-
-          button.addEventListener(
-            "click",
-            event => {
-
-              event.stopPropagation();
-
-              editEstimate(
-                Number(
-                  button.dataset
-                    .estimateEdit
-                )
-              );
-            }
+          showToast(
+            t("cleared")
           );
+
+          renderEstimate();
+
         }
       );
 
-    document
-      .querySelectorAll(
-        "[data-estimate-delete]"
-      )
-      .forEach(
-        button => {
-
-          button.addEventListener(
-            "click",
-            event => {
-
-              event.stopPropagation();
-
-              deleteEstimate(
-                Number(
-                  button.dataset
-                    .estimateDelete
-                )
-              );
-            }
-          );
-        }
-      );
   }
 
-  /* =======================================================
-     CLEAR ESTIMATE
-     ======================================================= */
-
-  function clearEstimate() {
-    const answer =
-      window.confirm(
-        state.language ===
-          "hi"
-          ? "क्या पूरा एस्टिमेट साफ करना है?"
-          : "Clear complete estimate?"
-      );
-
-    if (!answer) {
-      return;
-    }
-
-    state.estimateItems =
-      [];
-
-    saveEstimate();
-
-    showToast(
-      t("cleared")
-    );
-
-    renderEstimate();
-  }
-
-  /* =======================================================
-     DELETE ESTIMATE
-     ======================================================= */
-
-  function deleteEstimate(
-    index
-  ) {
-    if (
-      !state.estimateItems[
-        index
-      ]
-    ) {
-      return;
-    }
-
-    state.estimateItems.splice(
-      index,
-      1
-    );
-
-    saveEstimate();
-
-    showToast(
-      t("deleted")
-    );
-
-    renderEstimate();
-  }
 
   /* =======================================================
      EDIT ESTIMATE
      ======================================================= */
 
   function editEstimate(
-    estimateIndex
+    index
   ) {
+
     const record =
       state.estimateItems[
-        estimateIndex
+        index
       ];
 
     if (!record) {
       return;
     }
 
+
     let stageIndex =
       Number.isInteger(
         record.stageIndex
       )
         ? record.stageIndex
-        : -1;
+        : STAGES.findIndex(
+            stage =>
+              stage.code ===
+              record.stage
+          );
+
+
+    if (
+      stageIndex < 0 ||
+      !STAGES[stageIndex]
+    ) {
+      return;
+    }
+
+
+    const stage =
+      STAGES[
+        stageIndex
+      ];
+
 
     let sectionIndex =
       Number.isInteger(
@@ -4202,6 +3408,30 @@
         ? record.sectionIndex
         : -1;
 
+
+    if (
+      !stage.sections[
+        sectionIndex
+      ]
+    ) {
+
+      sectionIndex =
+        stage.sections.findIndex(
+          section =>
+            section.name ===
+            record.section
+        );
+
+    }
+
+
+    if (
+      sectionIndex < 0
+    ) {
+      return;
+    }
+
+
     let itemIndex =
       Number.isInteger(
         record.itemIndex
@@ -4209,68 +3439,13 @@
         ? record.itemIndex
         : -1;
 
-    /*
-      Backward compatibility:
-      old saved records may not
-      have indexes.
-    */
-
-    if (
-      !STAGES[stageIndex]
-    ) {
-      stageIndex =
-        STAGES.findIndex(
-          stage =>
-            stage.code ===
-            record.stage
-        );
-    }
-
-    if (
-      stageIndex < 0
-    ) {
-      return;
-    }
-
-    const stage =
-      STAGES[
-        stageIndex
-      ];
-
-    /*
-      Find section.
-    */
-
-    if (
-      !stage.sections[
-        sectionIndex
-      ]
-    ) {
-      sectionIndex =
-        stage.sections.findIndex(
-          section =>
-            section.name ===
-            record.section
-        );
-    }
-
-    /*
-      Find item.
-    */
-
-    if (
-      !stage.sections[
-        sectionIndex
-      ]
-    ) {
-      return;
-    }
 
     if (
       !stage.sections[
         sectionIndex
       ].items[itemIndex]
     ) {
+
       itemIndex =
         stage.sections[
           sectionIndex
@@ -4279,7 +3454,9 @@
             item.name ===
             record.material
         );
+
     }
+
 
     if (
       itemIndex < 0
@@ -4287,12 +3464,6 @@
       return;
     }
 
-    const item =
-      stage.sections[
-        sectionIndex
-      ].items[
-        itemIndex
-      ];
 
     state.page =
       "item";
@@ -4307,47 +3478,53 @@
       itemIndex;
 
     state.selectedItem =
-      item;
+      stage.sections[
+        sectionIndex
+      ].items[
+        itemIndex
+      ];
 
     state.editEstimateIndex =
-      estimateIndex;
+      index;
 
-    renderItemEditor();
+
+    renderItem();
 
     saveRoute();
 
-    scrollTop();
+    window.scrollTo(
+      0,
+      0
+    );
   }
+
 
   /* =======================================================
      CALCULATOR
      ======================================================= */
 
   function renderCalculator() {
-    main.innerHTML = `
-      <section
-        class="page calculatorPage"
-      >
 
-        <div
-          class="pageTitle"
-        >
+    main.innerHTML = `
+
+      <section class="page">
+
+        <div class="pageTitle">
+
           <h2>
             ${esc(
-              t(
-                "calculatorTitle"
-              )
+              t("calculator")
             )}
           </h2>
+
         </div>
+
 
         <div
           class="calculatorGrid"
         >
 
-          <div
-            class="calcCard"
-          >
+          <div class="calcCard">
 
             <h3>
               V = I × R
@@ -4384,9 +3561,8 @@
 
           </div>
 
-          <div
-            class="calcCard"
-          >
+
+          <div class="calcCard">
 
             <h3>
               I = V ÷ R
@@ -4407,7 +3583,7 @@
             >
 
             <button
-              id="calcI2"
+              id="calcI"
               class="primary"
               type="button"
             >
@@ -4423,9 +3599,8 @@
 
           </div>
 
-          <div
-            class="calcCard"
-          >
+
+          <div class="calcCard">
 
             <h3>
               R = V ÷ I
@@ -4446,7 +3621,7 @@
             >
 
             <button
-              id="calcR3"
+              id="calcR"
               class="primary"
               type="button"
             >
@@ -4465,14 +3640,10 @@
         </div>
 
       </section>
+
     `;
 
-    bindCalculator();
 
-    scrollTop();
-  }
-
-  function bindCalculator() {
     document
       .getElementById(
         "calcV"
@@ -4483,42 +3654,32 @@
 
           const I =
             Number(
-              document
-                .getElementById(
-                  "calcI"
-                )
-                ?.value
+              document.getElementById(
+                "calcI"
+              )?.value
             );
 
           const R =
             Number(
-              document
-                .getElementById(
-                  "calcR"
-                )
-                ?.value
+              document.getElementById(
+                "calcR"
+              )?.value
             );
 
-          const result =
-            document.getElementById(
-              "calcVResult"
-            );
+          document.getElementById(
+            "calcVResult"
+          ).textContent =
+            I && R
+              ? `${I * R} V`
+              : "—";
 
-          if (
-            result
-          ) {
-            result.textContent =
-              I &&
-              R
-                ? `${I * R} V`
-                : "—";
-          }
         }
       );
 
+
     document
       .getElementById(
-        "calcI2"
+        "calcI"
       )
       ?.addEventListener(
         "click",
@@ -4526,42 +3687,32 @@
 
           const V =
             Number(
-              document
-                .getElementById(
-                  "calcV2"
-                )
-                ?.value
+              document.getElementById(
+                "calcV2"
+              )?.value
             );
 
           const R =
             Number(
-              document
-                .getElementById(
-                  "calcR2"
-                )
-                ?.value
+              document.getElementById(
+                "calcR2"
+              )?.value
             );
 
-          const result =
-            document.getElementById(
-              "calcIResult"
-            );
+          document.getElementById(
+            "calcIResult"
+          ).textContent =
+            V && R
+              ? `${V / R} A`
+              : "—";
 
-          if (
-            result
-          ) {
-            result.textContent =
-              V &&
-              R
-                ? `${V / R} A`
-                : "—";
-          }
         }
       );
 
+
     document
       .getElementById(
-        "calcR3"
+        "calcR"
       )
       ?.addEventListener(
         "click",
@@ -4569,155 +3720,84 @@
 
           const V =
             Number(
-              document
-                .getElementById(
-                  "calcV3"
-                )
-                ?.value
+              document.getElementById(
+                "calcV3"
+              )?.value
             );
 
           const I =
             Number(
-              document
-                .getElementById(
-                  "calcI3"
-                )
-                ?.value
+              document.getElementById(
+                "calcI3"
+              )?.value
             );
 
-          const result =
-            document.getElementById(
-              "calcRResult"
-            );
+          document.getElementById(
+            "calcRResult"
+          ).textContent =
+            V && I
+              ? `${V / I} Ω`
+              : "—";
 
-          if (
-            result
-          ) {
-            result.textContent =
-              V &&
-              I
-                ? `${V / I} Ω`
-                : "—";
-          }
         }
       );
+
   }
+
 
   /* =======================================================
      SETTINGS
      ======================================================= */
 
   function renderSettings() {
-    main.innerHTML = `
-      <section
-        class="page settingsPage"
-      >
 
-        <div
-          class="pageTitle"
-        >
+    main.innerHTML = `
+
+      <section class="page">
+
+        <div class="pageTitle">
+
           <h2>
             ${esc(
-              t(
-                "settingsTitle"
-              )
+              t("settings")
             )}
           </h2>
+
         </div>
 
-        <div
-          class="settingsCard"
-        >
 
-          <div
-            class="settingRow"
-          >
+        <div class="settingsCard">
 
-            <div>
-              <b>
-                ${esc(
-                  t(
-                    "chooseView"
-                  )
-                )}
-              </b>
+          <div class="settingRow">
 
-              <small>
-                ${esc(
-                  viewLabel(
-                    state.view
-                  )
-                )}
-              </small>
-            </div>
+            <b>
+              Language
+            </b>
 
             <button
-              id="settingsView"
-              class="secondary"
-              type="button"
-            >
-              ${viewIcon(
-                state.view
-              )}
-              ${esc(
-                viewLabel(
-                  state.view
-                )
-              )}
-            </button>
-
-          </div>
-
-          <div
-            class="settingRow"
-          >
-
-            <div>
-              <b>
-                Language
-              </b>
-
-              <small>
-                Hindi / English
-              </small>
-            </div>
-
-            <button
-              id="settingsLang"
+              id="settingLanguage"
               class="secondary"
               type="button"
             >
               ${
                 state.language ===
                 "hi"
-                  ? "EN"
-                  : "हि"
+                  ? "English"
+                  : "हिन्दी"
               }
             </button>
 
           </div>
 
-          <div
-            class="settingRow"
-          >
 
-            <div>
-              <b>
-                Theme
-              </b>
+          <div class="settingRow">
 
-              <small>
-                ${
-                  state.theme ===
-                  "dark"
-                    ? t("dark")
-                    : t("light")
-                }
-              </small>
-            </div>
+            <b>
+              Theme
+            </b>
 
             <button
-              id="settingsTheme"
+              id="settingTheme"
               class="secondary"
               type="button"
             >
@@ -4731,14 +3811,33 @@
 
           </div>
 
+
+          <div class="settingRow">
+
+            <b>
+              View
+            </b>
+
+            <button
+              id="settingView"
+              class="secondary"
+              type="button"
+            >
+              ${viewIcon()}
+            </button>
+
+          </div>
+
         </div>
 
       </section>
+
     `;
+
 
     document
       .getElementById(
-        "settingsLang"
+        "settingLanguage"
       )
       ?.addEventListener(
         "click",
@@ -4750,13 +3849,20 @@
               ? "en"
               : "hi";
 
-          applyLanguage();
+          localStorage.setItem(
+            CONFIG.languageKey,
+            state.language
+          );
+
+          renderSettings();
+
         }
       );
 
+
     document
       .getElementById(
-        "settingsTheme"
+        "settingTheme"
       )
       ?.addEventListener(
         "click",
@@ -4771,63 +3877,239 @@
           applyTheme();
 
           renderSettings();
+
         }
       );
 
+
     document
       .getElementById(
-        "settingsView"
+        "settingView"
       )
       ?.addEventListener(
         "click",
         () => {
 
           const current =
-            VIEW_MODES.findIndex(
-              item =>
-                item[0] ===
-                state.view
+            VIEWS.indexOf(
+              state.view
             );
 
-          const next =
-            VIEW_MODES[
+          state.view =
+            VIEWS[
               (
                 current + 1
               ) %
-                VIEW_MODES.length
+                VIEWS.length
             ];
 
-          state.view =
-            next[0];
-
-          safeSet(
+          localStorage.setItem(
             CONFIG.viewKey,
             state.view
           );
 
           renderSettings();
+
         }
       );
 
-    scrollTop();
   }
+
+
+  /* =======================================================
+     BOTTOM NAV
+     ======================================================= */
+
+  function updateBottomNav() {
+
+    bottomNav
+      ?.querySelectorAll(
+        "[data-page], [data-nav]"
+      )
+      .forEach(button => {
+
+        const page =
+          button.dataset.page ||
+          button.dataset.nav ||
+          "";
+
+        button.classList.toggle(
+          "active",
+          page === state.page
+        );
+
+      });
+
+  }
+
+
+  bottomNav
+    ?.querySelectorAll(
+      "[data-page], [data-nav]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            button.dataset.page ||
+            button.dataset.nav;
+
+          if (page) {
+            navigate(page);
+          }
+
+        }
+      );
+
+    });
+
+
+  /* =======================================================
+     BACK
+     ======================================================= */
+
+  function goBack() {
+
+    if (
+      state.drawerOpen
+    ) {
+      closeDrawer();
+      return;
+    }
+
+
+    if (
+      state.history.length
+    ) {
+
+      const previous =
+        state.history.pop();
+
+      state.page =
+        previous.page;
+
+      state.stageIndex =
+        previous.stageIndex;
+
+      state.sectionIndex =
+        previous.sectionIndex;
+
+      state.itemIndex =
+        previous.itemIndex;
+
+      state.selectedItem =
+        getItem(
+          state.stageIndex,
+          state.sectionIndex,
+          state.itemIndex
+        );
+
+
+      renderCurrentPage();
+
+      saveRoute();
+
+      return;
+    }
+
+
+    if (
+      state.page === "item"
+    ) {
+
+      state.page = "stage";
+      state.itemIndex = null;
+
+      renderStage();
+
+      saveRoute();
+
+      return;
+    }
+
+
+    if (
+      state.page === "stage"
+    ) {
+
+      state.page = "home";
+
+      state.stageIndex = null;
+      state.sectionIndex = null;
+      state.itemIndex = null;
+
+      renderHome();
+
+      saveRoute();
+
+      return;
+    }
+
+
+    if (
+      state.page !== "home"
+    ) {
+
+      navigate(
+        "home",
+        false
+      );
+
+      return;
+    }
+
+
+    showToast(
+      t("close")
+    );
+
+  }
+
+
+  window.addEventListener(
+    "popstate",
+    () => {
+
+      goBack();
+
+      try {
+
+        history.pushState(
+          {
+            electroFix: true
+          },
+          "",
+          location.href
+        );
+
+      } catch {}
+
+    }
+  );
+
 
   /* =======================================================
      TOAST
      ======================================================= */
 
-  let toastTimer =
-    null;
+  let toastTimer = null;
+
 
   function showToast(
     message
   ) {
+
     let toast =
       document.getElementById(
         "appToast"
       );
 
+
     if (!toast) {
+
       toast =
         document.createElement(
           "div"
@@ -4842,7 +4124,9 @@
       document.body.appendChild(
         toast
       );
+
     }
+
 
     toast.textContent =
       message;
@@ -4851,392 +4135,33 @@
       "show"
     );
 
+
     clearTimeout(
       toastTimer
     );
 
+
     toastTimer =
       setTimeout(
         () => {
+
           toast.classList.remove(
             "show"
           );
-        },
-        1800
-      );
-  }
 
-  /* =======================================================
-     SCROLL TOP
-     ======================================================= */
-
-  function scrollTop() {
-    try {
-      window.scrollTo({
-        top: 0,
-        behavior: "instant"
-      });
-    } catch (error) {
-      window.scrollTo(
-        0,
-        0
-      );
-    }
-  }
-
-  /* =======================================================
-     BACK NAVIGATION
-     ======================================================= */
-
-  let exitWarningShown =
-    false;
-
-  function goBack() {
-
-    /*
-      1. Drawer open
-    */
-
-    if (
-      state.drawerOpen
-    ) {
-      closeDrawer();
-      return;
-    }
-
-    /*
-      2. View selector open
-    */
-
-    const viewOptions =
-      document.getElementById(
-        "viewOptions"
-      );
-
-    if (
-      viewOptions &&
-      !viewOptions.hasAttribute(
-        "hidden"
-      )
-    ) {
-      viewOptions.setAttribute(
-        "hidden",
-        ""
-      );
-
-      document
-        .getElementById(
-          "viewToggle"
-        )
-        ?.setAttribute(
-          "aria-expanded",
-          "false"
-        );
-
-      return;
-    }
-
-    /*
-      3. Real internal history
-    */
-
-    const previous =
-      state.history.pop();
-
-    if (previous) {
-
-      restoreSnapshot(
-        previous
-      );
-
-      saveRoute();
-
-      return;
-    }
-
-    /*
-      4. Current item -> stage
-    */
-
-    if (
-      state.page === "item"
-    ) {
-      state.page =
-        "stage";
-
-      state.itemIndex =
-        null;
-
-      state.editEstimateIndex =
-        -1;
-
-      renderStage();
-
-      saveRoute();
-
-      return;
-    }
-
-    /*
-      5. Stage -> home
-    */
-
-    if (
-      state.page === "stage"
-    ) {
-      state.page =
-        "home";
-
-      state.stageIndex =
-        null;
-
-      state.sectionIndex =
-        null;
-
-      state.itemIndex =
-        null;
-
-      renderHome();
-
-      saveRoute();
-
-      return;
-    }
-
-    /*
-      6. Other pages -> home
-    */
-
-    if (
-      state.page !== "home"
-    ) {
-      state.page =
-        "home";
-
-      state.stageIndex =
-        null;
-
-      state.sectionIndex =
-        null;
-
-      state.itemIndex =
-        null;
-
-      renderHome();
-
-      saveRoute();
-
-      return;
-    }
-
-    /*
-      7. Home exit warning
-    */
-
-    if (
-      !exitWarningShown
-    ) {
-      exitWarningShown =
-        true;
-
-      showToast(
-        t(
-          "closeWarning"
-        )
-      );
-
-      setTimeout(
-        () => {
-          exitWarningShown =
-            false;
         },
         1800
       );
 
-      return;
-    }
-
-    /*
-      Allow browser history
-      on second back.
-    */
-
-    try {
-      history.back();
-    } catch (error) {}
   }
 
-  function restoreSnapshot(
-    snapshot
-  ) {
-    state.page =
-      snapshot.page ||
-      "home";
-
-    state.stageIndex =
-      Number.isInteger(
-        snapshot.stageIndex
-      )
-        ? snapshot.stageIndex
-        : null;
-
-    state.sectionIndex =
-      Number.isInteger(
-        snapshot.sectionIndex
-      )
-        ? snapshot.sectionIndex
-        : null;
-
-    state.itemIndex =
-      Number.isInteger(
-        snapshot.itemIndex
-      )
-        ? snapshot.itemIndex
-        : null;
-
-    state.editEstimateIndex =
-      -1;
-
-    if (
-      state.page === "item"
-    ) {
-
-      const item =
-        getItem(
-          state.stageIndex,
-          state.sectionIndex,
-          state.itemIndex
-        );
-
-      if (!item) {
-        state.page =
-          "stage";
-
-        state.itemIndex =
-          null;
-
-        state.selectedItem =
-          null;
-
-        renderStage();
-
-        return;
-      }
-
-      state.selectedItem =
-        item;
-
-      renderItemEditor();
-
-      return;
-    }
-
-    if (
-      state.page === "stage"
-    ) {
-      renderStage();
-      return;
-    }
-
-    renderCurrentPage();
-  }
 
   /* =======================================================
-     BROWSER HISTORY
-     ======================================================= */
-
-  function setupBrowserHistory() {
-    try {
-      history.replaceState(
-        {
-          electroFix:
-            true
-        },
-        "",
-        location.href
-      );
-
-      history.pushState(
-        {
-          electroFix:
-            true
-        },
-        "",
-        location.href
-      );
-    } catch (error) {}
-  }
-
-  window.addEventListener(
-    "popstate",
-    event => {
-      event.preventDefault();
-
-      goBack();
-
-      try {
-        history.pushState(
-          {
-            electroFix:
-              true
-          },
-          "",
-          location.href
-        );
-      } catch (error) {}
-    }
-  );
-
-  /* =======================================================
-     KEYBOARD
-     ======================================================= */
-
-  document.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key !==
-        "Escape"
-      ) {
-        return;
-      }
-
-      if (
-        state.drawerOpen
-      ) {
-        closeDrawer();
-        return;
-      }
-
-      const viewOptions =
-        document.getElementById(
-          "viewOptions"
-        );
-
-      if (
-        viewOptions &&
-        !viewOptions.hasAttribute(
-          "hidden"
-        )
-      ) {
-        viewOptions.setAttribute(
-          "hidden",
-          ""
-        );
-
-        return;
-      }
-
-      goBack();
-    }
-  );
-
-  /* =======================================================
-     PAGE RENDER
+     RENDER
      ======================================================= */
 
   function renderCurrentPage() {
+
     switch (
       state.page
     ) {
@@ -5246,7 +4171,7 @@
         break;
 
       case "item":
-        renderItemEditor();
+        renderItem();
         break;
 
       case "estimate":
@@ -5261,40 +4186,53 @@
         renderSettings();
         break;
 
-      case "home":
       default:
+        state.page = "home";
         renderHome();
         break;
+
     }
+
 
     updateBottomNav();
 
     applyTheme();
 
-    /*
-      Estimate action buttons
-      are bound after rendering.
-    */
-
-    if (
-      state.page ===
-      "estimate"
-    ) {
-      bindEstimateActions();
-    }
+    saveRoute();
   }
 
+
   /* =======================================================
-     RESTORE ITEM STATE
+     RESTORE
      ======================================================= */
 
-  function restoreItemState() {
-    if (
-      state.page !==
-      "item"
-    ) {
-      return;
-    }
+  restoreRoute();
+
+
+  /*
+     Invalid saved route होने पर
+     Home पर जाएँ।
+  */
+
+  if (
+    state.stageIndex !== null &&
+    !STAGES[
+      state.stageIndex
+    ]
+  ) {
+
+    state.page = "home";
+
+    state.stageIndex = null;
+    state.sectionIndex = null;
+    state.itemIndex = null;
+
+  }
+
+
+  if (
+    state.page === "item"
+  ) {
 
     const item =
       getItem(
@@ -5304,118 +4242,80 @@
       );
 
     if (!item) {
-      state.page =
-        "stage";
 
-      state.itemIndex =
-        null;
+      state.page = "stage";
+      state.itemIndex = null;
+
+    } else {
 
       state.selectedItem =
-        null;
+        item;
 
-      return;
     }
 
-    state.selectedItem =
-      item;
   }
+
+
+  /* =======================================================
+     INITIAL HISTORY
+     ======================================================= */
+
+  try {
+
+    history.replaceState(
+      {
+        electroFix: true
+      },
+      "",
+      location.href
+    );
+
+    history.pushState(
+      {
+        electroFix: true
+      },
+      "",
+      location.href
+    );
+
+  } catch {}
+
 
   /* =======================================================
      START
      ======================================================= */
 
-  restoreRoute();
-
-  /*
-    Validate restored route.
-  */
-
-  if (
-    state.stageIndex !==
-    null &&
-    !STAGES[
-      state.stageIndex
-    ]
-  ) {
-    state.page =
-      "home";
-
-    state.stageIndex =
-      null;
-
-    state.sectionIndex =
-      null;
-
-    state.itemIndex =
-      null;
-  }
-
-  restoreItemState();
-
-  applyTheme();
-
   renderCurrentPage();
 
-  setupBrowserHistory();
-
-  /* =======================================================
-     DEBUG
-     ======================================================= */
 
   console.log(
-    "======================================"
+    "Estimate List READY"
   );
 
   console.log(
-    "Sandeep ElectroFix - Estimate List"
-  );
-
-  console.log(
-    "Raw stages:",
-    RAW_MATERIALS.length
-  );
-
-  console.log(
-    "Parsed stages:",
+    "Total stages:",
     STAGES.length
   );
 
   console.log(
     "Total materials:",
-    getAllItems().length
-  );
-
-  STAGES.forEach(
-    (
-      stage,
-      index
-    ) => {
-
-      const count =
+    STAGES.reduce(
+      (
+        total,
+        stage
+      ) =>
+        total +
         stage.sections.reduce(
           (
-            total,
+            n,
             section
           ) =>
-            total +
+            n +
             section.items.length,
           0
-        );
-
-      console.log(
-        `${index + 1}. ${
-          stage.code
-        } → ${
-          stage.title
-        } → ${
-          count
-        } materials`
-      );
-    }
-  );
-
-  console.log(
-    "======================================"
+        ),
+      0
+    )
   );
 
 })();

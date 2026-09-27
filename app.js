@@ -2,34 +2,30 @@
    SANDEEP ELECTROFIX - ESTIMATE LIST
    app.js
    ---------------------------------------------------------
-   Works with:
+   FILES:
    index.html
    style.css
    config.js
    material.js
-   ---------------------------------------------------------
+   app.js
+
    IMPORTANT:
-   - material.js is NOT modified
-   - Hindi mode  = Hindi / English
-   - English mode = English only
-   - Stage -> Section -> Material -> Editor
-   - Drawer + Hamburger + Reset
-   - Search + Filter
-   - Stage View + Material View
-   - Estimate
-   - Calculator
-   - Settings
-   - Light / Dark
-   - Refresh state
-   - Android/browser Back
+   material.js MASTER DATA IS NOT MODIFIED.
+
+   FLOW:
+   HOME -> STAGE -> SECTION -> MATERIAL -> EDITOR
+
+   LANGUAGE:
+   HI = Hindi only
+   EN = English only
    ========================================================= */
 
 (() => {
   "use strict";
 
-  /* =======================================================
-     1. BASIC HELPERS
-     ======================================================= */
+  /* =========================================================
+     BASIC HELPERS
+     ========================================================= */
 
   const $ = (selector, root = document) =>
     root.querySelector(selector);
@@ -38,7 +34,7 @@
     Array.from(root.querySelectorAll(selector));
 
   const safeText = (value) =>
-    value === undefined || value === null ? "" : String(value);
+    value == null ? "" : String(value);
 
   const esc = (value) =>
     safeText(value)
@@ -48,14 +44,11 @@
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
 
-  const clamp = (n, min, max) =>
-    Math.min(Math.max(n, min), max);
-
-  const storageGet = (key, fallback = null) => {
+  const storageGet = (key, fallback = "") => {
     try {
       const value = localStorage.getItem(key);
       return value === null ? fallback : value;
-    } catch (_) {
+    } catch {
       return fallback;
     }
   };
@@ -63,34 +56,45 @@
   const storageSet = (key, value) => {
     try {
       localStorage.setItem(key, value);
-    } catch (_) {}
+    } catch {}
   };
 
   const storageRemove = (key) => {
     try {
       localStorage.removeItem(key);
-    } catch (_) {}
+    } catch {}
   };
 
-  const jsonGet = (key, fallback) => {
+  const parseJSON = (value, fallback) => {
     try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return JSON.parse(raw);
-    } catch (_) {
+      return JSON.parse(value);
+    } catch {
       return fallback;
     }
   };
 
-  const jsonSet = (key, value) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (_) {}
+  const makeId = () =>
+    "ef-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2, 8);
+
+
+  /* =========================================================
+     BRAND
+     ========================================================= */
+
+  const BRAND = {
+    name: "Sandeep ElectroFix",
+    taglineHi: "आपके विश्वास को रोशन करते हुए",
+    taglineEn: "Powering Your Trust",
+    logo: "logo.png"
   };
 
-  /* =======================================================
-     2. STORAGE
-     ======================================================= */
+
+  /* =========================================================
+     STORAGE
+     ========================================================= */
 
   const STORAGE = {
     lang: "sandeepMaterialLang",
@@ -102,537 +106,260 @@
     lastUnit: "sandeepLastUnit"
   };
 
-  /* =======================================================
-     3. LANGUAGE
-     ======================================================= */
+
+  /* =========================================================
+     LANGUAGE DICTIONARY
+     ========================================================= */
 
   const DICT = {
-
     /* ---------- STAGES ---------- */
+    "Stage 1": "स्टेज 1",
+    "Stage 2": "स्टेज 2",
+    "Stage 3": "स्टेज 3",
+    "Stage 4": "स्टेज 4",
+    "Stage 5": "स्टेज 5",
 
-    "Slab Conduit Installation":
-      "स्लैब कंड्यूट इंस्टॉलेशन",
+    "Slab Conduit Installation": "स्लैब कंड्यूट इंस्टॉलेशन",
+    "Wall Conduit": "वॉल कंड्यूट",
+    "Wiring": "वायरिंग",
+    "Final Electrical Fittings": "फाइनल इलेक्ट्रिकल फिटिंग्स",
+    "False Ceiling Wiring Material": "फॉल्स सीलिंग वायरिंग मटेरियल",
 
-    "Wall Conduit Installation":
-      "वॉल कंड्यूट इंस्टॉलेशन",
-
-    "Wiring Installation":
-      "वायरिंग इंस्टॉलेशन",
-
-    "Final Electrical Fittings":
-      "फाइनल इलेक्ट्रिकल फिटिंग्स",
-
-    "False Ceiling Wiring Material":
-      "फॉल्स सीलिंग वायरिंग मटेरियल",
-
-    /* ---------- SECTIONS ---------- */
-
-    "Conduit & Box":
-      "कंड्यूट और बॉक्स",
-
-    "Installation Material":
-      "इंस्टॉलेशन मटेरियल",
-
-    "Wiring Material":
-      "वायरिंग मटेरियल",
-
-    "Pulling Material":
-      "पुलिंग मटेरियल",
-
-    "Switch & Socket":
-      "स्विच और सॉकेट",
-
-    "MCB & Protection":
-      "MCB और प्रोटेक्शन",
-
-    "Fan & Ceiling":
-      "फैन और सीलिंग",
-
-    "Lighting":
-      "लाइटिंग",
-
-    "Installation & Finishing":
-      "इंस्टॉलेशन और फिनिशिंग",
-
-    "Wiring & Conduit":
-      "वायरिंग और कंड्यूट",
-
-    "Installation & Fastening":
-      "इंस्टॉलेशन और फास्टनिंग",
+    "Conduit & Box": "कंड्यूट और बॉक्स",
 
     /* ---------- MATERIALS ---------- */
-
-    "Pipe":
-      "पाइप",
-
-    "Bend":
-      "बेंड",
-
-    "Junction Box":
-      "जंक्शन बॉक्स",
-
-    "Fan Box":
-      "फैन बॉक्स",
-
-    "Concealed Light Box":
-      "कंसील्ड लाइट बॉक्स",
-
-    "Tape (Shuttering & Joint Sealing)":
-      "टेप (शटरिंग और जॉइंट सीलिंग)",
-
-    "Solvent Cement":
-      "सॉल्वेंट सीमेंट",
-
-    "Neel Powder (Marking Powder)":
-      "नील पाउडर (मार्किंग पाउडर)",
-
-    "Binding Wire":
-      "बाइंडिंग वायर",
-
-    "Cable Tie / Zip Tie":
-      "केबल टाई / जिप टाई",
-
-    "Modular Board (Concealed Metal/PVC Box)":
-      "मॉड्यूलर बोर्ड (कंसील्ड मेटल/PVC बॉक्स)",
-
-    "Tape (Masking & Plaster Protection)":
-      "टेप (मास्किंग और प्लास्टर प्रोटेक्शन)",
-
-    "Cable Clip":
-      "केबल क्लिप",
-
-    "Wire":
-      "वायर",
-
-    "Flexible Pipe":
-      "फ्लेक्सिबल पाइप",
-
-    "Electrical Tape":
-      "इलेक्ट्रिकल टेप",
-
-    "Fastener":
-      "फास्टनर",
-
-    "Steel Wire / Spring Wire (Fish Tape)":
-      "स्टील वायर / स्प्रिंग वायर (फिश टेप)",
-
-    "Switch Plate":
-      "स्विच प्लेट",
-
-    "Switch Board (Surface Gang Box)":
-      "स्विच बोर्ड (सरफेस गैंग बॉक्स)",
-
-    "Switch":
-      "स्विच",
-
-    "Socket":
-      "सॉकेट",
-
-    "Fan Regulator":
-      "फैन रेगुलेटर",
-
-    "2 Way Switch":
-      "2 वे स्विच",
-
-    "Bell Push":
-      "बेल पुश",
-
-    "Neon Indicator":
-      "नियॉन इंडिकेटर",
-
-    "Blank Plate / Dummy Switch":
-      "ब्लैंक प्लेट / डमी स्विच",
-
-    "DP Switch (Double Pole Switch)":
-      "DP स्विच (डबल पोल स्विच)",
-
-    "Mini MCB":
-      "मिनी MCB",
-
-    "SP MCB (Single Pole)":
-      "SP MCB (सिंगल पोल)",
-
-    "DP MCB (Double Pole)":
-      "DP MCB (डबल पोल)",
-
-    "TPN MCB (Three Pole with Neutral)":
-      "TPN MCB (थ्री पोल विद न्यूट्रल)",
-
-    "MCB Changeover":
-      "MCB चेंजओवर",
-
-    "DP Isolator":
-      "DP आइसोलेटर",
-
-    "TPN Isolator (3P / 4P)":
-      "TPN आइसोलेटर (3P / 4P)",
-
-    "RCCB / RCD":
-      "RCCB / RCD",
-
-    "MCB Box":
-      "MCB बॉक्स",
-
-    "Kit Kat Fuse":
-      "किट कैट फ्यूज",
-
-    "Fan Sheet":
-      "फैन शीट",
-
-    "Round Sheet":
-      "राउंड शीट",
-
-    "Fan Rod":
-      "फैन रॉड",
-
-    "Fan Clamp":
-      "फैन क्लैम्प",
-
-    "Holder":
-      "होल्डर",
-
-    "Ceiling Rose":
-      "सीलिंग रोज",
-
-    "Chain":
-      "चेन",
-
-    "LED Bulb":
-      "LED बल्ब",
-
-    "LED Tube Light":
-      "LED ट्यूब लाइट",
-
-    "Foot Light":
-      "फुट लाइट",
-
-    "Up Down Light":
-      "अप डाउन लाइट",
-
-    "Panel Light":
-      "पैनल लाइट",
-
-    "Surface Light":
-      "सरफेस लाइट",
-
-    "COB Light":
-      "COB लाइट",
-
-    "COB Spot Light":
-      "COB स्पॉट लाइट",
-
-    "Down Light":
-      "डाउन लाइट",
-
-    "Strip Light":
-      "स्ट्रिप लाइट",
-
-    "Rope Light":
-      "रोप लाइट",
-
-    "LED Profile Channel":
-      "LED प्रोफाइल चैनल",
-
-    "LED Strip Driver (SMPS)":
-      "LED स्ट्रिप ड्राइवर (SMPS)",
-
-    "Door Bell":
-      "डोर बेल",
-
-    "Tape (Mounting / Double Sided)":
-      "टेप (माउंटिंग / डबल साइडेड)",
-
-    "Instant Glue":
-      "इंस्टेंट ग्लू",
-
-    "Araldite Glue (Epoxy)":
-      "अराल्डाइट ग्लू (एपॉक्सी)",
-
-    "POP (Plaster of Paris)":
-      "POP (प्लास्टर ऑफ पेरिस)",
-
-    "Putty Blade / Patta":
-      "पुट्टी ब्लेड / पट्टा",
-
-    "Screw":
-      "स्क्रू",
-
-    "Lug (Cable Terminal Lug)":
-      "लग (केबल टर्मिनल लग)",
-
-    "Washer":
-      "वॉशर",
-
-    "Saddle (Pipe Clamp)":
-      "सैडल (पाइप क्लैम्प)",
-
-    "PVC Wall Plug / Gulli / Gitti":
-      "PVC वॉल प्लग / गुल्ली / गिट्टी",
-
-    /* ---------- FIELD LABELS ---------- */
-
-    "Size":
-      "साइज़",
-
-    "Type":
-      "टाइप",
-
-    "Sub Type":
-      "सब टाइप",
-
-    "Colour":
-      "रंग",
-
-    "Color":
-      "रंग",
-
-    "Quantity":
-      "मात्रा",
-
-    "Unit":
-      "यूनिट",
-
-    "Brand":
-      "ब्रांड",
-
-    "Price":
-      "कीमत",
-
-    "Material":
-      "मटेरियल",
-
-    "Length":
-      "लंबाई",
-
-    "Width":
-      "चौड़ाई",
-
-    "Height":
-      "ऊंचाई",
-
-    /* ---------- COMMON OPTIONS ---------- */
-
-    "Normal":
-      "नॉर्मल",
-
-    "Deep":
-      "डीप",
-
-    "Short":
-      "शॉर्ट",
-
-    "Long":
-      "लॉन्ग",
-
-    "PVC":
-      "PVC",
-
-    "GI":
-      "GI",
-
-    "Metal":
-      "मेटल",
-
-    "Modular":
-      "मॉड्यूलर",
-
-    "Surface":
-      "सरफेस",
-
-    "Concealed":
-      "कंसील्ड",
-
-    "Local":
-      "लोकल",
-
-    "Other":
-      "अन्य",
-
-    "Skip":
-      "स्किप",
-
-    "User Input":
-      "यूज़र इनपुट",
-
-    "pcs":
-      "पीस",
-
-    "pc":
-      "पीस",
-
-    "pkt":
-      "पैकेट",
-
-    "bndl":
-      "बंडल",
-
-    "doz":
-      "दर्जन",
-
-    "box":
-      "बॉक्स",
-
-    "meter":
-      "मीटर",
-
-    "m":
-      "मीटर",
-
-    "sqft":
-      "वर्ग फुट",
-
-    "point":
-      "पॉइंट"
+    "Pipe": "पाइप",
+    "Bend": "बेंड",
+    "Junction Box": "जंक्शन बॉक्स",
+    "Fan Box": "फैन बॉक्स",
+    "Concealed Light Box": "कंसील्ड लाइट बॉक्स",
+    "Tape": "टेप",
+    "Solvent Cement": "सॉल्वेंट सीमेंट",
+    "Neel Powder": "नील पाउडर",
+    "Binding Wire": "बाइंडिंग वायर",
+    "Cable Tie": "केबल टाई",
+
+    "Modular Board": "मॉड्यूलर बोर्ड",
+    "MCB Box": "एमसीबी बॉक्स",
+    "Cable Clip": "केबल क्लिप",
+
+    "Wire": "वायर",
+    "Flexible Pipe": "फ्लेक्सिबल पाइप",
+    "Electrical Tape": "इलेक्ट्रिकल टेप",
+    "Fastener": "फास्टनर",
+    "Fish Tape": "फिश टेप",
+
+    "Switch": "स्विच",
+    "Socket": "सॉकेट",
+    "Fan Regulator": "फैन रेगुलेटर",
+    "Fan": "फैन",
+    "Holder": "होल्डर",
+    "Bulb": "बल्ब",
+    "LED": "एलईडी",
+    "MCB": "एमसीबी",
+    "RCCB": "आरसीसीबी",
+    "DB": "डीबी",
+    "Distribution Board": "डिस्ट्रीब्यूशन बोर्ड",
+    "Isolator": "आइसोलेटर",
+    "Indicator": "इंडिकेटर",
+    "Bell": "बेल",
+    "Door Bell": "डोर बेल",
+    "Exhaust Fan": "एग्जॉस्ट फैन",
+    "Ceiling Fan": "सीलिंग फैन",
+    "Light": "लाइट",
+    "Downlight": "डाउनलाइट",
+    "Panel Light": "पैनल लाइट",
+    "Spot Light": "स्पॉट लाइट",
+
+    /* ---------- FIELDS ---------- */
+    "Size": "साइज",
+    "Type": "टाइप",
+    "Sub Type": "सब टाइप",
+    "Way": "वे",
+    "Ways": "वे",
+    "Depth": "डेप्थ",
+    "Material": "मटेरियल",
+    "Quantity": "मात्रा",
+    "Unit": "यूनिट",
+    "Brand": "ब्रांड",
+    "Price": "कीमत",
+
+    /* ---------- OPTIONS ---------- */
+    "Normal": "नॉर्मल",
+    "Deep": "डीप",
+    "Short": "शॉर्ट",
+    "Long": "लॉन्ग",
+    "Straight": "स्ट्रेट",
+    "Angle": "एंगल",
+    "T": "टी",
+    "Cross": "क्रॉस",
+    "PVC": "पीवीसी",
+    "GI": "जीआई",
+    "HMS": "एचएमएस",
+    "MMS": "एमएमएस",
+    "LMS": "एलएमएस",
+
+    "1 Way": "1 वे",
+    "2 Way": "2 वे",
+    "2 Straight": "2 स्ट्रेट",
+    "2 Angle": "2 एंगल",
+    "3 T": "3 टी",
+    "4 Cross": "4 क्रॉस",
+
+    "Other": "अन्य",
+    "Local": "लोकल",
+    "Skip": "स्किप",
+
+    "pcs": "पीस",
+    "pc": "पीस",
+    "piece": "पीस",
+    "pieces": "पीस",
+    "pkt": "पैकेट",
+    "packet": "पैकेट",
+    "bndl": "बंडल",
+    "bundle": "बंडल",
+    "doz": "दर्जन",
+    "dozen": "दर्जन",
+    "meter": "मीटर",
+    "metre": "मीटर",
+    "m": "मीटर",
+    "roll": "रोल",
+    "box": "बॉक्स",
+    "set": "सेट",
+    "point": "पॉइंट",
+
+    /* ---------- COMMON ---------- */
+    "Home": "होम",
+    "Estimate": "एस्टिमेट",
+    "Calculator": "कैलकुलेटर",
+    "Settings": "सेटिंग्स",
+    "Search": "सर्च",
+    "Search materials": "मटेरियल सर्च करें",
+    "Filter": "फ़िल्टर",
+    "Clear": "क्लियर",
+    "Reset": "रीसेट",
+    "Reset App": "ऐप रीसेट करें",
+    "Close": "बंद करें",
+    "Apply": "लागू करें",
+    "Save": "सेव करें",
+    "Update": "अपडेट करें",
+    "Add": "जोड़ें",
+    "Next": "अगला",
+    "Back": "वापस",
+    "Previous": "पिछला",
+    "Delete": "डिलीट",
+    "Edit": "एडिट",
+    "Cancel": "रद्द करें",
+    "Yes": "हाँ",
+    "No": "नहीं",
+
+    "Stages": "स्टेज",
+    "Sections": "सेक्शन",
+    "Materials": "मटेरियल",
+    "Items": "आइटम",
+    "No materials found": "कोई मटेरियल नहीं मिला",
+    "No estimate items": "एस्टिमेट में कोई आइटम नहीं है",
+    "Added successfully": "सफलतापूर्वक जोड़ा गया",
+    "Updated successfully": "सफलतापूर्वक अपडेट किया गया",
+    "Quantity is required": "मात्रा जरूरी है",
+    "Please enter quantity": "कृपया मात्रा दर्ज करें",
+    "App reset successfully": "ऐप रीसेट हो गया",
+    "Nothing to show": "दिखाने के लिए कुछ नहीं है",
+
+    /* ---------- VIEW MODES ---------- */
+    "Grid": "ग्रिड",
+    "List": "लिस्ट",
+    "Compact": "कॉम्पैक्ट",
+    "Large": "बड़ा",
+    "Mini": "मिनी",
+    "2 Column": "2 कॉलम",
+    "Horizontal": "हॉरिज़ॉन्टल",
+    "Icon List": "आइकन लिस्ट",
+    "Timeline": "टाइमलाइन",
+    "Dense": "डेंस",
+
+    "Stage View": "स्टेज व्यू",
+    "Material View": "मटेरियल व्यू",
+
+    /* ---------- THEME ---------- */
+    "Dark": "डार्क",
+    "Light": "लाइट",
+
+    /* ---------- CALCULATOR ---------- */
+    "Electrical Calculator": "इलेक्ट्रिकल कैलकुलेटर",
+    "Voltage": "वोल्टेज",
+    "Current": "करंट",
+    "Resistance": "रेज़िस्टेंस",
+    "Power": "पावर",
+    "Inverter": "इन्वर्टर",
+    "Input": "इनपुट",
+    "Output": "आउटपुट",
+    "Calculate": "कैलकुलेट करें",
+    "12V": "12V",
+    "24V": "24V",
+    "230V": "230V"
   };
 
+
+  /* =========================================================
+     UI TEXT
+     ========================================================= */
+
   const UI = {
-
     hi: {
-      home: "होम / Home",
-      estimate: "एस्टिमेट / Estimate",
-      calculator: "कैलकुलेटर / Calculator",
-      settings: "सेटिंग्स / Settings",
+      home: "होम",
+      estimate: "एस्टिमेट",
+      calculator: "कैलकुलेटर",
+      settings: "सेटिंग्स",
 
-      search: "सर्च करें / Search",
-      filter: "फ़िल्टर / Filter",
-      clear: "क्लियर / Clear",
-      apply: "लागू करें / Apply",
-      close: "बंद करें / Close",
+      search: "सर्च करें",
+      searchPlaceholder: "मटेरियल / स्टेज / सेक्शन सर्च करें",
+      filter: "फ़िल्टर",
+      clear: "क्लियर",
+      reset: "ऐप रीसेट करें",
+      close: "बंद करें",
 
-      stages: "स्टेज / Stages",
-      sections: "सेक्शन / Sections",
-      materials: "मटेरियल / Materials",
+      stages: "स्टेज",
+      sections: "सेक्शन",
+      materials: "मटेरियल",
 
-      add: "जोड़ें / Add",
-      update: "अपडेट करें / Update",
-      next: "अगला / Next",
-      back: "वापस / Back",
-      previous: "पिछला / Previous",
+      back: "वापस",
+      previous: "पिछला",
+      next: "अगला",
+      add: "जोड़ें",
+      update: "अपडेट करें",
+      save: "सेव करें",
+      edit: "एडिट",
+      delete: "डिलीट",
+      cancel: "रद्द करें",
 
-      quantity: "मात्रा / Quantity",
-      unit: "यूनिट / Unit",
-      brand: "ब्रांड / Brand",
+      quantity: "मात्रा",
+      unit: "यूनिट",
+      brand: "ब्रांड",
 
-      noResults: "कोई परिणाम नहीं मिला / No results found",
-      noMaterials: "कोई मटेरियल नहीं मिला / No materials found",
-      noEstimate: "एस्टिमेट खाली है / Estimate is empty",
+      emptyEstimate: "एस्टिमेट में कोई आइटम नहीं है",
+      noMaterials: "कोई मटेरियल नहीं मिला",
 
-      added: "एस्टिमेट में जोड़ा गया / Added to estimate",
-      updated: "एस्टिमेट अपडेट किया गया / Estimate updated",
+      language: "भाषा",
+      theme: "थीम",
+      dark: "डार्क",
+      light: "लाइट",
 
-      requiredQuantity:
-        "कृपया मात्रा भरें / Please enter quantity",
+      stageView: "स्टेज व्यू",
+      materialView: "मटेरियल व्यू",
 
-      selectMaterial:
-        "मटेरियल चुनें / Select material",
+      calculatorTitle: "इलेक्ट्रिकल कैलकुलेटर",
+      voltage: "वोल्टेज",
+      current: "करंट",
+      resistance: "रेज़िस्टेंस",
+      power: "पावर",
+      inverter: "इन्वर्टर",
 
-      reset:
-        "ऐप रीसेट / Reset App",
-
-      resetQuestion:
-        "क्या आप ऐप का डेटा रीसेट करना चाहते हैं? / Do you want to reset app data?",
-
-      resetDone:
-        "ऐप रीसेट हो गया / App has been reset",
-
-      language:
-        "भाषा / Language",
-
-      theme:
-        "थीम / Theme",
-
-      dark:
-        "डार्क / Dark",
-
-      light:
-        "लाइट / Light",
-
-      menu:
-        "मेन्यू / Menu",
-
-      stageView:
-        "स्टेज व्यू / Stage View",
-
-      materialView:
-        "मटेरियल व्यू / Material View",
-
-      grid:
-        "ग्रिड / Grid",
-
-      list:
-        "लिस्ट / List",
-
-      compact:
-        "कॉम्पैक्ट / Compact",
-
-      large:
-        "बड़ा / Large",
-
-      mini:
-        "मिनी / Mini",
-
-      twoColumn:
-        "2 कॉलम / 2 Column",
-
-      horizontal:
-        "हॉरिज़ॉन्टल / Horizontal",
-
-      iconList:
-        "आइकन लिस्ट / Icon List",
-
-      timeline:
-        "टाइमलाइन / Timeline",
-
-      dense:
-        "डेंस / Dense",
-
-      edit:
-        "एडिट / Edit",
-
-      delete:
-        "डिलीट / Delete",
-
-      remove:
-        "हटाएं / Remove",
-
-      save:
-        "सेव / Save",
-
-      total:
-        "कुल / Total",
-
-      calculatorTitle:
-        "इलेक्ट्रिकल कैलकुलेटर / Electrical Calculator",
-
-      power:
-        "पावर / Power",
-
-      voltage:
-        "वोल्टेज / Voltage",
-
-      current:
-        "करंट / Current",
-
-      resistance:
-        "रेज़िस्टेंस / Resistance",
-
-      calculate:
-        "कैलकुलेट / Calculate",
-
-      result:
-        "परिणाम / Result",
-
-      inverter:
-        "इन्वर्टर / Inverter",
-
-      inputVoltage:
-        "इनपुट वोल्टेज / Input Voltage",
-
-      outputVoltage:
-        "आउटपुट वोल्टेज / Output Voltage",
-
-      closeWarning:
-        "ऐप बंद करें? / Close the app?"
+      saved: "सेव हो गया",
+      added: "सफलतापूर्वक जोड़ा गया",
+      updated: "सफलतापूर्वक अपडेट किया गया",
+      quantityRequired: "मात्रा जरूरी है",
+      resetDone: "ऐप रीसेट हो गया"
     },
 
     en: {
@@ -642,243 +369,191 @@
       settings: "Settings",
 
       search: "Search",
+      searchPlaceholder: "Search material / stage / section",
       filter: "Filter",
       clear: "Clear",
-      apply: "Apply",
+      reset: "Reset App",
       close: "Close",
 
       stages: "Stages",
       sections: "Sections",
       materials: "Materials",
 
-      add: "Add",
-      update: "Update",
-      next: "Next",
       back: "Back",
       previous: "Previous",
+      next: "Next",
+      add: "Add",
+      update: "Update",
+      save: "Save",
+      edit: "Edit",
+      delete: "Delete",
+      cancel: "Cancel",
 
       quantity: "Quantity",
       unit: "Unit",
       brand: "Brand",
 
-      noResults: "No results found",
+      emptyEstimate: "No estimate items",
       noMaterials: "No materials found",
-      noEstimate: "Estimate is empty",
 
-      added: "Added to estimate",
-      updated: "Estimate updated",
+      language: "Language",
+      theme: "Theme",
+      dark: "Dark",
+      light: "Light",
 
-      requiredQuantity:
-        "Please enter quantity",
+      stageView: "Stage View",
+      materialView: "Material View",
 
-      selectMaterial:
-        "Select material",
+      calculatorTitle: "Electrical Calculator",
+      voltage: "Voltage",
+      current: "Current",
+      resistance: "Resistance",
+      power: "Power",
+      inverter: "Inverter",
 
-      reset:
-        "Reset App",
-
-      resetQuestion:
-        "Do you want to reset app data?",
-
-      resetDone:
-        "App has been reset",
-
-      language:
-        "Language",
-
-      theme:
-        "Theme",
-
-      dark:
-        "Dark",
-
-      light:
-        "Light",
-
-      menu:
-        "Menu",
-
-      stageView:
-        "Stage View",
-
-      materialView:
-        "Material View",
-
-      grid:
-        "Grid",
-
-      list:
-        "List",
-
-      compact:
-        "Compact",
-
-      large:
-        "Large",
-
-      mini:
-        "Mini",
-
-      twoColumn:
-        "2 Column",
-
-      horizontal:
-        "Horizontal",
-
-      iconList:
-        "Icon List",
-
-      timeline:
-        "Timeline",
-
-      dense:
-        "Dense",
-
-      edit:
-        "Edit",
-
-      delete:
-        "Delete",
-
-      remove:
-        "Remove",
-
-      save:
-        "Save",
-
-      total:
-        "Total",
-
-      calculatorTitle:
-        "Electrical Calculator",
-
-      power:
-        "Power",
-
-      voltage:
-        "Voltage",
-
-      current:
-        "Current",
-
-      resistance:
-        "Resistance",
-
-      calculate:
-        "Calculate",
-
-      result:
-        "Result",
-
-      inverter:
-        "Inverter",
-
-      inputVoltage:
-        "Input Voltage",
-
-      outputVoltage:
-        "Output Voltage",
-
-      closeWarning:
-        "Close the app?"
+      saved: "Saved",
+      added: "Added successfully",
+      updated: "Updated successfully",
+      quantityRequired: "Quantity is required",
+      resetDone: "App reset successfully"
     }
   };
 
-  function langText(key) {
-    return UI[state.lang]?.[key] || UI.en[key] || key;
+
+  /* =========================================================
+     TRANSLATION
+     ========================================================= */
+
+  function currentLang() {
+    return state.lang === "en" ? "en" : "hi";
   }
 
-  function tr(value, forceEnglish = false) {
+  function langText(key) {
+    const lang = currentLang();
+
+    if (UI[lang] && UI[lang][key] != null) {
+      return UI[lang][key];
+    }
+
+    return key;
+  }
+
+  function tr(value) {
     const text = safeText(value);
 
     if (!text) return "";
 
-    const hindi = DICT[text];
-
-    if (state.lang === "en" || forceEnglish) {
+    if (currentLang() === "en") {
       return text;
     }
 
-    if (!hindi || hindi === text) {
-      return text;
-    }
-
-    return `${hindi} / ${text}`;
+    return DICT[text] || text;
   }
 
-  /* =======================================================
-     4. STATE
-     ======================================================= */
 
-  const savedLang =
-    storageGet(STORAGE.lang, "hi");
+  /* =========================================================
+     VIEW MODES
+     ========================================================= */
 
-  const savedTheme =
-    storageGet(STORAGE.theme, "dark");
+  const VIEW_MODES = [
+    "grid",
+    "list",
+    "compact",
+    "large",
+    "mini",
+    "two-column",
+    "horizontal",
+    "icon-list",
+    "timeline",
+    "dense"
+  ];
 
-  const savedStageView =
-    storageGet(STORAGE.stageView, "grid");
+  const VIEW_LABELS = {
+    grid: "Grid",
+    list: "List",
+    compact: "Compact",
+    large: "Large",
+    mini: "Mini",
+    "two-column": "2 Column",
+    horizontal: "Horizontal",
+    "icon-list": "Icon List",
+    timeline: "Timeline",
+    dense: "Dense"
+  };
 
-  const savedMaterialView =
-    storageGet(STORAGE.materialView, "grid");
+  function validView(value) {
+    return VIEW_MODES.includes(value) ? value : "grid";
+  }
 
-  const savedRoute =
-    jsonGet(STORAGE.route, null);
+
+  /* =========================================================
+     STATE
+     ========================================================= */
 
   const state = {
-    lang:
-      savedLang === "en" ? "en" : "hi",
+    lang: storageGet(STORAGE.lang, "hi") === "en" ? "en" : "hi",
 
     theme:
-      savedTheme === "light" ? "light" : "dark",
+      storageGet(STORAGE.theme, "dark") === "light"
+        ? "light"
+        : "dark",
 
-    page: savedRoute?.page || "home",
+    page: "home",
 
-    stageIndex:
-      Number.isInteger(savedRoute?.stageIndex)
-        ? savedRoute.stageIndex
-        : -1,
+    stageIndex: -1,
+    sectionIndex: -1,
+    itemIndex: -1,
 
-    sectionIndex:
-      Number.isInteger(savedRoute?.sectionIndex)
-        ? savedRoute.sectionIndex
-        : -1,
+    stageView: validView(
+      storageGet(STORAGE.stageView, "grid")
+    ),
 
-    itemIndex:
-      Number.isInteger(savedRoute?.itemIndex)
-        ? savedRoute.itemIndex
-        : -1,
-
-    stageView:
-      savedStageView || "grid",
-
-    materialView:
-      savedMaterialView || "grid",
+    materialView: validView(
+      storageGet(STORAGE.materialView, "grid")
+    ),
 
     editingEstimateId: null,
 
     draft: {},
 
     drawerOpen: false,
+    drawerHistoryPushed: false,
 
     filterOpen: false,
-
     viewOpen: false,
 
-    currentViewContext: "stage",
+    historyReady: false,
 
-    historyReady: false
+    currentViewContext: "stage"
   };
 
-  /* =======================================================
-     5. MATERIAL PARSER
-     ======================================================= */
 
-  function normalizeItem(raw) {
+  /* =========================================================
+     DATA
+     ========================================================= */
 
+  let DATA = [];
+
+  function normalizeField(raw) {
     if (!Array.isArray(raw)) {
       return {
         name: safeText(raw),
+        options: []
+      };
+    }
+
+    return {
+      name: safeText(raw[0]),
+      options: Array.isArray(raw[1])
+        ? raw[1].map(safeText)
+        : []
+    };
+  }
+
+  function normalizeItem(raw) {
+    if (!Array.isArray(raw)) {
+      return {
+        name: "",
         fields: [],
         units: [],
         brands: []
@@ -888,522 +563,1111 @@
     return {
       name: safeText(raw[0]),
 
-      fields:
-        Array.isArray(raw[1])
-          ? raw[1].map(field => {
+      fields: Array.isArray(raw[1])
+        ? raw[1].map(normalizeField)
+        : [],
 
-              if (!Array.isArray(field)) {
-                return {
-                  label: safeText(field),
-                  options: []
-                };
-              }
+      units: Array.isArray(raw[2])
+        ? raw[2].map(safeText)
+        : [],
 
-              return {
-                label: safeText(field[0]),
-                options:
-                  Array.isArray(field[1])
-                    ? field[1].map(safeText)
-                    : []
-              };
-            })
-          : [],
-
-      units:
-        Array.isArray(raw[2])
-          ? raw[2].map(safeText)
-          : [],
-
-      brands:
-        Array.isArray(raw[3])
-          ? raw[3].map(safeText)
-          : []
+      brands: Array.isArray(raw[3])
+        ? raw[3].map(safeText)
+        : []
     };
   }
 
   function parseMaterials() {
-
-    const raw =
-      Array.isArray(window.MATERIALS)
-        ? window.MATERIALS
-        : [];
+    const raw = Array.isArray(window.MATERIALS)
+      ? window.MATERIALS
+      : [];
 
     return raw.map((stage, stageIndex) => {
+      const stageId = safeText(stage[0]);
+      const stageName = safeText(stage[1]);
 
       const sections = [];
 
+      /*
+       * MASTER FORMAT:
+       * [
+       *   "STAGE 1",
+       *   "Slab Conduit Installation",
+       *   "Conduit & Box",
+       *   [...]
+       * ]
+       */
+
       if (Array.isArray(stage[3])) {
-
         sections.push({
-          name:
-            safeText(stage[2]) ||
-            `Section ${stageIndex + 1}`,
-
-          items:
-            stage[3].map(normalizeItem)
+          name: safeText(stage[2] || "Conduit & Box"),
+          items: stage[3].map(normalizeItem)
         });
       }
 
       for (let i = 4; i < stage.length; i++) {
+        if (!Array.isArray(stage[i])) continue;
 
-        const group = stage[i];
+        const section = stage[i];
 
         if (
-          Array.isArray(group) &&
-          typeof group[0] === "string" &&
-          Array.isArray(group[1])
+          Array.isArray(section) &&
+          typeof section[0] === "string" &&
+          Array.isArray(section[1])
         ) {
-
           sections.push({
-            name: group[0],
-
-            items:
-              group[1].map(normalizeItem)
+            name: safeText(section[0]),
+            items: section[1].map(normalizeItem)
           });
         }
       }
 
       return {
-        id: safeText(stage[0]),
-        title: safeText(stage[1]),
-        mainSection: safeText(stage[2]),
+        id: stageId,
+        name: stageName,
+        index: stageIndex,
         sections
       };
     });
   }
 
-  const DATA = parseMaterials();
+  DATA = parseMaterials();
 
-  /* =======================================================
-     6. MATERIAL ACCESS
-     ======================================================= */
 
-  function getStage(stageIndex) {
-    return DATA[stageIndex] || null;
+  /* =========================================================
+     ESTIMATE DATA
+     ========================================================= */
+
+  function getEstimateItems() {
+    return parseJSON(
+      storageGet(STORAGE.estimate, "[]"),
+      []
+    );
   }
 
-  function getSection(stageIndex, sectionIndex) {
-
-    const stage = getStage(stageIndex);
-
-    if (!stage) return null;
-
-    return stage.sections[sectionIndex] || null;
+  function saveEstimateItems(items) {
+    storageSet(
+      STORAGE.estimate,
+      JSON.stringify(items)
+    );
   }
 
-  function getItem(stageIndex, sectionIndex, itemIndex) {
 
-    const section =
-      getSection(stageIndex, sectionIndex);
+  /* =========================================================
+     ROUTE
+     ========================================================= */
 
-    if (!section) return null;
-
-    return section.items[itemIndex] || null;
+  function saveRoute() {
+    storageSet(
+      STORAGE.route,
+      JSON.stringify({
+        page: state.page,
+        stageIndex: state.stageIndex,
+        sectionIndex: state.sectionIndex,
+        itemIndex: state.itemIndex
+      })
+    );
   }
 
-  function getAllItems() {
+  function loadRoute() {
+    const saved = parseJSON(
+      storageGet(STORAGE.route, ""),
+      null
+    );
 
-    const list = [];
-
-    DATA.forEach((stage, stageIndex) => {
-
-      stage.sections.forEach(
-        (section, sectionIndex) => {
-
-          section.items.forEach(
-            (item, itemIndex) => {
-
-              list.push({
-                stageIndex,
-                sectionIndex,
-                itemIndex,
-
-                stage,
-                section,
-                item
-              });
-            }
-          );
-        }
-      );
-    });
-
-    return list;
-  }
-
-  const ALL_ITEMS = getAllItems();
-
-  /* =======================================================
-     7. DYNAMIC CSS
-     ======================================================= */
-
-  function injectDynamicCSS() {
-
-    if ($("#electrofixAppDynamicCSS")) {
+    if (!saved || typeof saved !== "object") {
       return;
     }
 
-    const style =
-      document.createElement("style");
+    state.page = safeText(saved.page || "home");
 
-    style.id =
-      "electrofixAppDynamicCSS";
+    state.stageIndex = Number.isInteger(saved.stageIndex)
+      ? saved.stageIndex
+      : -1;
+
+    state.sectionIndex = Number.isInteger(saved.sectionIndex)
+      ? saved.sectionIndex
+      : -1;
+
+    state.itemIndex = Number.isInteger(saved.itemIndex)
+      ? saved.itemIndex
+      : -1;
+
+    validateSavedRoute();
+  }
+
+  function validateSavedRoute() {
+    if (state.page === "home") {
+      state.stageIndex = -1;
+      state.sectionIndex = -1;
+      state.itemIndex = -1;
+      return;
+    }
+
+    if (
+      state.stageIndex < 0 ||
+      state.stageIndex >= DATA.length
+    ) {
+      state.page = "home";
+      state.stageIndex = -1;
+      state.sectionIndex = -1;
+      state.itemIndex = -1;
+      return;
+    }
+
+    if (state.page === "stage") {
+      state.sectionIndex = -1;
+      state.itemIndex = -1;
+      return;
+    }
+
+    if (
+      state.page === "section" ||
+      state.page === "item"
+    ) {
+      const stage = DATA[state.stageIndex];
+
+      if (
+        !stage ||
+        state.sectionIndex < 0 ||
+        state.sectionIndex >= stage.sections.length
+      ) {
+        state.page = "stage";
+        state.sectionIndex = -1;
+        state.itemIndex = -1;
+        return;
+      }
+    }
+
+    if (state.page === "item") {
+      const section =
+        DATA[state.stageIndex].sections[
+          state.sectionIndex
+        ];
+
+      if (
+        !section ||
+        state.itemIndex < 0 ||
+        state.itemIndex >= section.items.length
+      ) {
+        state.page = "section";
+        state.itemIndex = -1;
+      }
+    }
+
+    if (
+      ![
+        "home",
+        "stage",
+        "section",
+        "item",
+        "estimate",
+        "calculator",
+        "settings"
+      ].includes(state.page)
+    ) {
+      state.page = "home";
+    }
+  }
+
+
+  /* =========================================================
+     BRANDING
+     ========================================================= */
+
+  function applyBranding() {
+    $$("[data-brand-logo]").forEach((img) => {
+      img.src = BRAND.logo;
+      img.alt = BRAND.name;
+    });
+
+    $$("#brandLogo, .brand-logo img").forEach((img) => {
+      if (!img.getAttribute("src")) {
+        img.src = BRAND.logo;
+      }
+      img.alt = BRAND.name;
+    });
+
+    $$("[data-brand-name]").forEach((el) => {
+      el.textContent = BRAND.name;
+    });
+
+    $$("[data-brand-tagline]").forEach((el) => {
+      el.textContent =
+        currentLang() === "hi"
+          ? BRAND.taglineHi
+          : BRAND.taglineEn;
+    });
+  }
+
+  function brandLogoHTML(className = "") {
+    return `
+      <img
+        class="ef-brand-logo ${className}"
+        src="${esc(BRAND.logo)}"
+        alt="${esc(BRAND.name)}"
+        onerror="this.style.display='none'"
+      >
+    `;
+  }
+
+
+  /* =========================================================
+     DYNAMIC CSS
+     ========================================================= */
+
+  function injectDynamicCSS() {
+    if ($("#efDynamicCSS")) return;
+
+    const style = document.createElement("style");
+    style.id = "efDynamicCSS";
 
     style.textContent = `
+      /* =====================================================
+         GENERAL
+         ===================================================== */
 
       #efRoute {
-        width:100%;
-        max-width:1100px;
-        margin:0 auto;
-        padding:12px;
-        box-sizing:border-box;
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 12px 12px 90px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+
+      .ef-page {
+        width: 100%;
+        text-align: center;
       }
 
       .ef-page-head {
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:10px;
-        flex-wrap:wrap;
-        text-align:center;
-        margin:10px 0 18px;
+        display: grid;
+        grid-template-columns: 42px 1fr 42px;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 14px;
       }
 
-      .ef-page-head h2,
-      .ef-page-head h3 {
-        margin:0;
+      .ef-page-brand {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
       }
 
-      .ef-back-btn {
-        border:1px solid rgba(14,165,233,.5);
-        background:#07182e;
-        color:#38bdf8;
-        border-radius:12px;
-        padding:9px 14px;
-        cursor:pointer;
-        font-weight:700;
+      .ef-brand-logo {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        border-radius: 50%;
+        flex: 0 0 42px;
       }
 
-      .ef-count {
-        opacity:.75;
-        font-size:.88rem;
+      .ef-page-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1.2;
       }
 
-      .ef-section-card,
-      .ef-material-card,
-      .ef-estimate-card,
-      .ef-setting-card,
-      .ef-calc-card {
-        background:#07182e;
-        border:1px solid rgba(14,165,233,.28);
-        border-radius:16px;
-        padding:15px;
-        margin:10px 0;
-        box-sizing:border-box;
+      .ef-page-subtitle {
+        margin: 3px 0 0;
+        font-size: 11px;
+        opacity: .75;
       }
 
-      body.light-mode .ef-section-card,
-      body.light-mode .ef-material-card,
-      body.light-mode .ef-estimate-card,
-      body.light-mode .ef-setting-card,
-      body.light-mode .ef-calc-card {
-        background:#fff;
-        color:#111827;
+      .ef-back-btn,
+      .ef-view-trigger {
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(14,165,233,.55);
+        border-radius: 12px;
+        background: #07182e;
+        color: #38bdf8;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 19px;
+        font-weight: 900;
+        box-shadow:
+          0 0 10px rgba(14,165,233,.16),
+          inset 0 0 10px rgba(14,165,233,.06);
       }
 
-      .ef-section-grid,
-      .ef-material-grid,
-      .ef-estimate-grid,
-      .ef-settings-grid,
-      .ef-calc-grid {
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:12px;
+      .ef-back-btn:active,
+      .ef-view-trigger:active {
+        transform: scale(.95);
       }
 
-      .ef-card-button {
-        width:100%;
-        text-align:center;
-        cursor:pointer;
-        transition:.2s ease;
+      .ef-view-picker {
+        position: relative;
+        display: inline-flex;
+        justify-content: center;
+        z-index: 20;
       }
 
-      .ef-card-button:active {
-        transform:scale(.98);
-      }
-
-      .ef-section-card h3,
-      .ef-material-card h3,
-      .ef-estimate-card h3,
-      .ef-setting-card h3,
-      .ef-calc-card h3 {
-        margin:0 0 7px;
-      }
-
-      .ef-material-card {
-        min-height:85px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      }
-
-      .ef-material-card h3 {
-        font-size:1rem;
-      }
-
-      .ef-item-editor {
-        max-width:680px;
-        margin:0 auto;
-      }
-
-      .ef-field {
-        margin:13px 0;
-        text-align:center;
-      }
-
-      .ef-field-label {
-        display:block;
-        margin-bottom:7px;
-        font-weight:800;
-      }
-
-      .ef-field-row {
-        display:flex;
-        align-items:center;
-        gap:6px;
-      }
-
-      .ef-field-row select,
-      .ef-field-row input,
-      .ef-field > input {
-        width:100%;
-        min-height:44px;
-        box-sizing:border-box;
-        border-radius:11px;
-        border:1px solid rgba(14,165,233,.35);
-        background:#030b18;
-        color:inherit;
-        padding:9px 11px;
-        outline:none;
-      }
-
-      body.light-mode .ef-field-row select,
-      body.light-mode .ef-field-row input,
-      body.light-mode .ef-field > input {
-        background:#fff;
-        color:#111827;
-      }
-
-      .ef-clear-field {
-        width:36px;
-        min-width:36px;
-        height:36px;
-        border:0;
-        border-radius:50%;
-        cursor:pointer;
-        background:rgba(239,68,68,.12);
-        color:#ef4444;
-        font-weight:900;
-      }
-
-      .ef-qty {
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        gap:8px;
-      }
-
-      .ef-qty button {
-        width:42px;
-        height:42px;
-        border:1px solid rgba(14,165,233,.4);
-        border-radius:10px;
-        background:#07182e;
-        color:#38bdf8;
-        font-size:20px;
-        font-weight:900;
-        cursor:pointer;
-      }
-
-      .ef-qty input {
-        max-width:120px;
-        text-align:center;
-      }
-
-      .ef-actions {
-        display:flex;
-        justify-content:center;
-        gap:9px;
-        flex-wrap:wrap;
-        margin-top:18px;
-      }
-
-      .ef-btn {
-        border:0;
-        border-radius:12px;
-        padding:11px 17px;
-        cursor:pointer;
-        font-weight:800;
-        background:#0ea5e9;
-        color:#fff;
-      }
-
-      .ef-btn.secondary {
-        background:#172554;
-      }
-
-      .ef-btn.danger {
-        background:#991b1b;
-      }
-
-      .ef-empty {
-        text-align:center;
-        opacity:.7;
-        padding:35px 15px;
-      }
-
-      .ef-breadcrumb {
-        text-align:center;
-        opacity:.72;
-        font-size:.84rem;
-        margin-bottom:10px;
-      }
-
-      .ef-estimate-meta {
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:6px;
-        font-size:.9rem;
-        opacity:.9;
-      }
-
-      .ef-setting-row {
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-        flex-wrap:wrap;
-      }
-
-      .ef-language-btn,
-      .ef-theme-btn {
-        border:1px solid rgba(14,165,233,.35);
-        background:#07182e;
-        color:inherit;
-        border-radius:11px;
-        padding:10px 14px;
-        cursor:pointer;
-      }
-
-      .ef-language-btn.active,
-      .ef-theme-btn.active {
-        border-color:#facc15;
-        box-shadow:0 0 12px rgba(250,204,21,.22);
+      .ef-view-trigger {
+        background:
+          linear-gradient(
+            135deg,
+            rgba(14,165,233,.18),
+            rgba(250,204,21,.12)
+          );
+        color: #facc15;
       }
 
       .ef-view-options {
-        display:flex;
-        flex-wrap:wrap;
-        justify-content:center;
-        gap:7px;
-        margin:10px 0;
+        position: absolute;
+        top: 48px;
+        right: 0;
+        width: 170px;
+        padding: 7px;
+        border: 1px solid rgba(14,165,233,.45);
+        border-radius: 14px;
+        background: #07182e;
+        box-shadow: 0 12px 35px rgba(0,0,0,.45);
+        display: grid;
+        gap: 5px;
+        z-index: 9999;
       }
 
-      .ef-view-options button {
-        border:1px solid rgba(14,165,233,.3);
-        background:#07182e;
-        color:inherit;
-        border-radius:9px;
-        padding:8px 10px;
-        cursor:pointer;
+      .ef-view-options[hidden] {
+        display: none;
       }
 
-      .ef-view-options button.active {
-        border-color:#facc15;
-        color:#facc15;
+      .ef-view-option {
+        border: 1px solid rgba(56,189,248,.16);
+        border-radius: 9px;
+        background: transparent;
+        color: #dbeafe;
+        padding: 8px 9px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 12px;
       }
 
-      .ef-grid-list {
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        gap:10px;
+      .ef-view-option.active {
+        color: #050816;
+        background:
+          linear-gradient(
+            90deg,
+            #38bdf8,
+            #facc15
+          );
+        font-weight: 800;
       }
 
-      .ef-grid-list.view-list,
-      .ef-grid-list.view-horizontal,
-      .ef-grid-list.view-dense {
-        grid-template-columns:1fr;
+      .ef-breadcrumb {
+        margin: 5px 0 14px;
+        font-size: 11px;
+        opacity: .7;
+        text-align: center;
       }
 
-      .ef-grid-list.view-mini .ef-material-card {
-        min-height:50px;
-        padding:9px;
+      /* =====================================================
+         STAGE / SECTION GRID
+         ===================================================== */
+
+      #stageGrid,
+      #sectionGrid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        align-items: stretch;
       }
 
-      .ef-grid-list.view-large {
-        grid-template-columns:1fr;
+      #stageGrid.view-grid,
+      #sectionGrid.view-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .ef-grid-list.view-large .ef-material-card {
-        min-height:110px;
+      #stageGrid.view-two-column,
+      #sectionGrid.view-two-column {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .ef-grid-list.view-two-column {
-        grid-template-columns:repeat(2,minmax(0,1fr));
+      #stageGrid.view-list,
+      #sectionGrid.view-list,
+      #stageGrid.view-horizontal,
+      #sectionGrid.view-horizontal,
+      #stageGrid.view-dense,
+      #sectionGrid.view-dense,
+      #stageGrid.view-large,
+      #sectionGrid.view-large {
+        grid-template-columns: 1fr;
       }
 
-      .ef-grid-list.view-compact {
-        gap:5px;
+      #stageGrid.view-compact,
+      #sectionGrid.view-compact,
+      #stageGrid.view-mini,
+      #sectionGrid.view-mini,
+      #stageGrid.view-icon-list,
+      #sectionGrid.view-icon-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
-      .ef-grid-list.view-compact .ef-material-card {
-        padding:9px;
-        min-height:60px;
+      #stageGrid.view-timeline,
+      #sectionGrid.view-timeline {
+        grid-template-columns: 1fr;
       }
 
-      .ef-grid-list.view-timeline {
-        grid-template-columns:1fr;
+      #stageGrid.view-list .stage-card,
+      #stageGrid.view-horizontal .stage-card,
+      #stageGrid.view-dense .stage-card {
+        min-height: 66px !important;
+        height: auto !important;
+        padding: 9px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px;
+        text-align: center !important;
       }
 
-      .ef-grid-list.view-timeline .ef-material-card {
-        border-left:4px solid #0ea5e9;
-        border-radius:5px 15px 15px 5px;
+      #stageGrid.view-mini .stage-card {
+        min-height: 54px !important;
+        height: auto !important;
+        padding: 7px !important;
       }
 
-      .ef-grid-list.view-icon-list {
-        grid-template-columns:1fr;
+      #stageGrid.view-compact .stage-card {
+        min-height: 64px !important;
+        height: auto !important;
+        padding: 8px !important;
       }
 
-      .ef-search-summary {
-        text-align:center;
-        margin:10px 0;
-        opacity:.8;
+      #stageGrid.view-large .stage-card {
+        min-height: 130px !important;
       }
 
-      .ef-calc-form {
-        max-width:600px;
-        margin:auto;
+      #stageGrid.view-list .stage-card *,
+      #stageGrid.view-horizontal .stage-card *,
+      #stageGrid.view-dense .stage-card * {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
       }
 
-      .ef-result {
-        text-align:center;
-        margin-top:12px;
-        font-weight:900;
-        color:#38bdf8;
+      /* =====================================================
+         SECTION CARDS
+         ===================================================== */
+
+      .ef-section-card {
+        min-height: 120px;
+        padding: 15px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(14,165,233,.30);
+        background: #07182e;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition: .18s ease;
       }
 
-      @media(max-width:360px) {
-        .ef-section-grid,
+      .ef-section-card:active {
+        transform: scale(.98);
+      }
+
+      .ef-section-card h3 {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      .ef-section-card p {
+        margin: 6px 0 0;
+        font-size: 11px;
+        opacity: .7;
+      }
+
+      #sectionGrid.view-list .ef-section-card,
+      #sectionGrid.view-horizontal .ef-section-card,
+      #sectionGrid.view-dense .ef-section-card {
+        min-height: 62px;
+        padding: 8px 12px;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+
+      #sectionGrid.view-mini .ef-section-card {
+        min-height: 55px;
+        padding: 7px;
+      }
+
+      #sectionGrid.view-compact .ef-section-card {
+        min-height: 65px;
+        padding: 8px;
+      }
+
+      /* =====================================================
+         MATERIAL GRID
+         ===================================================== */
+
+      .ef-material-section {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+
+      .ef-material-section-title {
+        margin: 0 0 8px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(250,204,21,.25);
+        background: rgba(250,204,21,.05);
+        color: #facc15;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .ef-material-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 9px;
+      }
+
+      .ef-material-grid.view-grid,
+      .ef-material-grid.view-two-column {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+
+      .ef-material-grid.view-list,
+      .ef-material-grid.view-horizontal,
+      .ef-material-grid.view-large,
+      .ef-material-grid.view-dense {
+        grid-template-columns: 1fr;
+      }
+
+      .ef-material-grid.view-compact,
+      .ef-material-grid.view-mini,
+      .ef-material-grid.view-icon-list {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+
+      .ef-material-grid.view-timeline {
+        grid-template-columns: 1fr;
+      }
+
+      .ef-material-card {
+        min-width: 0;
+        min-height: 76px;
+        padding: 10px 9px;
+        border-radius: 13px;
+        border: 1px solid rgba(14,165,233,.30);
+        background: #07182e;
+        color: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition: .18s ease;
+      }
+
+      .ef-material-card:active {
+        transform: scale(.98);
+      }
+
+      .ef-material-name {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 750;
+        line-height: 1.25;
+        word-break: break-word;
+      }
+
+      /* REAL SMALL LIST VIEW */
+      .ef-material-grid.view-list .ef-material-card {
+        min-height: 46px;
+        height: 46px;
+        padding: 6px 10px;
+        border-radius: 9px;
+        justify-content: center;
+      }
+
+      .ef-material-grid.view-list .ef-material-name {
+        font-size: 11.5px;
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .ef-material-grid.view-dense .ef-material-card {
+        min-height: 40px;
+        height: 40px;
+        padding: 5px 8px;
+        border-radius: 8px;
+      }
+
+      .ef-material-grid.view-dense .ef-material-name {
+        font-size: 11px;
+      }
+
+      .ef-material-grid.view-mini .ef-material-card {
+        min-height: 48px;
+        height: 48px;
+        padding: 6px;
+      }
+
+      .ef-material-grid.view-mini .ef-material-name {
+        font-size: 10.5px;
+      }
+
+      .ef-material-grid.view-compact .ef-material-card {
+        min-height: 56px;
+        height: 56px;
+        padding: 7px;
+      }
+
+      .ef-material-grid.view-compact .ef-material-name {
+        font-size: 11.5px;
+      }
+
+      .ef-material-grid.view-large .ef-material-card {
+        min-height: 105px;
+      }
+
+      .ef-material-grid.view-horizontal .ef-material-card {
+        min-height: 55px;
+        height: 55px;
+        justify-content: flex-start;
+        padding: 8px 14px;
+        text-align: left;
+      }
+
+      .ef-material-grid.view-icon-list .ef-material-card {
+        min-height: 50px;
+        height: 50px;
+        padding: 6px 10px;
+      }
+
+      .ef-material-grid.view-timeline .ef-material-card {
+        min-height: 58px;
+        text-align: center;
+      }
+
+      /* =====================================================
+         EDITOR
+         ===================================================== */
+
+      .ef-editor {
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      .ef-editor-card {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 14px;
+        border-radius: 17px;
+        border: 1px solid rgba(14,165,233,.28);
+        background: #07182e;
+      }
+
+      .ef-editor-title {
+        margin: 0 0 5px;
+        font-size: 18px;
+        font-weight: 850;
+      }
+
+      .ef-editor-subtitle {
+        margin: 0 0 16px;
+        font-size: 11px;
+        opacity: .7;
+      }
+
+      .ef-field {
+        width: 100%;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+
+      .ef-field-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 750;
+        opacity: .85;
+      }
+
+      .ef-field-row {
+        display: grid;
+        grid-template-columns: 1fr 34px;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .ef-input,
+      .ef-select {
+        width: 100%;
+        min-height: 43px;
+        padding: 9px 10px;
+        box-sizing: border-box;
+        border-radius: 10px;
+        border: 1px solid rgba(14,165,233,.35);
+        background: #050816;
+        color: inherit;
+        outline: none;
+        text-align: center;
+      }
+
+      .ef-clear-field {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        border: 1px solid rgba(239,68,68,.35);
+        background: rgba(239,68,68,.08);
+        color: #fca5a5;
+        cursor: pointer;
+        font-weight: 900;
+      }
+
+      .ef-quantity-row {
+        display: grid;
+        grid-template-columns: 44px 1fr 44px 34px;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .ef-qty-btn {
+        height: 43px;
+        border-radius: 10px;
+        border: 1px solid rgba(14,165,233,.35);
+        background: #07182e;
+        color: #38bdf8;
+        font-size: 20px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .ef-action-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .ef-action-row.three {
+        grid-template-columns: repeat(3, minmax(0,1fr));
+      }
+
+      .ef-primary-btn,
+      .ef-secondary-btn,
+      .ef-danger-btn {
+        min-height: 43px;
+        border-radius: 10px;
+        padding: 8px 10px;
+        border: 1px solid rgba(14,165,233,.35);
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .ef-primary-btn {
+        color: #050816;
+        background: linear-gradient(90deg,#38bdf8,#facc15);
+      }
+
+      .ef-secondary-btn {
+        color: #38bdf8;
+        background: #07182e;
+      }
+
+      .ef-danger-btn {
+        color: #fecaca;
+        background: rgba(239,68,68,.08);
+        border-color: rgba(239,68,68,.35);
+      }
+
+      /* =====================================================
+         ESTIMATE
+         ===================================================== */
+
+      .ef-estimate-list {
+        width: 100%;
+        display: grid;
+        gap: 10px;
+        text-align: center;
+      }
+
+      .ef-estimate-card {
+        width: 100%;
+        padding: 12px;
+        box-sizing: border-box;
+        border-radius: 14px;
+        border: 1px solid rgba(14,165,233,.28);
+        background: #07182e;
+      }
+
+      .ef-estimate-title {
+        margin: 0 0 6px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .ef-estimate-meta {
+        font-size: 11px;
+        opacity: .75;
+        line-height: 1.5;
+      }
+
+      .ef-estimate-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        margin-top: 9px;
+      }
+
+      /* =====================================================
+         SETTINGS / CALCULATOR
+         ===================================================== */
+
+      .ef-setting-card,
+      .ef-calc-card {
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto 10px;
+        padding: 13px;
+        box-sizing: border-box;
+        border-radius: 15px;
+        border: 1px solid rgba(14,165,233,.28);
+        background: #07182e;
+        text-align: center;
+      }
+
+      .ef-setting-title {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .ef-setting-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 7px;
+      }
+
+      .ef-setting-btn {
+        border: 1px solid rgba(14,165,233,.28);
+        border-radius: 9px;
+        padding: 8px 11px;
+        background: #050816;
+        color: inherit;
+        cursor: pointer;
+        font-size: 11px;
+      }
+
+      .ef-setting-btn.active {
+        color: #050816;
+        background: linear-gradient(90deg,#38bdf8,#facc15);
+        font-weight: 800;
+      }
+
+      .ef-calc-grid {
+        display: grid;
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 8px;
+      }
+
+      .ef-calc-result {
+        margin-top: 10px;
+        min-height: 43px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #050816;
+        border: 1px solid rgba(250,204,21,.25);
+        color: #facc15;
+        font-weight: 800;
+      }
+
+      /* =====================================================
+         DRAWER
+         ===================================================== */
+
+      #drawerOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.58);
+        z-index: 99990;
+        display: none;
+      }
+
+      #drawerOverlay.open {
+        display: block;
+      }
+
+      #drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: min(320px,88vw);
+        height: 100vh;
+        z-index: 99999;
+        box-sizing: border-box;
+        padding: 15px;
+        background: #050816;
+        border-right: 1px solid rgba(14,165,233,.35);
+        transform: translateX(-105%);
+        transition: transform .22s ease;
+        overflow-y: auto;
+        text-align: center;
+      }
+
+      #drawer.open {
+        transform: translateX(0);
+      }
+
+      .ef-drawer-brand {
+        padding: 12px 8px 17px;
+        border-bottom: 1px solid rgba(14,165,233,.18);
+        margin-bottom: 10px;
+      }
+
+      .ef-drawer-brand .ef-brand-logo {
+        width: 62px;
+        height: 62px;
+        margin-bottom: 7px;
+      }
+
+      .ef-drawer-name {
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .ef-drawer-tagline {
+        margin-top: 4px;
+        font-size: 10px;
+        opacity: .68;
+      }
+
+      .ef-drawer-menu {
+        display: grid;
+        gap: 7px;
+      }
+
+      .ef-drawer-btn {
+        width: 100%;
+        min-height: 44px;
+        border-radius: 10px;
+        border: 1px solid rgba(14,165,233,.20);
+        background: #07182e;
+        color: inherit;
+        cursor: pointer;
+        text-align: center;
+        font-weight: 700;
+      }
+
+      .ef-drawer-btn.active {
+        border-color: rgba(250,204,21,.50);
+        color: #facc15;
+      }
+
+      .ef-drawer-separator {
+        height: 1px;
+        background: rgba(14,165,233,.16);
+        margin: 7px 0;
+      }
+
+      /* =====================================================
+         TOAST
+         ===================================================== */
+
+      .ef-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 78px;
+        transform: translateX(-50%);
+        z-index: 100000;
+        max-width: calc(100vw - 30px);
+        padding: 9px 13px;
+        border-radius: 10px;
+        background: #07182e;
+        border: 1px solid rgba(56,189,248,.35);
+        color: #e0f2fe;
+        font-size: 11px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      }
+
+      /* =====================================================
+         LIGHT MODE
+         ===================================================== */
+
+      body.light-mode #drawer {
+        background: #f8fafc;
+        color: #111827;
+        border-color: rgba(14,165,233,.35);
+      }
+
+      body.light-mode .ef-drawer-btn,
+      body.light-mode .ef-view-options,
+      body.light-mode .ef-section-card,
+      body.light-mode .ef-material-card,
+      body.light-mode .ef-editor-card,
+      body.light-mode .ef-setting-card,
+      body.light-mode .ef-calc-card,
+      body.light-mode .ef-estimate-card,
+      body.light-mode .ef-view-trigger,
+      body.light-mode .ef-back-btn,
+      body.light-mode .ef-secondary-btn,
+      body.light-mode .ef-qty-btn {
+        background: #ffffff;
+        color: #111827;
+      }
+
+      body.light-mode .ef-input,
+      body.light-mode .ef-select {
+        background: #ffffff;
+        color: #111827;
+      }
+
+      body.light-mode .ef-view-option {
+        color: #111827;
+      }
+
+      body.light-mode .ef-toast {
+        background: #ffffff;
+        color: #111827;
+      }
+
+      /* =====================================================
+         SMALL SCREENS
+         ===================================================== */
+
+      @media (max-width: 360px) {
+        #stageGrid,
+        #sectionGrid,
         .ef-material-grid,
-        .ef-estimate-grid,
-        .ef-settings-grid,
-        .ef-calc-grid {
-          grid-template-columns:1fr;
+        #stageGrid.view-compact,
+        #sectionGrid.view-compact,
+        #stageGrid.view-mini,
+        #sectionGrid.view-mini,
+        #stageGrid.view-icon-list,
+        #sectionGrid.view-icon-list {
+          grid-template-columns: 1fr;
         }
 
-        .ef-grid-list,
-        .ef-grid-list.view-two-column {
-          grid-template-columns:1fr;
+        .ef-action-row,
+        .ef-action-row.three {
+          grid-template-columns: 1fr;
+        }
+
+        .ef-calc-grid {
+          grid-template-columns: 1fr;
         }
       }
     `;
@@ -1411,578 +1675,378 @@
     document.head.appendChild(style);
   }
 
-  /* =======================================================
-     8. HOME MARKUP BACKUP
-     ======================================================= */
 
-  const homeEl = $("#home");
+  /* =========================================================
+     TOAST
+     ========================================================= */
 
-  let homeMarkup =
-    homeEl ? homeEl.innerHTML : "";
-
-  let homeIsStatic = true;
-
-  /* =======================================================
-     9. TOAST
-     ======================================================= */
+  let toastTimer = null;
 
   function showToast(message) {
+    $$(".ef-toast").forEach((el) => el.remove());
 
-    let toast = $("#toast");
-
-    if (!toast) {
-
-      toast =
-        document.createElement("div");
-
-      toast.id = "toast";
-
-      toast.style.cssText = `
-        position:fixed;
-        left:50%;
-        bottom:82px;
-        transform:translateX(-50%);
-        z-index:99999;
-        max-width:90%;
-        padding:10px 15px;
-        border-radius:12px;
-        background:#07182e;
-        color:#fff;
-        border:1px solid rgba(56,189,248,.5);
-        box-shadow:0 0 18px rgba(14,165,233,.25);
-        text-align:center;
-        pointer-events:none;
-        opacity:0;
-        transition:.2s;
-      `;
-
-      document.body.appendChild(toast);
-    }
-
+    const toast = document.createElement("div");
+    toast.className = "ef-toast";
     toast.textContent = message;
-    toast.style.opacity = "1";
 
-    clearTimeout(toast._timer);
+    document.body.appendChild(toast);
 
-    toast._timer =
-      setTimeout(() => {
-        toast.style.opacity = "0";
-      }, 1700);
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+      toast.remove();
+    }, 1500);
   }
 
-  /* =======================================================
-     10. THEME
-     ======================================================= */
+
+  /* =========================================================
+     THEME
+     ========================================================= */
 
   function applyTheme() {
-
     document.body.classList.toggle(
       "light-mode",
       state.theme === "light"
     );
 
-    document.documentElement.dataset.theme =
-      state.theme;
+    const themeMeta = $('meta[name="theme-color"]');
 
-    storageSet(
-      STORAGE.theme,
-      state.theme
-    );
-
-    const icon = $("#themeIcon");
-    const title = $("#themeTitle");
-    const stateEl = $("#themeState");
-
-    if (icon) {
-      icon.textContent =
-        state.theme === "dark" ? "🌙" : "☀️";
-    }
-
-    if (title) {
-      title.textContent =
-        state.theme === "dark"
-          ? langText("dark")
-          : langText("light");
-    }
-
-    if (stateEl) {
-      stateEl.textContent =
-        state.theme === "dark"
-          ? langText("dark")
-          : langText("light");
+    if (themeMeta) {
+      themeMeta.setAttribute(
+        "content",
+        state.theme === "light"
+          ? "#f8fafc"
+          : "#050816"
+      );
     }
   }
 
-  function toggleTheme() {
-
+  function setTheme(theme) {
     state.theme =
-      state.theme === "dark"
+      theme === "light"
         ? "light"
         : "dark";
 
-    applyTheme();
-
-    refreshVisibleLanguage();
-  }
-
-  /* =======================================================
-     11. LANGUAGE
-     ======================================================= */
-
-  function setLanguage(lang) {
-
-    state.lang =
-      lang === "en" ? "en" : "hi";
-
-    storageSet(
-      STORAGE.lang,
-      state.lang
-    );
-
-    updateLanguageButtons();
+    storageSet(STORAGE.theme, state.theme);
 
     applyTheme();
 
-    refreshVisibleLanguage();
+    buildDrawer();
 
-    if (!homeIsStatic) {
+    if (state.page === "settings") {
       renderCurrentPage(false);
     }
   }
 
-  function updateLanguageButtons() {
 
-    const hi = $("#langHi");
-    const en = $("#langEn");
+  /* =========================================================
+     LANGUAGE
+     ========================================================= */
 
-    if (hi) {
-      hi.classList.toggle(
-        "active",
-        state.lang === "hi"
-      );
+  function setLanguage(lang) {
+    state.lang = lang === "en" ? "en" : "hi";
 
-      hi.setAttribute(
-        "aria-pressed",
-        state.lang === "hi" ? "true" : "false"
-      );
-    }
+    storageSet(STORAGE.lang, state.lang);
 
-    if (en) {
-      en.classList.toggle(
-        "active",
-        state.lang === "en"
-      );
-
-      en.setAttribute(
-        "aria-pressed",
-        state.lang === "en" ? "true" : "false"
-      );
-    }
-  }
-
-  function refreshVisibleLanguage() {
-
-    updateLanguageButtons();
-
-    applyTheme();
-
-    const dynamicLabels =
-      $$("[data-i18n]");
-
-    dynamicLabels.forEach(el => {
-
-      const key =
-        el.dataset.i18n;
-
-      if (key) {
-        el.textContent =
-          langText(key);
-      }
-    });
-
-    const translatable =
-      $$("[data-tr]");
-
-    translatable.forEach(el => {
-
-      const value =
-        el.dataset.tr;
-
-      if (value) {
-        el.textContent =
-          tr(value);
-      }
-    });
-
-    if (homeIsStatic) {
-      bindHome();
-      updateHomeStageText();
-    }
-  }
-
-  /* =======================================================
-     12. DRAWER
-     ======================================================= */
-
-  function ensureDrawer() {
-
-    let drawer = $("#drawer");
-
-    let overlay =
-      $("#drawerOverlay");
-
-    if (!overlay) {
-
-      overlay =
-        document.createElement("div");
-
-      overlay.id =
-        "drawerOverlay";
-
-      overlay.style.cssText = `
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,.55);
-        z-index:9990;
-        display:none;
-      `;
-
-      document.body.appendChild(overlay);
-    }
-
-    if (!drawer) {
-
-      drawer =
-        document.createElement("aside");
-
-      drawer.id = "drawer";
-
-      drawer.style.cssText = `
-        position:fixed;
-        top:0;
-        left:0;
-        bottom:0;
-        width:min(310px,88vw);
-        z-index:9995;
-        padding:18px 14px;
-        box-sizing:border-box;
-        background:#050816;
-        color:#fff;
-        border-right:1px solid rgba(14,165,233,.35);
-        transform:translateX(-105%);
-        transition:.25s ease;
-        overflow-y:auto;
-      `;
-
-      document.body.appendChild(drawer);
+    if (state.page === "home") {
+      showHome(false);
+    } else {
+      renderCurrentPage(false);
     }
 
     buildDrawer();
+    updateStaticUI();
+    applyBranding();
+  }
 
-    overlay.onclick = closeDrawer;
+
+  /* =========================================================
+     DRAWER
+     ========================================================= */
+
+  function getCurrentRouteState() {
+    return {
+      efRoute: true,
+      page: state.page,
+      stageIndex: state.stageIndex,
+      sectionIndex: state.sectionIndex,
+      itemIndex: state.itemIndex
+    };
+  }
+
+  function ensureDrawer() {
+    let drawer = $("#drawer");
+    let overlay = $("#drawerOverlay");
+
+    if (!drawer) {
+      drawer = document.createElement("aside");
+      drawer.id = "drawer";
+      document.body.appendChild(drawer);
+    }
+
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "drawerOverlay";
+      document.body.appendChild(overlay);
+    }
+
+    overlay.onclick = () => {
+      closeDrawer();
+    };
+
+    buildDrawer();
+
+    return { drawer, overlay };
   }
 
   function buildDrawer() {
-
-    const drawer =
-      $("#drawer");
+    const drawer = $("#drawer");
 
     if (!drawer) return;
 
+    const isHindi = currentLang() === "hi";
+
     drawer.innerHTML = `
+      <div class="ef-drawer-brand">
+        ${brandLogoHTML()}
 
-      <div style="
-        text-align:center;
-        padding:10px 5px 18px;
-        border-bottom:1px solid rgba(14,165,233,.22);
-      ">
-        <div style="
-          font-size:1.15rem;
-          font-weight:900;
-          color:#38bdf8;
-        ">
-          Sandeep ElectroFix
+        <div class="ef-drawer-name">
+          ${esc(BRAND.name)}
         </div>
 
-        <div style="
-          font-size:.78rem;
-          opacity:.7;
-          margin-top:4px;
-        ">
-          Estimate List
+        <div class="ef-drawer-tagline">
+          ${
+            isHindi
+              ? esc(BRAND.taglineHi)
+              : esc(BRAND.taglineEn)
+          }
         </div>
       </div>
 
-      <div style="padding-top:12px;">
+      <div class="ef-drawer-menu">
 
-        ${drawerButton(
-          "home",
-          "🏠",
-          langText("home")
-        )}
+        <button
+          type="button"
+          class="ef-drawer-btn ${
+            state.page === "home" ? "active" : ""
+          }"
+          data-drawer-nav="home">
+          ${esc(langText("home"))}
+        </button>
 
-        ${drawerButton(
-          "estimate",
-          "🧾",
-          langText("estimate")
-        )}
+        <button
+          type="button"
+          class="ef-drawer-btn ${
+            state.page === "estimate" ? "active" : ""
+          }"
+          data-drawer-nav="estimate">
+          ${esc(langText("estimate"))}
+        </button>
 
-        ${drawerButton(
-          "calculator",
-          "🧮",
-          langText("calculator")
-        )}
+        <button
+          type="button"
+          class="ef-drawer-btn ${
+            state.page === "calculator" ? "active" : ""
+          }"
+          data-drawer-nav="calculator">
+          ${esc(langText("calculator"))}
+        </button>
 
-        ${drawerButton(
-          "settings",
-          "⚙️",
-          langText("settings")
-        )}
+        <button
+          type="button"
+          class="ef-drawer-btn ${
+            state.page === "settings" ? "active" : ""
+          }"
+          data-drawer-nav="settings">
+          ${esc(langText("settings"))}
+        </button>
 
-      </div>
+        <div class="ef-drawer-separator"></div>
 
-      <div style="
-        margin-top:16px;
-        padding-top:15px;
-        border-top:1px solid rgba(14,165,233,.2);
-      ">
-
-        <div style="
-          text-align:center;
-          font-weight:800;
-          margin-bottom:9px;
-        ">
-          ${langText("language")}
+        <div class="ef-setting-title">
+          ${esc(langText("language"))}
         </div>
 
-        <div style="
-          display:flex;
-          gap:8px;
-        ">
-
+        <div class="ef-setting-buttons">
           <button
-            id="drawerHi"
             type="button"
-            class="ef-language-btn ${state.lang === "hi" ? "active" : ""}"
-            style="flex:1"
-          >
+            class="ef-setting-btn ${
+              state.lang === "hi" ? "active" : ""
+            }"
+            data-drawer-lang="hi">
             हिन्दी
           </button>
 
           <button
-            id="drawerEn"
             type="button"
-            class="ef-language-btn ${state.lang === "en" ? "active" : ""}"
-            style="flex:1"
-          >
+            class="ef-setting-btn ${
+              state.lang === "en" ? "active" : ""
+            }"
+            data-drawer-lang="en">
             English
           </button>
-
         </div>
 
-      </div>
+        <div class="ef-drawer-separator"></div>
 
-      <div style="
-        margin-top:16px;
-        padding-top:15px;
-        border-top:1px solid rgba(14,165,233,.2);
-      ">
-
-        <div style="
-          text-align:center;
-          font-weight:800;
-          margin-bottom:9px;
-        ">
-          ${langText("theme")}
+        <div class="ef-setting-title">
+          ${esc(langText("theme"))}
         </div>
 
+        <div class="ef-setting-buttons">
+          <button
+            type="button"
+            class="ef-setting-btn ${
+              state.theme === "dark" ? "active" : ""
+            }"
+            data-drawer-theme="dark">
+            ${esc(langText("dark"))}
+          </button>
+
+          <button
+            type="button"
+            class="ef-setting-btn ${
+              state.theme === "light" ? "active" : ""
+            }"
+            data-drawer-theme="light">
+            ${esc(langText("light"))}
+          </button>
+        </div>
+
+        <div class="ef-drawer-separator"></div>
+
         <button
-          id="drawerTheme"
           type="button"
-          class="ef-theme-btn"
-          style="width:100%"
-        >
-          ${state.theme === "dark" ? "🌙" : "☀️"}
-          ${state.theme === "dark"
-            ? langText("dark")
-            : langText("light")}
-        </button>
-
-      </div>
-
-      <div style="
-        margin-top:16px;
-        padding-top:15px;
-        border-top:1px solid rgba(14,165,233,.2);
-      ">
-
-        <button
-          id="drawerReset"
-          type="button"
-          class="ef-btn danger"
-          style="width:100%"
-        >
-          ♻️ ${langText("reset")}
+          class="ef-drawer-btn"
+          id="drawerResetBtn">
+          ${esc(langText("reset"))}
         </button>
 
       </div>
     `;
 
-    $$(".drawer-item", drawer)
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const page =
-            button.dataset.page;
-
-          closeDrawer();
-
-          navigate(page);
-        };
-      });
-
-    const dhi =
-      $("#drawerHi");
-
-    const den =
-      $("#drawerEn");
-
-    if (dhi) {
-      dhi.onclick = () => {
-        setLanguage("hi");
-        buildDrawer();
+    $$("[data-drawer-nav]", drawer).forEach((btn) => {
+      btn.onclick = () => {
+        navigate(btn.dataset.drawerNav);
       };
-    }
+    });
 
-    if (den) {
-      den.onclick = () => {
-        setLanguage("en");
-        buildDrawer();
+    $$("[data-drawer-lang]", drawer).forEach((btn) => {
+      btn.onclick = () => {
+        setLanguage(btn.dataset.drawerLang);
       };
-    }
+    });
 
-    const dt =
-      $("#drawerTheme");
-
-    if (dt) {
-      dt.onclick = () => {
-        toggleTheme();
-        buildDrawer();
+    $$("[data-drawer-theme]", drawer).forEach((btn) => {
+      btn.onclick = () => {
+        setTheme(btn.dataset.drawerTheme);
       };
-    }
+    });
 
-    const reset =
-      $("#drawerReset");
+    const resetBtn = $("#drawerResetBtn", drawer);
 
-    if (reset) {
-      reset.onclick =
-        resetApplication;
+    if (resetBtn) {
+      resetBtn.onclick = resetApplication;
     }
   }
 
-  function drawerButton(page, icon, label) {
+  function showDrawerVisual() {
+    const drawer = $("#drawer");
+    const overlay = $("#drawerOverlay");
+    const menu = $("#menuBtn");
 
-    return `
-      <button
-        type="button"
-        class="drawer-item"
-        data-page="${esc(page)}"
-        style="
-          display:flex;
-          align-items:center;
-          gap:12px;
-          width:100%;
-          border:0;
-          background:transparent;
-          color:inherit;
-          padding:13px 10px;
-          border-radius:12px;
-          cursor:pointer;
-          text-align:left;
-          font-weight:800;
-          margin-bottom:4px;
-        "
-      >
-        <span style="
-          width:30px;
-          text-align:center;
-          font-size:1.1rem;
-        ">${icon}</span>
-
-        <span>${esc(label)}</span>
-      </button>
-    `;
-  }
-
-  function openDrawer() {
-
-    ensureDrawer();
-
-    const drawer =
-      $("#drawer");
-
-    const overlay =
-      $("#drawerOverlay");
-
-    if (!drawer) return;
-
-    state.drawerOpen = true;
-
-    drawer.style.transform =
-      "translateX(0)";
-
-    if (overlay) {
-      overlay.style.display =
-        "block";
-    }
-
-    const menu =
-      $("#menuBtn");
+    if (drawer) drawer.classList.add("open");
+    if (overlay) overlay.classList.add("open");
 
     if (menu) {
       menu.classList.add("active");
-      menu.setAttribute(
-        "aria-expanded",
-        "true"
-      );
+      menu.setAttribute("aria-expanded", "true");
     }
   }
 
-  function closeDrawer() {
+  function hideDrawerVisual() {
+    const drawer = $("#drawer");
+    const overlay = $("#drawerOverlay");
+    const menu = $("#menuBtn");
 
-    const drawer =
-      $("#drawer");
-
-    const overlay =
-      $("#drawerOverlay");
-
-    state.drawerOpen = false;
-
-    if (drawer) {
-      drawer.style.transform =
-        "translateX(-105%)";
-    }
-
-    if (overlay) {
-      overlay.style.display =
-        "none";
-    }
-
-    const menu =
-      $("#menuBtn");
+    if (drawer) drawer.classList.remove("open");
+    if (overlay) overlay.classList.remove("open");
 
     if (menu) {
       menu.classList.remove("active");
-      menu.setAttribute(
-        "aria-expanded",
-        "false"
-      );
+      menu.setAttribute("aria-expanded", "false");
     }
   }
 
-  function toggleDrawer() {
+  function openDrawer() {
+    ensureDrawer();
 
+    if (state.drawerOpen) return;
+
+    state.drawerOpen = true;
+
+    try {
+      history.pushState(
+        {
+          ...getCurrentRouteState(),
+          efDrawer: true
+        },
+        "",
+        location.href
+      );
+
+      state.drawerHistoryPushed = true;
+    } catch {
+      state.drawerHistoryPushed = false;
+    }
+
+    showDrawerVisual();
+  }
+
+  function closeDrawer(fromPopState = false) {
+    if (!state.drawerOpen) {
+      hideDrawerVisual();
+      return;
+    }
+
+    const hadHistoryEntry =
+      state.drawerHistoryPushed;
+
+    state.drawerOpen = false;
+    state.drawerHistoryPushed = false;
+
+    hideDrawerVisual();
+
+    if (
+      hadHistoryEntry &&
+      !fromPopState
+    ) {
+      try {
+        history.back();
+      } catch {}
+    }
+  }
+
+  function prepareNavigationFromDrawer() {
+    if (!state.drawerOpen) return;
+
+    if (state.drawerHistoryPushed) {
+      try {
+        history.replaceState(
+          getCurrentRouteState(),
+          "",
+          location.href
+        );
+      } catch {}
+    }
+
+    state.drawerHistoryPushed = false;
+    state.drawerOpen = false;
+
+    hideDrawerVisual();
+  }
+
+  function toggleDrawer() {
     if (state.drawerOpen) {
       closeDrawer();
     } else {
@@ -1990,747 +2054,270 @@
     }
   }
 
-  /* =======================================================
-     13. RESET APP
-     ======================================================= */
 
-  function resetApplication() {
+  /* =========================================================
+     HAMBURGER
+     ========================================================= */
 
-    const ok =
-      window.confirm(
-        langText("resetQuestion")
+  function bindHamburger() {
+    const btn = $("#menuBtn");
+
+    if (!btn) return;
+
+    btn.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleDrawer();
+    };
+  }
+
+
+  /* =========================================================
+     HISTORY
+     ========================================================= */
+
+  function routeStateFor(
+    page,
+    stageIndex = -1,
+    sectionIndex = -1,
+    itemIndex = -1
+  ) {
+    return {
+      efRoute: true,
+      page,
+      stageIndex,
+      sectionIndex,
+      itemIndex
+    };
+  }
+
+  function pushHistory() {
+    try {
+      history.pushState(
+        routeStateFor(
+          state.page,
+          state.stageIndex,
+          state.sectionIndex,
+          state.itemIndex
+        ),
+        "",
+        location.href
+      );
+    } catch {}
+
+    state.historyReady = true;
+  }
+
+  function replaceHistory() {
+    try {
+      history.replaceState(
+        routeStateFor(
+          state.page,
+          state.stageIndex,
+          state.sectionIndex,
+          state.itemIndex
+        ),
+        "",
+        location.href
+      );
+    } catch {}
+
+    state.historyReady = true;
+  }
+
+  function seedHistoryForSavedRoute() {
+    const currentPage = state.page;
+    const currentStage = state.stageIndex;
+    const currentSection = state.sectionIndex;
+    const currentItem = state.itemIndex;
+
+    try {
+      history.replaceState(
+        routeStateFor("home", -1, -1, -1),
+        "",
+        location.href
       );
 
-    if (!ok) return;
+      if (currentPage === "home") {
+        state.historyReady = true;
+        return;
+      }
 
-    storageRemove(STORAGE.estimate);
-    storageRemove(STORAGE.route);
-    storageRemove(STORAGE.lastUnit);
+      if (
+        currentPage === "stage" ||
+        currentPage === "section" ||
+        currentPage === "item"
+      ) {
+        history.pushState(
+          routeStateFor(
+            "stage",
+            currentStage,
+            -1,
+            -1
+          ),
+          "",
+          location.href
+        );
+      }
 
-    state.editingEstimateId = null;
-    state.draft = {};
+      if (
+        currentPage === "section" ||
+        currentPage === "item"
+      ) {
+        history.pushState(
+          routeStateFor(
+            "section",
+            currentStage,
+            currentSection,
+            -1
+          ),
+          "",
+          location.href
+        );
+      }
+
+      if (currentPage === "item") {
+        history.pushState(
+          routeStateFor(
+            "item",
+            currentStage,
+            currentSection,
+            currentItem
+          ),
+          "",
+          location.href
+        );
+      }
+
+      if (
+        currentPage === "estimate" ||
+        currentPage === "calculator" ||
+        currentPage === "settings"
+      ) {
+        history.pushState(
+          routeStateFor(
+            currentPage,
+            -1,
+            -1,
+            -1
+          ),
+          "",
+          location.href
+        );
+      }
+    } catch {
+      replaceHistory();
+    }
+
+    state.historyReady = true;
+  }
+
+
+  /* =========================================================
+     NAVIGATION
+     ========================================================= */
+
+  function navigate(
+    page,
+    stageIndex = state.stageIndex,
+    sectionIndex = state.sectionIndex,
+    itemIndex = state.itemIndex,
+    options = {}
+  ) {
+    if (state.drawerOpen) {
+      prepareNavigationFromDrawer();
+    }
+
+    state.page = page;
+
+    state.stageIndex =
+      Number.isInteger(stageIndex)
+        ? stageIndex
+        : -1;
+
+    state.sectionIndex =
+      Number.isInteger(sectionIndex)
+        ? sectionIndex
+        : -1;
+
+    state.itemIndex =
+      Number.isInteger(itemIndex)
+        ? itemIndex
+        : -1;
+
+    if (page !== "item") {
+      state.editingEstimateId = null;
+    }
+
+    saveRoute();
+
+    if (options.replace) {
+      replaceHistory();
+    } else {
+      pushHistory();
+    }
+
+    renderCurrentPage(false);
+  }
+
+
+  /* =========================================================
+     HOME
+     ========================================================= */
+
+  const homeEl = $("#home");
+
+  const homeMarkup = homeEl
+    ? homeEl.innerHTML
+    : "";
+
+  let homeIsStatic = true;
+
+  function showHome(push = false) {
     state.page = "home";
     state.stageIndex = -1;
     state.sectionIndex = -1;
     state.itemIndex = -1;
+    state.editingEstimateId = null;
 
-    closeDrawer();
+    saveRoute();
 
-    showHome(false);
+    if (push) {
+      pushHistory();
+    }
 
-    showToast(
-      langText("resetDone")
-    );
-  }
+    if (homeEl) {
+      homeEl.innerHTML = homeMarkup;
+      homeIsStatic = true;
+    }
 
-  /* =======================================================
-     14. HAMBURGER
-     ======================================================= */
+    bindHome();
 
-  function bindHamburger() {
+    applyBranding();
 
-    const button =
-      $("#menuBtn");
-
-    if (!button) return;
-
-    button.onclick = (event) => {
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      toggleDrawer();
-    };
-
-    button.setAttribute(
-      "aria-expanded",
-      "false"
-    );
-  }
-
-  /* =======================================================
-     15. HOME STAGES
-     ======================================================= */
-
-  function updateHomeStageText() {
-
-    const cards =
-      $$(".stage-card");
-
-    cards.forEach(card => {
-
-      const index =
-        Number(
-          card.dataset.stageIndex ??
-          Number(card.dataset.stage || 1) - 1
-        );
-
-      const stage =
-        getStage(index);
-
-      if (!stage) return;
-
-      const title =
-        $(".stage-title", card);
-
-      if (title) {
-        title.textContent =
-          tr(stage.title);
-      }
-
-      const count =
-        $(".stage-count", card);
-
-      if (count) {
-
-        const countValue =
-          stage.sections.reduce(
-            (total, section) =>
-              total + section.items.length,
-            0
-          );
-
-        count.textContent =
-          state.lang === "hi"
-            ? `${countValue} मटेरियल / ${countValue} Materials`
-            : `${countValue} Materials`;
-      }
+    window.scrollTo({
+      top: 0,
+      behavior: "auto"
     });
+  }
+
+
+  /* =========================================================
+     HOME STAGES
+     ========================================================= */
+
+  function stageItemCount(stage) {
+    return stage.sections.reduce(
+      (total, section) =>
+        total + section.items.length,
+      0
+    );
   }
 
   function renderHomeStages() {
-
-    const grid =
-      $("#stageGrid");
+    const grid = $("#stageGrid");
 
     if (!grid) return;
-
-    grid.innerHTML = "";
-
-    DATA.forEach(
-      (stage, stageIndex) => {
-
-        const count =
-          stage.sections.reduce(
-            (total, section) =>
-              total + section.items.length,
-            0
-          );
-
-        const card =
-          document.createElement("div");
-
-        card.className =
-          "stage-card";
-
-        card.dataset.stage =
-          String(stageIndex + 1);
-
-        card.dataset.stageIndex =
-          String(stageIndex);
-
-        card.dataset.search =
-          stage.title.toLowerCase();
-
-        card.innerHTML = `
-
-          <div class="stage-title">
-            ${esc(tr(stage.title))}
-          </div>
-
-          <div class="stage-count">
-            ${state.lang === "hi"
-              ? `${count} मटेरियल / ${count} Materials`
-              : `${count} Materials`}
-          </div>
-        `;
-
-        card.addEventListener(
-          "click",
-          () => openStage(stageIndex)
-        );
-
-        grid.appendChild(card);
-      }
-    );
-  }
-
-  /* =======================================================
-     16. HOME SEARCH
-     ======================================================= */
-
-  function getSearchText(record) {
-
-    const stage =
-      record.stage;
-
-    const section =
-      record.section;
-
-    const item =
-      record.item;
-
-    const values = [
-      stage.title,
-      stage.mainSection,
-      section.name,
-      item.name
-    ];
-
-    item.fields.forEach(field => {
-
-      values.push(field.label);
-
-      field.options.forEach(
-        option => values.push(option)
-      );
-    });
-
-    item.units.forEach(
-      unit => values.push(unit)
-    );
-
-    item.brands.forEach(
-      brand => values.push(brand)
-    );
-
-    return values
-      .join(" ")
-      .toLowerCase();
-  }
-
-  function populateFilters() {
-
-    const stageSelect =
-      $("#stageFilter");
-
-    const typeSelect =
-      $("#typeFilter");
-
-    const sizeSelect =
-      $("#sizeFilter");
-
-    const brandSelect =
-      $("#brandFilter");
-
-    if (stageSelect) {
-
-      const current =
-        stageSelect.value;
-
-      stageSelect.innerHTML = `
-        <option value="">${esc(langText("stages"))}</option>
-      `;
-
-      DATA.forEach(
-        (stage, index) => {
-
-          const option =
-            document.createElement("option");
-
-          option.value =
-            String(index);
-
-          option.textContent =
-            tr(stage.title);
-
-          stageSelect.appendChild(option);
-        }
-      );
-
-      stageSelect.value =
-        current;
-    }
-
-    const types =
-      new Set();
-
-    const sizes =
-      new Set();
-
-    const brands =
-      new Set();
-
-    ALL_ITEMS.forEach(
-      record => {
-
-        record.item.fields.forEach(
-          field => {
-
-            if (
-              /type/i.test(field.label)
-            ) {
-              field.options.forEach(
-                value => types.add(value)
-              );
-            }
-
-            if (
-              /size/i.test(field.label)
-            ) {
-              field.options.forEach(
-                value => sizes.add(value)
-              );
-            }
-          }
-        );
-
-        record.item.brands.forEach(
-          brand => brands.add(brand)
-        );
-      }
-    );
-
-    function fillSelect(
-      select,
-      values,
-      placeholder
-    ) {
-
-      if (!select) return;
-
-      const current =
-        select.value;
-
-      select.innerHTML = `
-        <option value="">${esc(placeholder)}</option>
-      `;
-
-      [...values]
-        .sort((a,b) =>
-          a.localeCompare(b)
-        )
-        .forEach(value => {
-
-          const option =
-            document.createElement("option");
-
-          option.value =
-            value;
-
-          option.textContent =
-            tr(value);
-
-          select.appendChild(option);
-        });
-
-      select.value =
-        current;
-    }
-
-    fillSelect(
-      typeSelect,
-      types,
-      state.lang === "hi"
-        ? "टाइप / Type"
-        : "Type"
-    );
-
-    fillSelect(
-      sizeSelect,
-      sizes,
-      state.lang === "hi"
-        ? "साइज़ / Size"
-        : "Size"
-    );
-
-    fillSelect(
-      brandSelect,
-      brands,
-      state.lang === "hi"
-        ? "ब्रांड / Brand"
-        : "Brand"
-    );
-  }
-
-  function matchesFilters(record) {
-
-    const searchInput =
-      $("#main");
-
-    const query =
-      safeText(
-        searchInput?.value
-      )
-        .trim()
-        .toLowerCase();
-
-    if (query) {
-
-      const haystack =
-        getSearchText(record);
-
-      if (!haystack.includes(query)) {
-
-        const translated =
-          [
-            tr(record.stage.title),
-            tr(record.section.name),
-            tr(record.item.name)
-          ]
-            .join(" ")
-            .toLowerCase();
-
-        if (!translated.includes(query)) {
-          return false;
-        }
-      }
-    }
-
-    const stageFilter =
-      $("#stageFilter")?.value || "";
-
-    if (
-      stageFilter !== "" &&
-      Number(stageFilter) !== record.stageIndex
-    ) {
-      return false;
-    }
-
-    const typeFilter =
-      $("#typeFilter")?.value || "";
-
-    if (typeFilter) {
-
-      const has =
-        record.item.fields.some(
-          field =>
-            /type/i.test(field.label) &&
-            field.options.includes(typeFilter)
-        );
-
-      if (!has) return false;
-    }
-
-    const sizeFilter =
-      $("#sizeFilter")?.value || "";
-
-    if (sizeFilter) {
-
-      const has =
-        record.item.fields.some(
-          field =>
-            /size/i.test(field.label) &&
-            field.options.includes(sizeFilter)
-        );
-
-      if (!has) return false;
-    }
-
-    const brandFilter =
-      $("#brandFilter")?.value || "";
-
-    if (brandFilter) {
-
-      if (
-        !record.item.brands.includes(
-          brandFilter
-        )
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  function runHomeSearch() {
-
-    const grid =
-      $("#stageGrid");
-
-    if (!grid) return;
-
-    const cards =
-      $$(".stage-card", grid);
-
-    const matchedStages =
-      new Set();
-
-    let resultCount = 0;
-
-    ALL_ITEMS.forEach(record => {
-
-      if (matchesFilters(record)) {
-
-        matchedStages.add(
-          record.stageIndex
-        );
-
-        resultCount++;
-      }
-    });
-
-    const hasAnyFilter =
-      safeText($("#main")?.value).trim() ||
-      $("#stageFilter")?.value ||
-      $("#typeFilter")?.value ||
-      $("#sizeFilter")?.value ||
-      $("#brandFilter")?.value;
-
-    if (!hasAnyFilter) {
-
-      cards.forEach(
-        card =>
-          card.style.display = ""
-      );
-
-      resultCount =
-        ALL_ITEMS.length;
-
-    } else {
-
-      cards.forEach(card => {
-
-        const index =
-          Number(card.dataset.stageIndex);
-
-        card.style.display =
-          matchedStages.has(index)
-            ? ""
-            : "none";
-      });
-    }
-
-    const info =
-      $("#resultsInfo");
-
-    if (info) {
-
-      info.textContent =
-        state.lang === "hi"
-          ? `${resultCount} परिणाम / ${resultCount} Results`
-          : `${resultCount} Results`;
-    }
-
-    const noResults =
-      $("#noResults");
-
-    if (noResults) {
-
-      noResults.style.display =
-        hasAnyFilter && resultCount === 0
-          ? ""
-          : "none";
-
-      if (resultCount === 0) {
-        noResults.textContent =
-          langText("noResults");
-      }
-    }
-  }
-
-  function clearFilters() {
-
-    [
-      "#main",
-      "#stageFilter",
-      "#typeFilter",
-      "#sizeFilter",
-      "#brandFilter"
-    ].forEach(selector => {
-
-      const el = $(selector);
-
-      if (el) {
-        el.value = "";
-      }
-    });
-
-    runHomeSearch();
-  }
-
-  function bindHomeSearch() {
-
-    const input =
-      $("#main");
-
-    if (input) {
-
-      input.oninput =
-        runHomeSearch;
-    }
-
-    [
-      "#stageFilter",
-      "#typeFilter",
-      "#sizeFilter",
-      "#brandFilter"
-    ].forEach(selector => {
-
-      const el = $(selector);
-
-      if (el) {
-        el.onchange =
-          runHomeSearch;
-      }
-    });
-
-    const filterButton =
-      $("#filter-icon");
-
-    const filterPanel =
-      $("#filterPanel");
-
-    if (filterButton) {
-
-      filterButton.onclick =
-        event => {
-
-          event.preventDefault();
-
-          state.filterOpen =
-            !state.filterOpen;
-
-          if (filterPanel) {
-
-            filterPanel.style.display =
-              state.filterOpen
-                ? ""
-                : "none";
-          }
-        };
-    }
-
-    const clear =
-      $("#clearFilter");
-
-    if (clear) {
-      clear.onclick =
-        clearFilters;
-    }
-  }
-
-  /* =======================================================
-     17. VIEW SELECTOR
-     ======================================================= */
-
-  const VIEW_NAMES = {
-    grid: "grid",
-    list: "list",
-    compact: "compact",
-    large: "large",
-    mini: "mini",
-    "two-column": "twoColumn",
-    horizontal: "horizontal",
-    "icon-list": "iconList",
-    timeline: "timeline",
-    dense: "dense"
-  };
-
-  function viewLabel(view) {
-
-    const key =
-      VIEW_NAMES[view];
-
-    return key
-      ? langText(key)
-      : view;
-  }
-
-  function bindViewSelector() {
-
-    const trigger =
-      $("#viewTrigger");
-
-    const options =
-      $("#viewOptions");
-
-    if (!trigger || !options) {
-      return;
-    }
-
-    trigger.onclick = event => {
-
-      event.preventDefault();
-
-      state.viewOpen =
-        !state.viewOpen;
-
-      options.style.display =
-        state.viewOpen
-          ? ""
-          : "none";
-    };
-
-    $$(".view-option", options)
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const view =
-            button.dataset.view ||
-            "grid";
-
-          if (
-            state.currentViewContext ===
-            "material"
-          ) {
-
-            state.materialView =
-              view;
-
-            storageSet(
-              STORAGE.materialView,
-              view
-            );
-
-            applyMaterialView();
-
-          } else {
-
-            state.stageView =
-              view;
-
-            storageSet(
-              STORAGE.stageView,
-              view
-            );
-
-            applyStageView();
-          }
-
-          state.viewOpen =
-            false;
-
-          options.style.display =
-            "none";
-
-          updateViewOptionLabels();
-        };
-      });
-
-    updateViewOptionLabels();
-  }
-
-  function updateViewOptionLabels() {
-
-    $$(".view-option")
-      .forEach(button => {
-
-        const view =
-          button.dataset.view ||
-          "grid";
-
-        const label =
-          $(".view-option-label", button);
-
-        if (label) {
-          label.textContent =
-            viewLabel(view);
-        }
-      });
-  }
-
-  function applyStageView() {
-
-    const grid =
-      $("#stageGrid");
-
-    if (!grid) return;
-
-    grid.dataset.view =
-      state.stageView;
 
     grid.classList.remove(
       "view-grid",
@@ -2748,37 +2335,540 @@
     grid.classList.add(
       `view-${state.stageView}`
     );
+
+    grid.innerHTML = DATA.map(
+      (stage, index) => `
+        <button
+          type="button"
+          class="stage-card"
+          data-stage-index="${index}">
+
+          <div class="ef-stage-logo-wrap">
+            ${brandLogoHTML()}
+          </div>
+
+          <div>
+            <h3>
+              ${esc(tr(stage.name))}
+            </h3>
+
+            <p>
+              ${stageItemCount(stage)}
+              ${
+                currentLang() === "hi"
+                  ? " मटेरियल"
+                  : " Materials"
+              }
+            </p>
+          </div>
+        </button>
+      `
+    ).join("");
+
+    $$(".stage-card", grid).forEach((card) => {
+      card.onclick = () => {
+        openStage(
+          Number(card.dataset.stageIndex)
+        );
+      };
+    });
   }
 
-  function applyMaterialView() {
 
-    const grid =
-      $("#materialGrid");
+  /* =========================================================
+     HOME VIEW SELECTOR
+     ========================================================= */
 
-    if (!grid) return;
+  function viewOptionsHTML(
+    active,
+    prefix,
+    context
+  ) {
+    return VIEW_MODES.map((mode) => `
+      <button
+        type="button"
+        class="ef-view-option ${
+          active === mode ? "active" : ""
+        }"
+        data-view-mode="${mode}"
+        data-view-context="${context}"
+        data-view-prefix="${prefix}">
+        ${esc(tr(VIEW_LABELS[mode]))}
+      </button>
+    `).join("");
+  }
 
-    grid.className =
-      grid.className
-        .replace(
-          /view-[a-z-]+/g,
-          ""
-        );
+  function createFallbackHomeViewSelector() {
+    const stageGrid = $("#stageGrid");
 
-    grid.classList.add(
-      "ef-grid-list",
-      `view-${state.materialView}`
+    if (!stageGrid) return;
+
+    if (
+      $("#viewTrigger") &&
+      $("#viewOptions")
+    ) {
+      return;
+    }
+
+    const parent = stageGrid.parentElement;
+
+    if (!parent) return;
+
+    let picker = $("#efHomeViewPicker");
+
+    if (!picker) {
+      picker = document.createElement("div");
+      picker.id = "efHomeViewPicker";
+      picker.className = "ef-view-picker";
+
+      parent.insertBefore(
+        picker,
+        stageGrid
+      );
+    }
+
+    picker.innerHTML = `
+      <button
+        type="button"
+        id="homeViewTrigger"
+        class="ef-view-trigger"
+        aria-expanded="false"
+        aria-label="${esc(
+          langText("stageView")
+        )}">
+        ◈
+      </button>
+
+      <div
+        id="homeViewOptions"
+        class="ef-view-options"
+        hidden>
+        ${viewOptionsHTML(
+          state.stageView,
+          "home",
+          "stage"
+        )}
+      </div>
+    `;
+
+    bindHomeViewSelector(
+      $("#homeViewTrigger"),
+      $("#homeViewOptions")
     );
   }
 
-  /* =======================================================
-     18. HOME BINDING
-     ======================================================= */
+  function bindHomeViewSelector(
+    trigger,
+    options
+  ) {
+    if (!trigger || !options) return;
+
+    trigger.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const willOpen =
+        options.hasAttribute("hidden");
+
+      if (willOpen) {
+        options.removeAttribute("hidden");
+      } else {
+        options.setAttribute("hidden", "");
+      }
+
+      trigger.setAttribute(
+        "aria-expanded",
+        String(willOpen)
+      );
+    };
+
+    $$(
+      ".ef-view-option",
+      options
+    ).forEach((btn) => {
+      btn.onclick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const mode =
+          btn.dataset.viewMode;
+
+        state.stageView =
+          validView(mode);
+
+        storageSet(
+          STORAGE.stageView,
+          state.stageView
+        );
+
+        options.setAttribute(
+          "hidden",
+          ""
+        );
+
+        trigger.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+        applyStageView();
+
+        $$(
+          ".ef-view-option",
+          options
+        ).forEach((option) => {
+          option.classList.toggle(
+            "active",
+            option.dataset.viewMode ===
+              state.stageView
+          );
+        });
+      };
+    });
+  }
+
+  function bindExistingHomeViewSelector() {
+    const trigger = $("#viewTrigger");
+    const options = $("#viewOptions");
+
+    if (!trigger || !options) {
+      createFallbackHomeViewSelector();
+      return;
+    }
+
+    trigger.textContent = "◈";
+
+    trigger.setAttribute(
+      "aria-label",
+      langText("stageView")
+    );
+
+    $$(
+      ".view-option, .ef-view-option",
+      options
+    ).forEach((btn) => {
+      if (!btn.dataset.viewMode) return;
+
+      btn.textContent = tr(
+        VIEW_LABELS[
+          btn.dataset.viewMode
+        ] || btn.dataset.viewMode
+      );
+
+      btn.classList.toggle(
+        "active",
+        btn.dataset.viewMode ===
+          state.stageView
+      );
+    });
+
+    bindHomeViewSelector(
+      trigger,
+      options
+    );
+  }
+
+  function applyStageView() {
+    const grids = [
+      $("#stageGrid"),
+      $("#sectionGrid")
+    ].filter(Boolean);
+
+    grids.forEach((grid) => {
+      VIEW_MODES.forEach((mode) => {
+        grid.classList.remove(
+          `view-${mode}`
+        );
+      });
+
+      grid.classList.add(
+        `view-${state.stageView}`
+      );
+    });
+  }
+
+
+  /* =========================================================
+     SEARCH / FILTER
+     ========================================================= */
+
+  function getAllSearchText(stage) {
+    const parts = [
+      stage.id,
+      stage.name
+    ];
+
+    stage.sections.forEach((section) => {
+      parts.push(section.name);
+
+      section.items.forEach((item) => {
+        parts.push(item.name);
+
+        item.fields.forEach((field) => {
+          parts.push(field.name);
+          parts.push(...field.options);
+        });
+
+        parts.push(...item.units);
+        parts.push(...item.brands);
+      });
+    });
+
+    return parts
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function populateFilters() {
+    const typeFilter = $("#typeFilter");
+    const sizeFilter = $("#sizeFilter");
+    const brandFilter = $("#brandFilter");
+
+    const types = new Set();
+    const sizes = new Set();
+    const brands = new Set();
+
+    DATA.forEach((stage) => {
+      stage.sections.forEach((section) => {
+        section.items.forEach((item) => {
+          item.fields.forEach((field) => {
+            const name =
+              field.name.toLowerCase();
+
+            if (
+              name.includes("type") ||
+              name.includes("sub type")
+            ) {
+              field.options.forEach((v) =>
+                types.add(v)
+              );
+            }
+
+            if (
+              name.includes("size")
+            ) {
+              field.options.forEach((v) =>
+                sizes.add(v)
+              );
+            }
+          });
+
+          item.brands.forEach((v) =>
+            brands.add(v)
+          );
+        });
+      });
+    });
+
+    function fillSelect(
+      select,
+      values
+    ) {
+      if (!select) return;
+
+      const old = select.value;
+
+      select.innerHTML = `
+        <option value="">
+          ${esc(
+            currentLang() === "hi"
+              ? "सभी"
+              : "All"
+          )}
+        </option>
+
+        ${Array.from(values)
+          .sort()
+          .map(
+            (value) => `
+              <option value="${esc(value)}">
+                ${esc(tr(value))}
+              </option>
+            `
+          )
+          .join("")}
+      `;
+
+      if (
+        Array.from(values).includes(old)
+      ) {
+        select.value = old;
+      }
+    }
+
+    fillSelect(typeFilter, types);
+    fillSelect(sizeFilter, sizes);
+    fillSelect(brandFilter, brands);
+  }
+
+  function applySearchAndFilter() {
+    const searchInput =
+      $("#searchInput") ||
+      $("#mainSearch") ||
+      $("#search");
+
+    const query =
+      searchInput?.value
+        ?.trim()
+        .toLowerCase() || "";
+
+    const typeValue =
+      $("#typeFilter")?.value || "";
+
+    const sizeValue =
+      $("#sizeFilter")?.value || "";
+
+    const brandValue =
+      $("#brandFilter")?.value || "";
+
+    $$(".stage-card").forEach(
+      (card) => {
+        const index =
+          Number(card.dataset.stageIndex);
+
+        const stage = DATA[index];
+
+        if (!stage) return;
+
+        const text =
+          getAllSearchText(stage);
+
+        let visible =
+          !query ||
+          text.includes(query);
+
+        if (
+          visible &&
+          typeValue
+        ) {
+          visible = stage.sections.some(
+            (section) =>
+              section.items.some(
+                (item) =>
+                  item.fields.some(
+                    (field) =>
+                      (
+                        field.name
+                          .toLowerCase()
+                          .includes("type")
+                      ) &&
+                      field.options.includes(
+                        typeValue
+                      )
+                  )
+              )
+          );
+        }
+
+        if (
+          visible &&
+          sizeValue
+        ) {
+          visible = stage.sections.some(
+            (section) =>
+              section.items.some(
+                (item) =>
+                  item.fields.some(
+                    (field) =>
+                      field.name
+                        .toLowerCase()
+                        .includes("size") &&
+                      field.options.includes(
+                        sizeValue
+                      )
+                  )
+              )
+          );
+        }
+
+        if (
+          visible &&
+          brandValue
+        ) {
+          visible = stage.sections.some(
+            (section) =>
+              section.items.some(
+                (item) =>
+                  item.brands.includes(
+                    brandValue
+                  )
+              )
+          );
+        }
+
+        card.style.display =
+          visible ? "" : "none";
+      }
+    );
+  }
+
+  function clearFilters() {
+    [
+      "#searchInput",
+      "#mainSearch",
+      "#search"
+    ].forEach((selector) => {
+      const el = $(selector);
+      if (el) el.value = "";
+    });
+
+    [
+      "#typeFilter",
+      "#sizeFilter",
+      "#brandFilter"
+    ].forEach((selector) => {
+      const el = $(selector);
+      if (el) el.value = "";
+    });
+
+    applySearchAndFilter();
+  }
+
+  function bindHomeSearch() {
+    const searchInput =
+      $("#searchInput") ||
+      $("#mainSearch") ||
+      $("#search");
+
+    if (searchInput) {
+      searchInput.placeholder =
+        langText("searchPlaceholder");
+
+      searchInput.oninput =
+        applySearchAndFilter;
+    }
+
+    [
+      "#typeFilter",
+      "#sizeFilter",
+      "#brandFilter"
+    ].forEach((selector) => {
+      const el = $(selector);
+
+      if (el) {
+        el.onchange =
+          applySearchAndFilter;
+      }
+    });
+
+    const clearBtn =
+      $("#clearFilter") ||
+      $("#clearSearch");
+
+    if (clearBtn) {
+      clearBtn.onclick =
+        clearFilters;
+    }
+  }
+
+
+  /* =========================================================
+     HOME BIND
+     ========================================================= */
 
   function bindHome() {
-
-    if (!homeIsStatic) return;
-
-    bindHamburger();
+    state.currentViewContext =
+      "stage";
 
     renderHomeStages();
 
@@ -2786,198 +2876,31 @@
 
     bindHomeSearch();
 
-    bindViewSelector();
+    bindExistingHomeViewSelector();
 
     applyStageView();
 
-    updateHomeStageText();
+    bindHamburger();
 
-    const themeButton =
-      $("#themeButton");
+    bindBottomNav();
 
-    if (themeButton) {
-      themeButton.onclick =
-        toggleTheme;
-    }
+    updateStaticUI();
 
-    const hi =
-      $("#langHi");
-
-    if (hi) {
-      hi.onclick =
-        () => setLanguage("hi");
-    }
-
-    const en =
-      $("#langEn");
-
-    if (en) {
-      en.onclick =
-        () => setLanguage("en");
-    }
-
-    updateLanguageButtons();
-
-    runHomeSearch();
+    applyBranding();
   }
 
-  /* =======================================================
-     19. ROUTE STORAGE
-     ======================================================= */
 
-  function saveRoute() {
-
-    jsonSet(
-      STORAGE.route,
-      {
-        page: state.page,
-        stageIndex: state.stageIndex,
-        sectionIndex: state.sectionIndex,
-        itemIndex: state.itemIndex
-      }
-    );
-  }
-
-  /* =======================================================
-     20. HISTORY
-     ======================================================= */
-
-  function pushHistory() {
-
-    try {
-
-      history.pushState(
-        {
-          efRoute: true,
-          page: state.page,
-          stageIndex: state.stageIndex,
-          sectionIndex: state.sectionIndex,
-          itemIndex: state.itemIndex
-        },
-        "",
-        location.href
-      );
-
-    } catch (_) {}
-  }
-
-  function replaceHistory() {
-
-    try {
-
-      history.replaceState(
-        {
-          efRoute: true,
-          page: state.page,
-          stageIndex: state.stageIndex,
-          sectionIndex: state.sectionIndex,
-          itemIndex: state.itemIndex
-        },
-        "",
-        location.href
-      );
-
-    } catch (_) {}
-  }
-
-  /* =======================================================
-     21. PAGE NAVIGATION
-     ======================================================= */
-
-  function navigate(
-    page,
-    stageIndex = -1,
-    sectionIndex = -1,
-    itemIndex = -1,
-    options = {}
-  ) {
-
-    state.page =
-      page;
-
-    state.stageIndex =
-      stageIndex;
-
-    state.sectionIndex =
-      sectionIndex;
-
-    state.itemIndex =
-      itemIndex;
-
-    if (page !== "item") {
-      state.draft = {};
-      state.editingEstimateId = null;
-    }
-
-    saveRoute();
-
-    if (options.push !== false) {
-      pushHistory();
-    }
-
-    if (page === "home") {
-      showHome(false);
-    } else {
-      showRoute(false);
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: "instant"
-    });
-  }
-
-  function showHome(push = true) {
-
-    if (!homeEl) return;
-
-    homeIsStatic = true;
-
-    homeEl.innerHTML =
-      homeMarkup;
-
-    if (push) {
-      state.page = "home";
-      state.stageIndex = -1;
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-      saveRoute();
-      pushHistory();
-    }
-
-    bindHome();
-  }
-
-  function showRoute(push = false) {
-
-    if (!homeEl) return;
-
-    homeIsStatic = false;
-
-    homeEl.innerHTML =
-      `<div id="efRoute"></div>`;
-
-    if (push) {
-      saveRoute();
-      pushHistory();
-    }
-
-    renderCurrentPage(false);
-  }
-
-  /* =======================================================
-     22. STAGE PAGE
-     ======================================================= */
+  /* =========================================================
+     STAGE PAGE
+     ========================================================= */
 
   function openStage(stageIndex) {
-
-    const stage =
-      getStage(stageIndex);
-
-    if (!stage) return;
-
-    state.currentViewContext =
-      "material";
+    if (
+      stageIndex < 0 ||
+      stageIndex >= DATA.length
+    ) {
+      return;
+    }
 
     navigate(
       "stage",
@@ -2988,255 +2911,518 @@
   }
 
   function renderStagePage() {
-
-    const route =
-      $("#efRoute");
-
     const stage =
-      getStage(state.stageIndex);
+      DATA[state.stageIndex];
 
-    if (!route || !stage) {
-
-      navigate("home", -1, -1, -1, {
-        push: false
-      });
-
+    if (!stage) {
+      showHome(false);
       return;
+    }
+
+    state.currentViewContext =
+      "stage";
+
+    return `
+      <div class="ef-page">
+
+        <div class="ef-page-head">
+
+          <button
+            type="button"
+            class="ef-back-btn"
+            id="routeBackBtn"
+            aria-label="${esc(
+              langText("back")
+            )}">
+            ←
+          </button>
+
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
+
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(tr(stage.name))}
+              </h2>
+
+              <p class="ef-page-subtitle">
+                ${esc(BRAND.name)}
+              </p>
+            </div>
+          </div>
+
+          <div class="ef-view-picker">
+
+            <button
+              type="button"
+              class="ef-view-trigger"
+              id="stageViewTrigger"
+              aria-expanded="false"
+              aria-label="${esc(
+                langText("stageView")
+              )}">
+              ◈
+            </button>
+
+            <div
+              id="stageViewOptions"
+              class="ef-view-options"
+              hidden>
+              ${viewOptionsHTML(
+                state.stageView,
+                "stage",
+                "stage"
+              )}
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="ef-breadcrumb">
+          ${esc(langText("stages"))}
+          &nbsp;›&nbsp;
+          ${esc(tr(stage.name))}
+          &nbsp;›&nbsp;
+          ${esc(langText("sections"))}
+        </div>
+
+        <div
+          id="sectionGrid"
+          class="view-${esc(state.stageView)}">
+          ${renderStageSections(stage)}
+        </div>
+
+      </div>
+    `;
+  }
+
+  function renderStageSections(stage) {
+    if (!stage.sections.length) {
+      return `
+        <div class="ef-setting-card">
+          ${esc(langText("nothing"))}
+        </div>
+      `;
+    }
+
+    return stage.sections
+      .map(
+        (section, index) => `
+          <button
+            type="button"
+            class="ef-section-card"
+            data-section-index="${index}">
+
+            <h3>
+              ${esc(tr(section.name))}
+            </h3>
+
+            <p>
+              ${section.items.length}
+              ${
+                currentLang() === "hi"
+                  ? " मटेरियल"
+                  : " Materials"
+              }
+            </p>
+
+          </button>
+        `
+      )
+      .join("");
+  }
+
+  function bindStagePage() {
+    const backBtn =
+      $("#routeBackBtn");
+
+    if (backBtn) {
+      backBtn.onclick =
+        goBackRoute;
+    }
+
+    $$(".ef-section-card").forEach(
+      (card) => {
+        card.onclick = () => {
+          openSection(
+            state.stageIndex,
+            Number(
+              card.dataset.sectionIndex
+            )
+          );
+        };
+      }
+    );
+
+    bindRouteViewPicker(
+      "stage",
+      state.stageView
+    );
+
+    applyStageView();
+  }
+
+
+  /* =========================================================
+     SECTION PAGE
+     ========================================================= */
+
+  function openSection(
+    stageIndex,
+    sectionIndex
+  ) {
+    const stage =
+      DATA[stageIndex];
+
+    if (!stage) return;
+
+    const section =
+      stage.sections[sectionIndex];
+
+    if (!section) return;
+
+    navigate(
+      "section",
+      stageIndex,
+      sectionIndex,
+      -1
+    );
+  }
+
+  function renderSectionPage() {
+    const stage =
+      DATA[state.stageIndex];
+
+    const section =
+      stage?.sections[
+        state.sectionIndex
+      ];
+
+    if (!stage || !section) {
+      showHome(false);
+      return "";
     }
 
     state.currentViewContext =
       "material";
 
-    route.innerHTML = `
+    return `
+      <div class="ef-page">
 
-      <div class="ef-page-head">
+        <div class="ef-page-head">
 
-        <button
-          class="ef-back-btn"
-          id="routeBack"
-          type="button"
-        >
-          ← ${esc(langText("back"))}
-        </button>
+          <button
+            type="button"
+            class="ef-back-btn"
+            id="routeBackBtn"
+            aria-label="${esc(
+              langText("back")
+            )}">
+            ←
+          </button>
 
-        <div>
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
 
-          <h2>
-            ${esc(tr(stage.title))}
-          </h2>
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(tr(section.name))}
+              </h2>
 
-          <div class="ef-count">
-            ${esc(tr(stage.mainSection))}
+              <p class="ef-page-subtitle">
+                ${esc(tr(stage.name))}
+              </p>
+            </div>
+          </div>
+
+          <div class="ef-view-picker">
+
+            <button
+              type="button"
+              class="ef-view-trigger"
+              id="materialViewTrigger"
+              aria-expanded="false"
+              aria-label="${esc(
+                langText("materialView")
+              )}">
+              ◈
+            </button>
+
+            <div
+              id="materialViewOptions"
+              class="ef-view-options"
+              hidden>
+              ${viewOptionsHTML(
+                state.materialView,
+                "material",
+                "material"
+              )}
+            </div>
+
           </div>
 
         </div>
 
-      </div>
+        <div class="ef-breadcrumb">
+          ${esc(langText("stages"))}
+          &nbsp;›&nbsp;
+          ${esc(tr(stage.name))}
+          &nbsp;›&nbsp;
+          ${esc(tr(section.name))}
+        </div>
 
-      <div class="ef-breadcrumb">
-        ${esc(langText("stages"))}
-        →
-        ${esc(tr(stage.title))}
-      </div>
+        <div
+          id="materialGrid"
+          class="ef-material-grid view-${esc(
+            state.materialView
+          )}">
 
-      <div class="ef-view-options">
+          ${renderSectionMaterials(section)}
 
-        ${renderViewButtons(
-          state.materialView
-        )}
-
-      </div>
-
-      <div
-        id="materialGrid"
-        class="ef-grid-list view-${esc(state.materialView)}"
-      >
-
-        ${renderStageMaterials(stage)}
+        </div>
 
       </div>
     `;
-
-    const back =
-      $("#routeBack");
-
-    if (back) {
-      back.onclick =
-        () => goBackRoute();
-    }
-
-    bindRouteViewButtons();
-
-    applyMaterialView();
-
-    bindMaterialCards();
-
-    updateViewOptionLabels();
   }
 
-  function renderStageMaterials(stage) {
+  function renderSectionMaterials(
+    section
+  ) {
+    if (!section.items.length) {
+      return `
+        <div class="ef-setting-card">
+          ${esc(
+            langText("noMaterials")
+          )}
+        </div>
+      `;
+    }
 
-    const items = [];
+    return section.items
+      .map(
+        (item, index) => `
+          <button
+            type="button"
+            class="ef-material-card"
+            data-item-index="${index}">
 
-    stage.sections.forEach(
-      (section, sectionIndex) => {
-
-        items.push(`
-          <div
-            class="ef-section-card"
-            style="
-              grid-column:1/-1;
-              text-align:center;
-              margin-top:6px;
-            "
-          >
-            <h3>
-              ${esc(tr(section.name))}
-            </h3>
-
-            <div class="ef-count">
-              ${section.items.length}
-              ${state.lang === "hi"
-                ? "मटेरियल / Materials"
-                : "Materials"}
+            <div class="ef-material-name">
+              ${esc(tr(item.name))}
             </div>
-          </div>
-        `);
 
-        section.items.forEach(
-          (item, itemIndex) => {
+          </button>
+        `
+      )
+      .join("");
+  }
 
-            items.push(`
-              <button
-                type="button"
-                class="ef-material-card ef-card-button"
-                data-stage-index="${stage === getStage(state.stageIndex)
-                  ? state.stageIndex
-                  : ""}"
-                data-section-index="${sectionIndex}"
-                data-item-index="${itemIndex}"
-              >
-                <h3>
-                  ${esc(tr(item.name))}
-                </h3>
-              </button>
-            `);
-          }
-        );
+  function bindSectionPage() {
+    const backBtn =
+      $("#routeBackBtn");
+
+    if (backBtn) {
+      backBtn.onclick =
+        goBackRoute;
+    }
+
+    $$(".ef-material-card").forEach(
+      (card) => {
+        card.onclick = () => {
+          openItem(
+            state.stageIndex,
+            state.sectionIndex,
+            Number(
+              card.dataset.itemIndex
+            )
+          );
+        };
       }
     );
 
-    return items.join("");
+    bindRouteViewPicker(
+      "material",
+      state.materialView
+    );
+
+    applyMaterialView();
   }
 
-  function bindMaterialCards() {
 
-    $$(".ef-material-card")
-      .forEach(card => {
+  /* =========================================================
+     ROUTE VIEW PICKER
+     ========================================================= */
 
-        card.onclick = () => {
+  function bindRouteViewPicker(
+    context,
+    active
+  ) {
+    const trigger =
+      context === "material"
+        ? $("#materialViewTrigger")
+        : $("#stageViewTrigger");
 
-          const stageIndex =
-            Number(
-              card.dataset.stageIndex
+    const options =
+      context === "material"
+        ? $("#materialViewOptions")
+        : $("#stageViewOptions");
+
+    if (!trigger || !options) return;
+
+    trigger.textContent = "◈";
+
+    trigger.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const willOpen =
+        options.hasAttribute("hidden");
+
+      if (willOpen) {
+        options.removeAttribute("hidden");
+      } else {
+        options.setAttribute(
+          "hidden",
+          ""
+        );
+      }
+
+      trigger.setAttribute(
+        "aria-expanded",
+        String(willOpen)
+      );
+    };
+
+    $$(".ef-view-option", options)
+      .forEach((btn) => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          const mode =
+            validView(
+              btn.dataset.viewMode
             );
 
-          const sectionIndex =
-            Number(
-              card.dataset.sectionIndex
-            );
+          if (context === "material") {
+            state.materialView =
+              mode;
 
-          const itemIndex =
-            Number(
-              card.dataset.itemIndex
+            storageSet(
+              STORAGE.materialView,
+              mode
             );
+          } else {
+            state.stageView =
+              mode;
 
-          openItem(
-            stageIndex,
-            sectionIndex,
-            itemIndex
+            storageSet(
+              STORAGE.stageView,
+              mode
+            );
+          }
+
+          options.setAttribute(
+            "hidden",
+            ""
           );
+
+          trigger.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+          renderCurrentPage(false);
         };
       });
   }
 
-  /* =======================================================
-     23. VIEW BUTTONS FOR ROUTE
-     ======================================================= */
-
-  function renderViewButtons(active) {
-
-    const views = [
-      "grid",
-      "list",
-      "compact",
-      "large",
-      "mini",
-      "two-column",
-      "horizontal",
-      "icon-list",
-      "timeline",
-      "dense"
-    ];
-
-    return views.map(view => `
-
-      <button
-        type="button"
-        class="${view === active ? "active" : ""}"
-        data-route-view="${esc(view)}"
-      >
-        ${esc(viewLabel(view))}
-      </button>
-
-    `).join("");
-  }
-
-  function bindRouteViewButtons() {
-
-    $$(".ef-view-options [data-route-view]")
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const view =
-            button.dataset.routeView;
-
-          state.materialView =
-            view;
-
-          storageSet(
-            STORAGE.materialView,
-            view
+  function applyMaterialView() {
+    $$(".ef-material-grid").forEach(
+      (grid) => {
+        VIEW_MODES.forEach((mode) => {
+          grid.classList.remove(
+            `view-${mode}`
           );
+        });
 
-          renderStagePage();
-        };
-      });
+        grid.classList.add(
+          `view-${state.materialView}`
+        );
+      }
+    );
   }
 
-  /* =======================================================
-     24. ITEM OPEN
-     ======================================================= */
+
+  /* =========================================================
+     ITEM
+     ========================================================= */
+
+  function getCurrentItem() {
+    const stage =
+      DATA[state.stageIndex];
+
+    const section =
+      stage?.sections[
+        state.sectionIndex
+      ];
+
+    return (
+      section?.items[
+        state.itemIndex
+      ] || null
+    );
+  }
+
+  function getEstimateForCurrentItem() {
+    const items =
+      getEstimateItems();
+
+    if (state.editingEstimateId) {
+      const byId =
+        items.find(
+          (item) =>
+            item.id ===
+            state.editingEstimateId
+        );
+
+      if (byId) return byId;
+    }
+
+    return (
+      items.find(
+        (item) =>
+          item.stageIndex ===
+            state.stageIndex &&
+          item.sectionIndex ===
+            state.sectionIndex &&
+          item.itemIndex ===
+            state.itemIndex
+      ) || null
+    );
+  }
 
   function openItem(
     stageIndex,
     sectionIndex,
     itemIndex,
-    options = {}
+    editingId = null
   ) {
+    const stage =
+      DATA[stageIndex];
+
+    const section =
+      stage?.sections[sectionIndex];
 
     const item =
-      getItem(
-        stageIndex,
-        sectionIndex,
-        itemIndex
-      );
+      section?.items[itemIndex];
 
-    if (!item) return;
+    if (!stage || !section || !item) {
+      return;
+    }
 
-    state.currentViewContext =
-      "material";
+    state.editingEstimateId =
+      editingId;
 
     state.draft = {};
 
@@ -3244,278 +3430,294 @@
       "item",
       stageIndex,
       sectionIndex,
-      itemIndex,
-      {
-        push:
-          options.push !== false
-      }
+      itemIndex
     );
   }
 
-  /* =======================================================
-     25. ITEM EDITOR
-     ======================================================= */
-
   function renderItemPage() {
-
-    const route =
-      $("#efRoute");
-
     const stage =
-      getStage(state.stageIndex);
+      DATA[state.stageIndex];
 
     const section =
-      getSection(
-        state.stageIndex,
+      stage?.sections[
         state.sectionIndex
-      );
+      ];
 
     const item =
-      getItem(
-        state.stageIndex,
-        state.sectionIndex,
+      section?.items[
         state.itemIndex
-      );
+      ];
 
-    if (
-      !route ||
-      !stage ||
-      !section ||
-      !item
-    ) {
-
-      navigate(
-        "home",
-        -1,
-        -1,
-        -1,
-        { push:false }
-      );
-
-      return;
+    if (!stage || !section || !item) {
+      showHome(false);
+      return "";
     }
 
-    const estimate =
+    const existing =
       getEstimateForCurrentItem();
 
-    const values =
-      estimate?.values ||
-      state.draft ||
-      {};
+    return `
+      <div class="ef-page">
 
-    let html = `
+        <div class="ef-page-head">
 
-      <div class="ef-page-head">
+          <button
+            type="button"
+            class="ef-back-btn"
+            id="routeBackBtn"
+            aria-label="${esc(
+              langText("back")
+            )}">
+            ←
+          </button>
 
-        <button
-          class="ef-back-btn"
-          id="itemBack"
-          type="button"
-        >
-          ← ${esc(langText("back"))}
-        </button>
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
 
-        <div>
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(tr(item.name))}
+              </h2>
 
-          <h2>
-            ${esc(tr(item.name))}
-          </h2>
+              <p class="ef-page-subtitle">
+                ${esc(BRAND.name)}
+              </p>
+            </div>
+          </div>
 
-          <div class="ef-count">
-            ${esc(tr(section.name))}
+          <div></div>
+
+        </div>
+
+        <div class="ef-breadcrumb">
+          ${esc(tr(stage.name))}
+          &nbsp;›&nbsp;
+          ${esc(tr(section.name))}
+          &nbsp;›&nbsp;
+          ${esc(tr(item.name))}
+        </div>
+
+        <div class="ef-editor">
+
+          <div class="ef-editor-card">
+
+            <h2 class="ef-editor-title">
+              ${esc(tr(item.name))}
+            </h2>
+
+            <p class="ef-editor-subtitle">
+              ${esc(
+                currentLang() === "hi"
+                  ? "मटेरियल डिटेल भरें"
+                  : "Enter material details"
+              )}
+            </p>
+
+            ${renderFields(
+              item,
+              existing
+            )}
+
+            ${renderQuantity(
+              existing
+            )}
+
+            ${renderUnit(
+              item,
+              existing
+            )}
+
+            ${renderBrand(
+              item,
+              existing
+            )}
+
+            <div class="ef-action-row three">
+
+              <button
+                type="button"
+                class="ef-secondary-btn"
+                id="itemBackBtn">
+                ${esc(
+                  langText("back")
+                )}
+              </button>
+
+              <button
+                type="button"
+                class="ef-primary-btn"
+                id="saveItemBtn">
+                ${esc(
+                  existing
+                    ? langText("update")
+                    : langText("add")
+                )}
+              </button>
+
+              <button
+                type="button"
+                class="ef-secondary-btn"
+                id="nextItemBtn">
+                ${esc(
+                  langText("next")
+                )}
+              </button>
+
+            </div>
+
           </div>
 
         </div>
 
       </div>
-
-      <div class="ef-breadcrumb">
-        ${esc(tr(stage.title))}
-        →
-        ${esc(tr(section.name))}
-        →
-        ${esc(tr(item.name))}
-      </div>
-
-      <div class="ef-item-editor">
-
-        ${renderFields(
-          item,
-          values
-        )}
-
-        ${renderQuantity(
-          values.quantity
-        )}
-
-        ${renderUnit(
-          item,
-          values.unit
-        )}
-
-        ${renderBrand(
-          item,
-          values.brand
-        )}
-
-        <div class="ef-actions">
-
-          <button
-            type="button"
-            class="ef-btn"
-            id="saveItem"
-          >
-            ${esc(
-              estimate
-                ? langText("update")
-                : langText("add")
-            )}
-          </button>
-
-          <button
-            type="button"
-            class="ef-btn secondary"
-            id="nextItem"
-          >
-            ${esc(langText("next"))} →
-          </button>
-
-        </div>
-
-      </div>
     `;
+  }
 
-    route.innerHTML =
-      html;
 
-    bindItemEditor(
-      item,
-      estimate
+  /* =========================================================
+     ITEM FIELDS
+     ========================================================= */
+
+  function getExistingFieldValue(
+    existing,
+    fieldName
+  ) {
+    if (!existing?.values) {
+      return "";
+    }
+
+    return (
+      existing.values[fieldName] ||
+      ""
     );
   }
 
-  function renderFields(item, values) {
-
+  function renderFields(
+    item,
+    existing
+  ) {
     if (!item.fields.length) {
       return "";
     }
 
     return item.fields
-      .map(
-        (field, fieldIndex) => {
+      .map((field, fieldIndex) => {
+        const value =
+          getExistingFieldValue(
+            existing,
+            field.name
+          );
 
-          const key =
-            `field_${fieldIndex}`;
+        return `
+          <div class="ef-field">
 
-          const current =
-            values[key] || "";
+            <label
+              class="ef-field-label">
+              ${esc(tr(field.name))}
+            </label>
 
-          return `
+            <div class="ef-field-row">
 
-            <div
-              class="ef-field"
-              data-field-index="${fieldIndex}"
-            >
+              <select
+                class="ef-select ef-item-field"
+                data-field-index="${fieldIndex}"
+                data-field-name="${esc(
+                  field.name
+                )}">
 
-              <label class="ef-field-label">
-                ${esc(tr(field.label))}
-              </label>
-
-              <div class="ef-field-row">
-
-                <select
-                  data-field-key="${esc(key)}"
-                >
-
-                  <option value="">
-                    ${state.lang === "hi"
-                      ? `चुनें / Select ${esc(field.label)}`
-                      : `Select ${esc(field.label)}`}
-                  </option>
-
+                <option value="">
                   ${
-                    field.options
-                      .map(option => `
-                        <option
-                          value="${esc(option)}"
-                          ${current === option ? "selected" : ""}
-                        >
-                          ${esc(tr(option))}
-                        </option>
-                      `)
-                      .join("")
+                    currentLang() === "hi"
+                      ? "चुनें"
+                      : "Select"
                   }
+                </option>
 
-                </select>
+                ${field.options
+                  .map(
+                    (option) => `
+                      <option
+                        value="${esc(option)}"
+                        ${
+                          value === option
+                            ? "selected"
+                            : ""
+                        }>
+                        ${esc(
+                          tr(option)
+                        )}
+                      </option>
+                    `
+                  )
+                  .join("")}
 
-                <button
-                  type="button"
-                  class="ef-clear-field"
-                  data-clear-key="${esc(key)}"
-                  title="${esc(langText("clear"))}"
-                >
-                  ×
-                </button>
+              </select>
 
-              </div>
+              <button
+                type="button"
+                class="ef-clear-field"
+                data-clear-field="${fieldIndex}"
+                aria-label="${esc(
+                  langText("clear")
+                )}">
+                ×
+              </button>
 
             </div>
-          `;
-        }
-      )
+
+          </div>
+        `;
+      })
       .join("");
   }
 
-  function renderQuantity(quantity) {
 
-    let value =
-      quantity === undefined ||
-      quantity === null ||
-      quantity === ""
-        ? 1
-        : Number(quantity);
+  /* =========================================================
+     QUANTITY
+     ========================================================= */
 
-    if (!Number.isFinite(value) || value < 0) {
-      value = 1;
-    }
+  function renderQuantity(existing) {
+    const quantity =
+      existing?.quantity != null
+        ? existing.quantity
+        : 1;
 
     return `
-
       <div class="ef-field">
 
         <label class="ef-field-label">
           ${esc(langText("quantity"))}
         </label>
 
-        <div class="ef-qty">
+        <div class="ef-quantity-row">
 
           <button
             type="button"
-            id="qtyMinus"
-          >
+            class="ef-qty-btn"
+            id="qtyMinus">
             −
           </button>
 
           <input
-            id="quantityInput"
             type="number"
+            inputmode="numeric"
             min="0"
             step="1"
-            value="${esc(value)}"
-          />
+            class="ef-input"
+            id="itemQuantity"
+            value="${esc(quantity)}">
 
           <button
             type="button"
-            id="qtyPlus"
-          >
+            class="ef-qty-btn"
+            id="qtyPlus">
             +
           </button>
 
           <button
             type="button"
             class="ef-clear-field"
-            id="qtyClear"
-          >
+            id="qtyClear">
             ×
           </button>
 
@@ -3525,22 +3727,37 @@
     `;
   }
 
-  function renderUnit(item, currentUnit) {
 
+  /* =========================================================
+     UNIT
+     ========================================================= */
+
+  function renderUnit(
+    item,
+    existing
+  ) {
     const units =
       item.units.length
         ? item.units
-        : ["pcs"];
+        : [
+            "pcs"
+          ];
 
-    const storedUnit =
-      currentUnit ||
+    let current =
+      existing?.unit ||
       storageGet(
         STORAGE.lastUnit,
         ""
       );
 
-    return `
+    if (
+      current &&
+      !units.includes(current)
+    ) {
+      current = "";
+    }
 
+    return `
       <div class="ef-field">
 
         <label class="ef-field-label">
@@ -3549,32 +3766,40 @@
 
         <div class="ef-field-row">
 
-          <select id="unitInput">
+          <select
+            class="ef-select"
+            id="itemUnit">
 
             <option value="">
-              ${state.lang === "hi"
-                ? "चुनें / Select Unit"
-                : "Select Unit"}
+              ${
+                currentLang() === "hi"
+                  ? "चुनें"
+                  : "Select"
+              }
             </option>
 
-            ${
-              units.map(unit => `
-                <option
-                  value="${esc(unit)}"
-                  ${storedUnit === unit ? "selected" : ""}
-                >
-                  ${esc(tr(unit))}
-                </option>
-              `).join("")
-            }
+            ${units
+              .map(
+                (unit) => `
+                  <option
+                    value="${esc(unit)}"
+                    ${
+                      current === unit
+                        ? "selected"
+                        : ""
+                    }>
+                    ${esc(tr(unit))}
+                  </option>
+                `
+              )
+              .join("")}
 
           </select>
 
           <button
             type="button"
             class="ef-clear-field"
-            id="unitClear"
-          >
+            id="unitClear">
             ×
           </button>
 
@@ -3584,14 +3809,23 @@
     `;
   }
 
-  function renderBrand(item, currentBrand) {
 
+  /* =========================================================
+     BRAND
+     ========================================================= */
+
+  function renderBrand(
+    item,
+    existing
+  ) {
     if (!item.brands.length) {
       return "";
     }
 
-    return `
+    const current =
+      existing?.brand || "";
 
+    return `
       <div class="ef-field">
 
         <label class="ef-field-label">
@@ -3600,32 +3834,40 @@
 
         <div class="ef-field-row">
 
-          <select id="brandInput">
+          <select
+            class="ef-select"
+            id="itemBrand">
 
             <option value="">
-              ${state.lang === "hi"
-                ? "चुनें / Select Brand"
-                : "Select Brand"}
+              ${
+                currentLang() === "hi"
+                  ? "वैकल्पिक"
+                  : "Optional"
+              }
             </option>
 
-            ${
-              item.brands.map(brand => `
-                <option
-                  value="${esc(brand)}"
-                  ${currentBrand === brand ? "selected" : ""}
-                >
-                  ${esc(brand)}
-                </option>
-              `).join("")
-            }
+            ${item.brands
+              .map(
+                (brand) => `
+                  <option
+                    value="${esc(brand)}"
+                    ${
+                      current === brand
+                        ? "selected"
+                        : ""
+                    }>
+                    ${esc(tr(brand))}
+                  </option>
+                `
+              )
+              .join("")}
 
           </select>
 
           <button
             type="button"
             class="ef-clear-field"
-            id="brandClear"
-          >
+            id="brandClear">
             ×
           </button>
 
@@ -3635,98 +3877,63 @@
     `;
   }
 
-  /* =======================================================
-     26. ITEM DRAFT
-     ======================================================= */
+
+  /* =========================================================
+     ITEM EDITOR
+     ========================================================= */
 
   function collectItemValues() {
-
     const values = {};
 
-    $$("[data-field-key]")
-      .forEach(select => {
-
+    $$(".ef-item-field").forEach(
+      (field) => {
         values[
-          select.dataset.fieldKey
-        ] = select.value;
-      });
-
-    const quantity =
-      $("#quantityInput");
-
-    values.quantity =
-      quantity
-        ? quantity.value
-        : "";
-
-    const unit =
-      $("#unitInput");
-
-    values.unit =
-      unit
-        ? unit.value
-        : "";
-
-    const brand =
-      $("#brandInput");
-
-    values.brand =
-      brand
-        ? brand.value
-        : "";
+          field.dataset.fieldName
+        ] = field.value;
+      }
+    );
 
     return values;
   }
 
-  function bindItemEditor(
-    item,
-    existingEstimate
-  ) {
+  function bindItemEditor() {
+    const backBtn =
+      $("#routeBackBtn");
 
-    const back =
-      $("#itemBack");
-
-    if (back) {
-      back.onclick =
-        () => goBackRoute();
+    if (backBtn) {
+      backBtn.onclick =
+        goBackRoute;
     }
 
-    $$("[data-field-key]")
-      .forEach(select => {
+    const itemBackBtn =
+      $("#itemBackBtn");
 
-        select.onchange =
-          () => {
+    if (itemBackBtn) {
+      itemBackBtn.onclick =
+        goBackRoute;
+    }
 
-            state.draft =
-              collectItemValues();
-          };
-      });
+    $$("[data-clear-field]").forEach(
+      (btn) => {
+        btn.onclick = () => {
+          const index =
+            btn.dataset.clearField;
 
-    $$("[data-clear-key]")
-      .forEach(button => {
+          const field = $(
+            `.ef-item-field[data-field-index="${CSS.escape(
+              index
+            )}"]`
+          );
 
-        button.onclick =
-          () => {
+          if (field) {
+            field.value = "";
+          }
+        };
+      }
+    );
 
-            const key =
-              button.dataset.clearKey;
-
-            const select =
-              document.querySelector(
-                `[data-field-key="${CSS.escape(key)}"]`
-              );
-
-            if (select) {
-              select.value = "";
-            }
-
-            state.draft =
-              collectItemValues();
-          };
-      });
-
-    const qty =
-      $("#quantityInput");
+    const quantity =
+      $("#itemQuantity");
 
     const minus =
       $("#qtyMinus");
@@ -3737,263 +3944,164 @@
     const clear =
       $("#qtyClear");
 
-    function updateQty(value) {
+    function setQuantity(value) {
+      if (!quantity) return;
 
-      let n =
+      let num =
         Number(value);
 
-      if (!Number.isFinite(n)) {
-        n = 0;
+      if (!Number.isFinite(num)) {
+        num = 0;
       }
 
-      n =
-        Math.max(
-          0,
-          Math.floor(n)
-        );
+      num = Math.max(
+        0,
+        Math.floor(num)
+      );
 
-      if (qty) {
-        qty.value = String(n);
-      }
-
-      state.draft =
-        collectItemValues();
+      quantity.value = String(num);
     }
 
     if (minus) {
-
-      minus.onclick =
-        () => {
-
-          updateQty(
-            Number(qty?.value || 0) - 1
-          );
-        };
+      minus.onclick = () => {
+        setQuantity(
+          Number(quantity?.value || 0) - 1
+        );
+      };
     }
 
     if (plus) {
-
-      plus.onclick =
-        () => {
-
-          updateQty(
-            Number(qty?.value || 0) + 1
-          );
-        };
-    }
-
-    if (qty) {
-      qty.oninput =
-        () => updateQty(qty.value);
+      plus.onclick = () => {
+        setQuantity(
+          Number(quantity?.value || 0) + 1
+        );
+      };
     }
 
     if (clear) {
-      clear.onclick =
-        () => updateQty(0);
-    }
-
-    const unit =
-      $("#unitInput");
-
-    if (unit) {
-
-      unit.onchange =
-        () => {
-
-          if (unit.value) {
-
-            storageSet(
-              STORAGE.lastUnit,
-              unit.value
-            );
-          }
-
-          state.draft =
-            collectItemValues();
-        };
+      clear.onclick = () => {
+        setQuantity(0);
+      };
     }
 
     const unitClear =
       $("#unitClear");
 
     if (unitClear) {
+      unitClear.onclick = () => {
+        const unit =
+          $("#itemUnit");
 
-      unitClear.onclick =
-        () => {
-
-          if (unit) {
-            unit.value = "";
-          }
-
-          state.draft =
-            collectItemValues();
-        };
-    }
-
-    const brand =
-      $("#brandInput");
-
-    if (brand) {
-
-      brand.onchange =
-        () => {
-
-          state.draft =
-            collectItemValues();
-        };
+        if (unit) {
+          unit.value = "";
+        }
+      };
     }
 
     const brandClear =
       $("#brandClear");
 
     if (brandClear) {
+      brandClear.onclick = () => {
+        const brand =
+          $("#itemBrand");
 
-      brandClear.onclick =
-        () => {
-
-          if (brand) {
-            brand.value = "";
-          }
-
-          state.draft =
-            collectItemValues();
-        };
+        if (brand) {
+          brand.value = "";
+        }
+      };
     }
 
-    const save =
-      $("#saveItem");
+    const saveBtn =
+      $("#saveItemBtn");
 
-    if (save) {
-
-      save.onclick =
-        () => {
-
-          const values =
-            collectItemValues();
-
-          const quantity =
-            Number(values.quantity);
-
-          if (
-            !Number.isFinite(quantity) ||
-            quantity <= 0
-          ) {
-
-            showToast(
-              langText("requiredQuantity")
-            );
-
-            return;
-          }
-
-          saveEstimateItem(
-            values,
-            existingEstimate
-          );
-        };
+    if (saveBtn) {
+      saveBtn.onclick =
+        saveCurrentItem;
     }
 
-    const next =
-      $("#nextItem");
+    const nextBtn =
+      $("#nextItemBtn");
 
-    if (next) {
-
-      next.onclick =
-        () => {
-
-          state.draft =
-            collectItemValues();
-
-          openNextItem();
-        };
+    if (nextBtn) {
+      nextBtn.onclick =
+        openNextItem;
     }
   }
 
-  /* =======================================================
-     27. ESTIMATE STORAGE
-     ======================================================= */
 
-  function getEstimates() {
+  /* =========================================================
+     SAVE ITEM
+     ========================================================= */
 
-    const data =
-      jsonGet(
-        STORAGE.estimate,
-        []
+  function saveCurrentItem() {
+    const quantityInput =
+      $("#itemQuantity");
+
+    const quantity =
+      Number(
+        quantityInput?.value || 0
       );
 
-    return Array.isArray(data)
-      ? data
-      : [];
-  }
-
-  function setEstimates(items) {
-    jsonSet(
-      STORAGE.estimate,
-      items
-    );
-  }
-
-  function makeId() {
-
-    return (
-      "EF-" +
-      Date.now().toString(36) +
-      "-" +
-      Math.random()
-        .toString(36)
-        .slice(2, 8)
-    );
-  }
-
-  function getEstimateForCurrentItem() {
-
-    const list =
-      getEstimates();
-
-    return list.find(
-      entry =>
-        entry.stageIndex ===
-          state.stageIndex &&
-        entry.sectionIndex ===
-          state.sectionIndex &&
-        entry.itemIndex ===
-          state.itemIndex
-    ) || null;
-  }
-
-  function saveEstimateItem(
-    values,
-    existingEstimate
-  ) {
-
-    const stage =
-      getStage(state.stageIndex);
-
-    const section =
-      getSection(
-        state.stageIndex,
-        state.sectionIndex
+    if (
+      !Number.isFinite(quantity) ||
+      quantity <= 0
+    ) {
+      showToast(
+        langText("quantityRequired")
       );
 
-    const item =
-      getItem(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
-      );
+      quantityInput?.focus();
 
-    if (!stage || !section || !item) {
       return;
     }
 
-    const list =
-      getEstimates();
+    const values =
+      collectItemValues();
+
+    const unit =
+      $("#itemUnit")?.value || "";
+
+    const brand =
+      $("#itemBrand")?.value || "";
+
+    const item =
+      getCurrentItem();
+
+    if (!item) return;
+
+    const estimates =
+      getEstimateItems();
+
+    let existingIndex = -1;
+
+    if (state.editingEstimateId) {
+      existingIndex =
+        estimates.findIndex(
+          (entry) =>
+            entry.id ===
+            state.editingEstimateId
+        );
+    }
+
+    if (existingIndex < 0) {
+      existingIndex =
+        estimates.findIndex(
+          (entry) =>
+            entry.stageIndex ===
+              state.stageIndex &&
+            entry.sectionIndex ===
+              state.sectionIndex &&
+            entry.itemIndex ===
+              state.itemIndex
+        );
+    }
 
     const entry = {
-
       id:
-        existingEstimate?.id ||
-        makeId(),
+        existingIndex >= 0
+          ? estimates[existingIndex].id
+          : makeId(),
 
       stageIndex:
         state.stageIndex,
@@ -4004,325 +4112,317 @@
       itemIndex:
         state.itemIndex,
 
-      stageId:
-        stage.id,
+      stage:
+        DATA[state.stageIndex].name,
 
-      stageTitle:
-        stage.title,
+      section:
+        DATA[state.stageIndex]
+          .sections[state.sectionIndex]
+          .name,
 
-      sectionName:
-        section.name,
-
-      materialName:
+      name:
         item.name,
 
-      values: {
-        ...values
-      },
+      values,
 
-      quantity:
-        Number(values.quantity),
+      quantity,
 
-      unit:
-        values.unit || "",
+      unit,
 
-      brand:
-        values.brand || "",
+      brand,
 
       price: ""
     };
 
-    const existingIndex =
-      list.findIndex(
-        e =>
-          e.id === entry.id
-      );
-
     if (existingIndex >= 0) {
-
-      list[existingIndex] =
+      estimates[existingIndex] =
         entry;
-
-      showToast(
-        langText("updated")
-      );
-
     } else {
+      estimates.push(entry);
+    }
 
-      list.push(entry);
+    saveEstimateItems(
+      estimates
+    );
 
-      showToast(
-        langText("added")
+    if (unit) {
+      storageSet(
+        STORAGE.lastUnit,
+        unit
       );
     }
 
-    setEstimates(list);
-
-    storageSet(
-      STORAGE.lastUnit,
-      values.unit || ""
+    showToast(
+      existingIndex >= 0
+        ? langText("updated")
+        : langText("added")
     );
 
-    state.draft = {};
+    state.editingEstimateId = null;
 
     setTimeout(
       openNextItem,
-      250
+      220
     );
   }
 
-  /* =======================================================
-     28. NEXT ITEM
-     ======================================================= */
 
-  function getNextPosition(
-    stageIndex,
-    sectionIndex,
-    itemIndex
-  ) {
+  /* =========================================================
+     NEXT ITEM
+     ========================================================= */
 
-    const stage =
-      getStage(stageIndex);
+  function getNextPosition() {
+    let s =
+      state.stageIndex;
 
-    if (!stage) {
-      return null;
-    }
+    let sec =
+      state.sectionIndex;
+
+    let item =
+      state.itemIndex + 1;
 
     if (
-      itemIndex + 1 <
-      stage.sections[sectionIndex].items.length
+      DATA[s]?.sections[sec] &&
+      item <
+        DATA[s].sections[sec].items.length
     ) {
-
       return {
-        stageIndex,
-        sectionIndex,
-        itemIndex:
-          itemIndex + 1
+        stageIndex: s,
+        sectionIndex: sec,
+        itemIndex: item
       };
     }
 
-    if (
-      sectionIndex + 1 <
-      stage.sections.length
-    ) {
+    sec++;
 
-      return {
-        stageIndex,
-        sectionIndex:
-          sectionIndex + 1,
-        itemIndex: 0
-      };
+    while (
+      DATA[s] &&
+      sec < DATA[s].sections.length
+    ) {
+      if (
+        DATA[s].sections[sec].items.length
+      ) {
+        return {
+          stageIndex: s,
+          sectionIndex: sec,
+          itemIndex: 0
+        };
+      }
+
+      sec++;
     }
 
-    if (
-      stageIndex + 1 <
-      DATA.length
-    ) {
+    s++;
 
-      return {
-        stageIndex:
-          stageIndex + 1,
-        sectionIndex: 0,
-        itemIndex: 0
-      };
+    while (s < DATA.length) {
+      for (
+        let sectionIndex = 0;
+        sectionIndex <
+        DATA[s].sections.length;
+        sectionIndex++
+      ) {
+        const section =
+          DATA[s].sections[
+            sectionIndex
+          ];
+
+        if (section.items.length) {
+          return {
+            stageIndex: s,
+            sectionIndex,
+            itemIndex: 0
+          };
+        }
+      }
+
+      s++;
     }
 
     return null;
   }
 
   function openNextItem() {
-
     const next =
-      getNextPosition(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
-      );
+      getNextPosition();
 
     if (!next) {
-
-      navigate(
-        "estimate",
-        -1,
-        -1,
-        -1
-      );
-
+      navigate("estimate");
       return;
     }
 
-    openItem(
+    state.editingEstimateId =
+      null;
+
+    state.draft = {};
+
+    navigate(
+      "item",
       next.stageIndex,
       next.sectionIndex,
       next.itemIndex
     );
   }
 
-  /* =======================================================
-     29. ESTIMATE PAGE
-     ======================================================= */
+
+  /* =========================================================
+     ESTIMATE PAGE
+     ========================================================= */
 
   function renderEstimatePage() {
-
-    const route =
-      $("#efRoute");
-
-    if (!route) return;
-
-    const list =
-      getEstimates();
-
-    route.innerHTML = `
-
-      <div class="ef-page-head">
-
-        <button
-          type="button"
-          class="ef-back-btn"
-          id="estimateBack"
-        >
-          ← ${esc(langText("back"))}
-        </button>
-
-        <h2>
-          ${esc(langText("estimate"))}
-        </h2>
-
-      </div>
-
-      ${
-        list.length
-          ? `
-            <div class="ef-estimate-grid">
-              ${list.map(
-                entry =>
-                  renderEstimateCard(entry)
-              ).join("")}
-            </div>
-          `
-          : `
-            <div class="ef-empty">
-              ${esc(langText("noEstimate"))}
-            </div>
-          `
-      }
-    `;
-
-    const back =
-      $("#estimateBack");
-
-    if (back) {
-      back.onclick =
-        () => navigate("home");
-    }
-
-    $$(".ef-estimate-edit")
-      .forEach(button => {
-
-        button.onclick =
-          () => {
-
-            const id =
-              button.dataset.id;
-
-            const entry =
-              getEstimates()
-                .find(e => e.id === id);
-
-            if (!entry) return;
-
-            state.editingEstimateId =
-              id;
-
-            openItem(
-              entry.stageIndex,
-              entry.sectionIndex,
-              entry.itemIndex
-            );
-          };
-      });
-
-    $$(".ef-estimate-delete")
-      .forEach(button => {
-
-        button.onclick =
-          () => {
-
-            const id =
-              button.dataset.id;
-
-            const updated =
-              getEstimates()
-                .filter(e => e.id !== id);
-
-            setEstimates(updated);
-
-            renderEstimatePage();
-          };
-      });
-  }
-
-  function renderEstimateCard(entry) {
+    const estimates =
+      getEstimateItems();
 
     return `
+      <div class="ef-page">
 
-      <div class="ef-estimate-card">
+        <div class="ef-page-head">
 
-        <h3>
-          ${esc(tr(entry.materialName))}
+          <button
+            type="button"
+            class="ef-back-btn"
+            id="routeBackBtn">
+            ←
+          </button>
+
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
+
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(
+                  langText("estimate")
+                )}
+              </h2>
+
+              <p class="ef-page-subtitle">
+                ${esc(BRAND.name)}
+              </p>
+            </div>
+          </div>
+
+          <div></div>
+
+        </div>
+
+        <div class="ef-estimate-list">
+
+          ${
+            estimates.length
+              ? estimates
+                  .map(
+                    renderEstimateCard
+                  )
+                  .join("")
+              : `
+                <div class="ef-setting-card">
+                  ${esc(
+                    langText(
+                      "emptyEstimate"
+                    )
+                  )}
+                </div>
+              `
+          }
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  function renderEstimateCard(
+    entry,
+    index
+  ) {
+    const values =
+      Object.entries(
+        entry.values || {}
+      )
+        .filter(
+          ([, value]) =>
+            safeText(value).trim()
+        )
+        .map(
+          ([key, value]) =>
+            `${tr(key)}: ${tr(value)}`
+        )
+        .join(" • ");
+
+    return `
+      <div
+        class="ef-estimate-card"
+        data-estimate-id="${esc(
+          entry.id
+        )}">
+
+        <h3 class="ef-estimate-title">
+          ${esc(tr(entry.name))}
         </h3>
 
         <div class="ef-estimate-meta">
+          ${esc(
+            tr(entry.stage)
+          )}
+          /
+          ${esc(
+            tr(entry.section)
+          )}
+          <br>
 
-          <div>
-            ${esc(tr(entry.stageTitle))}
-          </div>
+          ${esc(
+            langText("quantity")
+          )}:
+          ${esc(entry.quantity)}
 
-          <div>
-            ${esc(tr(entry.sectionName))}
-          </div>
+          ${
+            entry.unit
+              ? ` • ${esc(
+                  langText("unit")
+                )}: ${esc(
+                  tr(entry.unit)
+                )}`
+              : ""
+          }
 
-          <div>
-            ${esc(langText("quantity"))}:
-            ${esc(entry.quantity)}
-          </div>
+          ${
+            entry.brand
+              ? ` • ${esc(
+                  langText("brand")
+                )}: ${esc(
+                  tr(entry.brand)
+                )}`
+              : ""
+          }
 
-          <div>
-            ${esc(langText("unit"))}:
-            ${esc(
-              entry.unit
-                ? tr(entry.unit)
-                : "-"
-            )}
-          </div>
-
-          <div>
-            ${esc(langText("brand"))}:
-            ${esc(
-              entry.brand
-                ? entry.brand
-                : "-"
-            )}
-          </div>
-
+          ${
+            values
+              ? `<br>${esc(values)}`
+              : ""
+          }
         </div>
 
-        <div class="ef-actions">
+        <div class="ef-estimate-actions">
 
           <button
             type="button"
-            class="ef-btn ef-estimate-edit"
-            data-id="${esc(entry.id)}"
-          >
-            ✏️ ${esc(langText("edit"))}
+            class="ef-secondary-btn"
+            data-edit-estimate="${esc(
+              entry.id
+            )}">
+            ${esc(
+              langText("edit")
+            )}
           </button>
 
           <button
             type="button"
-            class="ef-btn danger ef-estimate-delete"
-            data-id="${esc(entry.id)}"
-          >
-            🗑️ ${esc(langText("delete"))}
+            class="ef-danger-btn"
+            data-delete-estimate="${esc(
+              entry.id
+            )}">
+            ${esc(
+              langText("delete")
+            )}
           </button>
 
         </div>
@@ -4331,422 +4431,529 @@
     `;
   }
 
-  /* =======================================================
-     30. CALCULATOR
-     ======================================================= */
+  function bindEstimatePage() {
+    const back =
+      $("#routeBackBtn");
+
+    if (back) {
+      back.onclick =
+        goBackRoute;
+    }
+
+    $$("[data-edit-estimate]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          const id =
+            btn.dataset.editEstimate;
+
+          const entry =
+            getEstimateItems().find(
+              (item) =>
+                item.id === id
+            );
+
+          if (!entry) return;
+
+          state.editingEstimateId =
+            id;
+
+          openItem(
+            entry.stageIndex,
+            entry.sectionIndex,
+            entry.itemIndex,
+            id
+          );
+        };
+      });
+
+    $$("[data-delete-estimate]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          const id =
+            btn.dataset.deleteEstimate;
+
+          const items =
+            getEstimateItems();
+
+          const filtered =
+            items.filter(
+              (item) =>
+                item.id !== id
+            );
+
+          saveEstimateItems(
+            filtered
+          );
+
+          renderCurrentPage(false);
+        };
+      });
+  }
+
+
+  /* =========================================================
+     CALCULATOR
+     ========================================================= */
 
   function renderCalculatorPage() {
+    return `
+      <div class="ef-page">
 
-    const route =
-      $("#efRoute");
-
-    if (!route) return;
-
-    route.innerHTML = `
-
-      <div class="ef-page-head">
-
-        <button
-          type="button"
-          class="ef-back-btn"
-          id="calculatorBack"
-        >
-          ← ${esc(langText("back"))}
-        </button>
-
-        <h2>
-          ${esc(langText("calculatorTitle"))}
-        </h2>
-
-      </div>
-
-      <div class="ef-calc-grid">
-
-        <div class="ef-calc-card">
-          <h3>P = V × I</h3>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("voltage"))} (V)
-            </label>
-
-            <input
-              id="calcV1"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("current"))} (A)
-            </label>
-
-            <input
-              id="calcI1"
-              type="number"
-              step="any"
-            />
-          </div>
+        <div class="ef-page-head">
 
           <button
-            class="ef-btn"
-            id="calcP"
             type="button"
-          >
-            ${esc(langText("calculate"))}
+            class="ef-back-btn"
+            id="routeBackBtn">
+            ←
           </button>
 
-          <div
-            class="ef-result"
-            id="resultP"
-          ></div>
-        </div>
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
 
-        <div class="ef-calc-card">
-          <h3>V = I × R</h3>
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(
+                  langText(
+                    "calculatorTitle"
+                  )
+                )}
+              </h2>
 
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("current"))} (A)
-            </label>
-
-            <input
-              id="calcI2"
-              type="number"
-              step="any"
-            />
+              <p class="ef-page-subtitle">
+                ${esc(BRAND.name)}
+              </p>
+            </div>
           </div>
 
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("resistance"))} (Ω)
-            </label>
+          <div></div>
 
-            <input
-              id="calcR2"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <button
-            class="ef-btn"
-            id="calcV"
-            type="button"
-          >
-            ${esc(langText("calculate"))}
-          </button>
-
-          <div
-            class="ef-result"
-            id="resultV"
-          ></div>
-        </div>
-
-        <div class="ef-calc-card">
-          <h3>I = V ÷ R</h3>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("voltage"))} (V)
-            </label>
-
-            <input
-              id="calcV3"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("resistance"))} (Ω)
-            </label>
-
-            <input
-              id="calcR3"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <button
-            class="ef-btn"
-            id="calcI"
-            type="button"
-          >
-            ${esc(langText("calculate"))}
-          </button>
-
-          <div
-            class="ef-result"
-            id="resultI"
-          ></div>
-        </div>
-
-        <div class="ef-calc-card">
-          <h3>R = V ÷ I</h3>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("voltage"))} (V)
-            </label>
-
-            <input
-              id="calcV4"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <div class="ef-field">
-            <label class="ef-field-label">
-              ${esc(langText("current"))} (A)
-            </label>
-
-            <input
-              id="calcI4"
-              type="number"
-              step="any"
-            />
-          </div>
-
-          <button
-            class="ef-btn"
-            id="calcR"
-            type="button"
-          >
-            ${esc(langText("calculate"))}
-          </button>
-
-          <div
-            class="ef-result"
-            id="resultR"
-          ></div>
         </div>
 
         <div class="ef-calc-card">
 
-          <h3>
-            ${esc(langText("inverter"))}
-          </h3>
-
-          <div class="ef-field">
-
-            <label class="ef-field-label">
-              ${esc(langText("inputVoltage"))}
-            </label>
-
-            <select id="inverterInput">
-              <option value="12">
-                12V
-              </option>
-
-              <option value="24">
-                24V
-              </option>
-            </select>
-
+          <div class="ef-setting-title">
+            P = V × I
           </div>
 
-          <div class="ef-field">
-
-            <label class="ef-field-label">
-              ${esc(langText("outputVoltage"))}
-            </label>
+          <div class="ef-calc-grid">
 
             <input
-              id="inverterOutput"
-              value="230"
+              class="ef-input"
+              id="calcV"
               type="number"
-              step="any"
-            />
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("voltage")
+              )}">
+
+            <input
+              class="ef-input"
+              id="calcI"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("current")
+              )}">
 
           </div>
 
           <button
-            class="ef-btn"
-            id="calcInverter"
             type="button"
-          >
-            ${esc(langText("calculate"))}
+            class="ef-primary-btn"
+            id="calcPowerBtn"
+            style="width:100%;margin-top:8px;">
+            P = V × I
           </button>
 
           <div
-            class="ef-result"
-            id="resultInverter"
-          ></div>
+            class="ef-calc-result"
+            id="calcPowerResult">
+            —
+          </div>
 
         </div>
 
-      </div>
-    `;
+        <div class="ef-calc-card">
 
-    $("#calculatorBack")?.addEventListener(
-      "click",
-      () => navigate("home")
-    );
+          <div class="ef-setting-title">
+            V = I × R
+          </div>
 
-    $("#calcP")?.addEventListener(
-      "click",
-      () => {
+          <div class="ef-calc-grid">
 
-        const v =
-          Number($("#calcV1")?.value);
+            <input
+              class="ef-input"
+              id="calcVCurrent"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("current")
+              )}">
 
-        const i =
-          Number($("#calcI1")?.value);
+            <input
+              class="ef-input"
+              id="calcRVoltage"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("resistance")
+              )}">
 
-        $("#resultP").textContent =
-          Number.isFinite(v) &&
-          Number.isFinite(i)
-            ? `P = ${(v * i).toFixed(2)} W`
-            : "";
-      }
-    );
+          </div>
 
-    $("#calcV")?.addEventListener(
-      "click",
-      () => {
+          <button
+            type="button"
+            class="ef-primary-btn"
+            id="calcVoltageBtn"
+            style="width:100%;margin-top:8px;">
+            V = I × R
+          </button>
 
-        const i =
-          Number($("#calcI2")?.value);
+          <div
+            class="ef-calc-result"
+            id="calcVoltageResult">
+            —
+          </div>
 
-        const r =
-          Number($("#calcR2")?.value);
+        </div>
 
-        $("#resultV").textContent =
-          Number.isFinite(i) &&
-          Number.isFinite(r)
-            ? `V = ${(i * r).toFixed(2)} V`
-            : "";
-      }
-    );
+        <div class="ef-calc-card">
 
-    $("#calcI")?.addEventListener(
-      "click",
-      () => {
+          <div class="ef-setting-title">
+            I = V ÷ R
+          </div>
 
-        const v =
-          Number($("#calcV3")?.value);
+          <div class="ef-calc-grid">
 
-        const r =
-          Number($("#calcR3")?.value);
+            <input
+              class="ef-input"
+              id="calcICVoltage"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("voltage")
+              )}">
 
-        $("#resultI").textContent =
-          Number.isFinite(v) &&
-          Number.isFinite(r) &&
-          r !== 0
-            ? `I = ${(v / r).toFixed(2)} A`
-            : "";
-      }
-    );
+            <input
+              class="ef-input"
+              id="calcICResistance"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("resistance")
+              )}">
 
-    $("#calcR")?.addEventListener(
-      "click",
-      () => {
+          </div>
 
-        const v =
-          Number($("#calcV4")?.value);
+          <button
+            type="button"
+            class="ef-primary-btn"
+            id="calcCurrentBtn"
+            style="width:100%;margin-top:8px;">
+            I = V ÷ R
+          </button>
 
-        const i =
-          Number($("#calcI4")?.value);
+          <div
+            class="ef-calc-result"
+            id="calcCurrentResult">
+            —
+          </div>
 
-        $("#resultR").textContent =
-          Number.isFinite(v) &&
-          Number.isFinite(i) &&
-          i !== 0
-            ? `R = ${(v / i).toFixed(2)} Ω`
-            : "";
-      }
-    );
+        </div>
 
-    $("#calcInverter")
-      ?.addEventListener(
-        "click",
-        () => {
+        <div class="ef-calc-card">
 
-          const input =
-            Number(
-              $("#inverterInput")?.value
-            );
+          <div class="ef-setting-title">
+            R = V ÷ I
+          </div>
 
-          const output =
-            Number(
-              $("#inverterOutput")?.value
-            );
+          <div class="ef-calc-grid">
 
-          $("#resultInverter")
-            .textContent =
-              Number.isFinite(input) &&
-              Number.isFinite(output)
-                ? `${input}V → ${output}V`
-                : "";
-        }
-      );
-  }
+            <input
+              class="ef-input"
+              id="calcRVVoltage"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("voltage")
+              )}">
 
-  /* =======================================================
-     31. SETTINGS
-     ======================================================= */
+            <input
+              class="ef-input"
+              id="calcRVCurrent"
+              type="number"
+              inputmode="decimal"
+              placeholder="${esc(
+                langText("current")
+              )}">
 
-  function renderSettingsPage() {
+          </div>
 
-    const route =
-      $("#efRoute");
+          <button
+            type="button"
+            class="ef-primary-btn"
+            id="calcResistanceBtn"
+            style="width:100%;margin-top:8px;">
+            R = V ÷ I
+          </button>
 
-    if (!route) return;
+          <div
+            class="ef-calc-result"
+            id="calcResistanceResult">
+            —
+          </div>
 
-    route.innerHTML = `
+        </div>
 
-      <div class="ef-page-head">
+        <div class="ef-calc-card">
 
-        <button
-          type="button"
-          class="ef-back-btn"
-          id="settingsBack"
-        >
-          ← ${esc(langText("back"))}
-        </button>
+          <div class="ef-setting-title">
+            ${esc(
+              langText("inverter")
+            )}
+          </div>
 
-        <h2>
-          ${esc(langText("settings"))}
-        </h2>
-
-      </div>
-
-      <div class="ef-settings-grid">
-
-        <div class="ef-setting-card">
-
-          <h3>
-            ${esc(langText("language"))}
-          </h3>
-
-          <div class="ef-setting-row">
+          <div class="ef-setting-buttons">
 
             <button
               type="button"
-              id="settingsHi"
-              class="ef-language-btn ${
+              class="ef-setting-btn"
+              data-inverter="12">
+              12V → 230V
+            </button>
+
+            <button
+              type="button"
+              class="ef-setting-btn"
+              data-inverter="24">
+              24V → 230V
+            </button>
+
+          </div>
+
+          <div
+            class="ef-calc-result"
+            id="inverterResult">
+            —
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  function safeDivide(
+    a,
+    b
+  ) {
+    if (
+      !Number.isFinite(a) ||
+      !Number.isFinite(b) ||
+      b === 0
+    ) {
+      return null;
+    }
+
+    return a / b;
+  }
+
+  function bindCalculatorPage() {
+    const back =
+      $("#routeBackBtn");
+
+    if (back) {
+      back.onclick =
+        goBackRoute;
+    }
+
+    const powerBtn =
+      $("#calcPowerBtn");
+
+    if (powerBtn) {
+      powerBtn.onclick = () => {
+        const v =
+          Number($("#calcV")?.value);
+
+        const i =
+          Number($("#calcI")?.value);
+
+        const result =
+          Number.isFinite(v) &&
+          Number.isFinite(i)
+            ? v * i
+            : null;
+
+        $("#calcPowerResult").textContent =
+          result == null
+            ? "—"
+            : `${result} W`;
+      };
+    }
+
+    const voltageBtn =
+      $("#calcVoltageBtn");
+
+    if (voltageBtn) {
+      voltageBtn.onclick = () => {
+        const i =
+          Number(
+            $("#calcVCurrent")?.value
+          );
+
+        const r =
+          Number(
+            $("#calcRVoltage")?.value
+          );
+
+        const result =
+          Number.isFinite(i) &&
+          Number.isFinite(r)
+            ? i * r
+            : null;
+
+        $("#calcVoltageResult").textContent =
+          result == null
+            ? "—"
+            : `${result} V`;
+      };
+    }
+
+    const currentBtn =
+      $("#calcCurrentBtn");
+
+    if (currentBtn) {
+      currentBtn.onclick = () => {
+        const v =
+          Number(
+            $("#calcICVoltage")?.value
+          );
+
+        const r =
+          Number(
+            $("#calcICResistance")?.value
+          );
+
+        const result =
+          safeDivide(v, r);
+
+        $("#calcCurrentResult").textContent =
+          result == null
+            ? "—"
+            : `${result} A`;
+      };
+    }
+
+    const resistanceBtn =
+      $("#calcResistanceBtn");
+
+    if (resistanceBtn) {
+      resistanceBtn.onclick = () => {
+        const v =
+          Number(
+            $("#calcRVVoltage")?.value
+          );
+
+        const i =
+          Number(
+            $("#calcRVCurrent")?.value
+          );
+
+        const result =
+          safeDivide(v, i);
+
+        $("#calcResistanceResult").textContent =
+          result == null
+            ? "—"
+            : `${result} Ω`;
+      };
+    }
+
+    $$("[data-inverter]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          const value =
+            btn.dataset.inverter;
+
+          const result =
+            $("#inverterResult");
+
+          if (result) {
+            result.textContent =
+              `${value}V → 230V`;
+          }
+        };
+      });
+  }
+
+
+  /* =========================================================
+     SETTINGS
+     ========================================================= */
+
+  function renderSettingsPage() {
+    return `
+      <div class="ef-page">
+
+        <div class="ef-page-head">
+
+          <button
+            type="button"
+            class="ef-back-btn"
+            id="routeBackBtn">
+            ←
+          </button>
+
+          <div class="ef-page-brand">
+            ${brandLogoHTML()}
+
+            <div>
+              <h2 class="ef-page-title">
+                ${esc(
+                  langText("settings")
+                )}
+              </h2>
+
+              <p class="ef-page-subtitle">
+                ${esc(BRAND.name)}
+              </p>
+            </div>
+          </div>
+
+          <div></div>
+
+        </div>
+
+        <div class="ef-setting-card">
+
+          <h3 class="ef-setting-title">
+            ${esc(
+              langText("language")
+            )}
+          </h3>
+
+          <div class="ef-setting-buttons">
+
+            <button
+              type="button"
+              class="ef-setting-btn ${
                 state.lang === "hi"
                   ? "active"
                   : ""
               }"
-            >
+              data-settings-lang="hi">
               हिन्दी
             </button>
 
             <button
               type="button"
-              id="settingsEn"
-              class="ef-language-btn ${
+              class="ef-setting-btn ${
                 state.lang === "en"
                   ? "active"
                   : ""
               }"
-            >
+              data-settings-lang="en">
               English
             </button>
 
@@ -4756,674 +4963,777 @@
 
         <div class="ef-setting-card">
 
-          <h3>
-            ${esc(langText("theme"))}
+          <h3 class="ef-setting-title">
+            ${esc(
+              langText("theme")
+            )}
           </h3>
 
-          <div class="ef-setting-row">
+          <div class="ef-setting-buttons">
 
             <button
               type="button"
-              id="settingsTheme"
-              class="ef-theme-btn"
-            >
-              ${
+              class="ef-setting-btn ${
                 state.theme === "dark"
-                  ? "🌙 " + esc(langText("dark"))
-                  : "☀️ " + esc(langText("light"))
-              }
+                  ? "active"
+                  : ""
+              }"
+              data-settings-theme="dark">
+              ${esc(
+                langText("dark")
+              )}
             </button>
-
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3>
-            ${esc(langText("stageView"))}
-          </h3>
-
-          <div class="ef-view-options">
-            ${renderSettingsViewButtons(
-              "stage",
-              state.stageView
-            )}
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3>
-            ${esc(langText("materialView"))}
-          </h3>
-
-          <div class="ef-view-options">
-            ${renderSettingsViewButtons(
-              "material",
-              state.materialView
-            )}
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3>
-            ${esc(langText("reset"))}
-          </h3>
-
-          <div class="ef-setting-row">
 
             <button
               type="button"
-              id="settingsReset"
-              class="ef-btn danger"
-            >
-              ♻️ ${esc(langText("reset"))}
+              class="ef-setting-btn ${
+                state.theme === "light"
+                  ? "active"
+                  : ""
+              }"
+              data-settings-theme="light">
+              ${esc(
+                langText("light")
+              )}
             </button>
 
           </div>
+
+        </div>
+
+        <div class="ef-setting-card">
+
+          <h3 class="ef-setting-title">
+            ${esc(
+              langText("stageView")
+            )}
+          </h3>
+
+          <div class="ef-setting-buttons">
+
+            ${VIEW_MODES.map(
+              (mode) => `
+                <button
+                  type="button"
+                  class="ef-setting-btn ${
+                    state.stageView === mode
+                      ? "active"
+                      : ""
+                  }"
+                  data-stage-view="${mode}">
+                  ${esc(
+                    tr(
+                      VIEW_LABELS[mode]
+                    )
+                  )}
+                </button>
+              `
+            ).join("")}
+
+          </div>
+
+        </div>
+
+        <div class="ef-setting-card">
+
+          <h3 class="ef-setting-title">
+            ${esc(
+              langText("materialView")
+            )}
+          </h3>
+
+          <div class="ef-setting-buttons">
+
+            ${VIEW_MODES.map(
+              (mode) => `
+                <button
+                  type="button"
+                  class="ef-setting-btn ${
+                    state.materialView ===
+                    mode
+                      ? "active"
+                      : ""
+                  }"
+                  data-material-view="${mode}">
+                  ${esc(
+                    tr(
+                      VIEW_LABELS[mode]
+                    )
+                  )}
+                </button>
+              `
+            ).join("")}
+
+          </div>
+
+        </div>
+
+        <div class="ef-setting-card">
+
+          <button
+            type="button"
+            class="ef-danger-btn"
+            id="settingsResetBtn"
+            style="width:100%;">
+            ${esc(
+              langText("reset")
+            )}
+          </button>
 
         </div>
 
       </div>
     `;
+  }
 
-    $("#settingsBack")?.addEventListener(
-      "click",
-      () => navigate("home")
-    );
+  function bindSettingsPage() {
+    const back =
+      $("#routeBackBtn");
 
-    $("#settingsHi")?.addEventListener(
-      "click",
-      () => {
-        setLanguage("hi");
-        renderSettingsPage();
-      }
-    );
+    if (back) {
+      back.onclick =
+        goBackRoute;
+    }
 
-    $("#settingsEn")?.addEventListener(
-      "click",
-      () => {
-        setLanguage("en");
-        renderSettingsPage();
-      }
-    );
-
-    $("#settingsTheme")?.addEventListener(
-      "click",
-      () => {
-        toggleTheme();
-        renderSettingsPage();
-      }
-    );
-
-    $("#settingsReset")?.addEventListener(
-      "click",
-      resetApplication
-    );
-
-    $$(".settings-view")
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const context =
-            button.dataset.context;
-
-          const view =
-            button.dataset.view;
-
-          if (context === "stage") {
-
-            state.stageView =
-              view;
-
-            storageSet(
-              STORAGE.stageView,
-              view
-            );
-
-          } else {
-
-            state.materialView =
-              view;
-
-            storageSet(
-              STORAGE.materialView,
-              view
-            );
-          }
-
-          renderSettingsPage();
+    $$("[data-settings-lang]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          setLanguage(
+            btn.dataset.settingsLang
+          );
         };
       });
+
+    $$("[data-settings-theme]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          setTheme(
+            btn.dataset.settingsTheme
+          );
+        };
+      });
+
+    $$("[data-stage-view]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          state.stageView =
+            validView(
+              btn.dataset.stageView
+            );
+
+          storageSet(
+            STORAGE.stageView,
+            state.stageView
+          );
+
+          renderCurrentPage(false);
+        };
+      });
+
+    $$("[data-material-view]")
+      .forEach((btn) => {
+        btn.onclick = () => {
+          state.materialView =
+            validView(
+              btn.dataset.materialView
+            );
+
+          storageSet(
+            STORAGE.materialView,
+            state.materialView
+          );
+
+          renderCurrentPage(false);
+        };
+      });
+
+    const reset =
+      $("#settingsResetBtn");
+
+    if (reset) {
+      reset.onclick =
+        resetApplication;
+    }
   }
 
-  function renderSettingsViewButtons(
-    context,
-    active
-  ) {
 
-    const views = [
-      "grid",
-      "list",
-      "compact",
-      "large",
-      "mini",
-      "two-column",
-      "horizontal",
-      "icon-list",
-      "timeline",
-      "dense"
-    ];
+  /* =========================================================
+     RESET
+     ========================================================= */
 
-    return views.map(
-      view => `
+  function resetApplication() {
+    const confirmed =
+      window.confirm(
+        currentLang() === "hi"
+          ? "एस्टिमेट और ऐप का सेव किया हुआ डेटा रीसेट करें?"
+          : "Reset saved estimate and app data?"
+      );
 
-        <button
-          type="button"
-          class="
-            settings-view
-            ${view === active ? "active" : ""}
-          "
-          data-context="${esc(context)}"
-          data-view="${esc(view)}"
-        >
-          ${esc(viewLabel(view))}
-        </button>
+    if (!confirmed) {
+      return;
+    }
 
-      `
-    ).join("");
+    if (state.drawerOpen) {
+      prepareNavigationFromDrawer();
+    }
+
+    storageRemove(
+      STORAGE.estimate
+    );
+
+    storageRemove(
+      STORAGE.route
+    );
+
+    storageRemove(
+      STORAGE.lastUnit
+    );
+
+    state.stageView = "grid";
+    state.materialView = "grid";
+
+    storageSet(
+      STORAGE.stageView,
+      "grid"
+    );
+
+    storageSet(
+      STORAGE.materialView,
+      "grid"
+    );
+
+    state.page = "home";
+    state.stageIndex = -1;
+    state.sectionIndex = -1;
+    state.itemIndex = -1;
+    state.editingEstimateId = null;
+    state.draft = {};
+
+    saveRoute();
+
+    replaceHistory();
+
+    showHome(false);
+
+    buildDrawer();
+
+    showToast(
+      langText("resetDone")
+    );
   }
 
-  /* =======================================================
-     32. CURRENT PAGE RENDER
-     ======================================================= */
+
+  /* =========================================================
+     CURRENT PAGE RENDER
+     ========================================================= */
 
   function renderCurrentPage(
-    push = false
+    scrollTop = true
   ) {
-
     if (state.page === "home") {
-
-      showHome(push);
+      showHome(false);
       return;
     }
 
-    if (homeIsStatic) {
-      showRoute(push);
-      return;
+    if (!homeEl) return;
+
+    let html = "";
+
+    switch (state.page) {
+      case "stage":
+        html = renderStagePage();
+        break;
+
+      case "section":
+        html = renderSectionPage();
+        break;
+
+      case "item":
+        html = renderItemPage();
+        break;
+
+      case "estimate":
+        html = renderEstimatePage();
+        break;
+
+      case "calculator":
+        html = renderCalculatorPage();
+        break;
+
+      case "settings":
+        html = renderSettingsPage();
+        break;
+
+      default:
+        state.page = "home";
+        showHome(false);
+        return;
     }
+
+    homeEl.innerHTML = `
+      <div id="efRoute">
+        ${html}
+      </div>
+    `;
+
+    homeIsStatic = false;
 
     if (state.page === "stage") {
+      bindStagePage();
+    }
 
-      renderStagePage();
-      return;
+    if (state.page === "section") {
+      bindSectionPage();
     }
 
     if (state.page === "item") {
-
-      renderItemPage();
-      return;
+      bindItemEditor();
     }
 
     if (state.page === "estimate") {
-
-      renderEstimatePage();
-      return;
+      bindEstimatePage();
     }
 
     if (state.page === "calculator") {
-
-      renderCalculatorPage();
-      return;
+      bindCalculatorPage();
     }
 
     if (state.page === "settings") {
+      bindSettingsPage();
+    }
 
-      renderSettingsPage();
+    bindHamburger();
+    bindBottomNav();
+    updateStaticUI();
+    applyBranding();
+
+    if (scrollTop) {
+      window.scrollTo({
+        top: 0,
+        behavior: "auto"
+      });
+    }
+  }
+
+
+  /* =========================================================
+     BACK NAVIGATION
+     ========================================================= */
+
+  function goBackRoute() {
+    if (state.drawerOpen) {
+      closeDrawer();
       return;
     }
 
-    showHome(false);
-  }
-
-  /* =======================================================
-     33. BACK ROUTE
-     ======================================================= */
-
-  function goBackRoute() {
+    if (state.historyReady) {
+      try {
+        history.back();
+        return;
+      } catch {}
+    }
 
     if (state.page === "item") {
+      navigate(
+        "section",
+        state.stageIndex,
+        state.sectionIndex,
+        -1
+      );
+      return;
+    }
 
+    if (state.page === "section") {
       navigate(
         "stage",
         state.stageIndex,
         -1,
         -1
       );
-
       return;
     }
 
-    if (state.page === "stage") {
+    showHome(false);
+  }
 
-      navigate(
-        "home",
-        -1,
-        -1,
-        -1
-      );
 
-      return;
-    }
+  /* =========================================================
+     BOTTOM NAV
+     ========================================================= */
 
-    navigate(
-      "home",
-      -1,
-      -1,
-      -1
+  function bindBottomNav() {
+    $$(".bottom-item").forEach(
+      (button) => {
+        const nav =
+          button.dataset.nav;
+
+        if (!nav) return;
+
+        button.onclick = () => {
+          navigate(nav);
+        };
+      }
     );
   }
 
-  /* =======================================================
-     34. POPSTATE
-     ======================================================= */
+
+  /* =========================================================
+     STATIC UI
+     ========================================================= */
+
+  function updateStaticUI() {
+    const mappings = [
+      [
+        "[data-nav='home']",
+        "home"
+      ],
+      [
+        "[data-nav='estimate']",
+        "estimate"
+      ],
+      [
+        "[data-nav='calculator']",
+        "calculator"
+      ],
+      [
+        "[data-nav='settings']",
+        "settings"
+      ]
+    ];
+
+    mappings.forEach(
+      ([selector, key]) => {
+        $$(selector).forEach(
+          (el) => {
+            el.textContent =
+              langText(key);
+          }
+        );
+      }
+    );
+
+    const search =
+      $("#searchInput") ||
+      $("#mainSearch") ||
+      $("#search");
+
+    if (search) {
+      search.placeholder =
+        langText(
+          "searchPlaceholder"
+        );
+    }
+
+    const title =
+      $("#appTitle");
+
+    if (title) {
+      title.textContent =
+        currentLang() === "hi"
+          ? "एस्टिमेट लिस्ट"
+          : "Estimate List";
+    }
+
+    const subtitle =
+      $("#appSubtitle");
+
+    if (subtitle) {
+      subtitle.textContent =
+        BRAND.name;
+    }
+
+    const tagline =
+      $("#appTagline");
+
+    if (tagline) {
+      tagline.textContent =
+        currentLang() === "hi"
+          ? BRAND.taglineHi
+          : BRAND.taglineEn;
+    }
+
+    applyBranding();
+  }
+
+
+  /* =========================================================
+     POPSTATE / ANDROID BACK
+     ========================================================= */
 
   window.addEventListener(
     "popstate",
-    event => {
+    (event) => {
 
-      if (state.drawerOpen) {
-
-        closeDrawer();
-
-        pushHistory();
-
-        return;
-      }
-
-      const route =
-        event.state;
-
+      /*
+       * Drawer history entry was popped.
+       * Close drawer first.
+       */
       if (
-        route &&
-        route.efRoute
+        state.drawerOpen &&
+        state.drawerHistoryPushed
       ) {
+        state.drawerOpen = false;
+        state.drawerHistoryPushed = false;
 
-        state.page =
-          route.page || "home";
+        hideDrawerVisual();
 
-        state.stageIndex =
-          Number.isInteger(route.stageIndex)
-            ? route.stageIndex
-            : -1;
-
-        state.sectionIndex =
-          Number.isInteger(route.sectionIndex)
-            ? route.sectionIndex
-            : -1;
-
-        state.itemIndex =
-          Number.isInteger(route.itemIndex)
-            ? route.itemIndex
-            : -1;
-
-        saveRoute();
-
+        /*
+         * If the state underneath is a
+         * valid app route, restore it.
+         */
         if (
-          state.page === "home"
+          event.state &&
+          event.state.efRoute
         ) {
-          showHome(false);
-        } else {
-          showRoute(false);
+          state.page =
+            event.state.page || "home";
+
+          state.stageIndex =
+            Number.isInteger(
+              event.state.stageIndex
+            )
+              ? event.state.stageIndex
+              : -1;
+
+          state.sectionIndex =
+            Number.isInteger(
+              event.state.sectionIndex
+            )
+              ? event.state.sectionIndex
+              : -1;
+
+          state.itemIndex =
+            Number.isInteger(
+              event.state.itemIndex
+            )
+              ? event.state.itemIndex
+              : -1;
+
+          saveRoute();
+
+          renderCurrentPage(false);
         }
 
         return;
       }
 
-      if (state.page !== "home") {
+      /*
+       * Forward into drawer state.
+       */
+      if (
+        event.state &&
+        event.state.efDrawer
+      ) {
+        state.drawerOpen = true;
+        state.drawerHistoryPushed = true;
 
-        goBackRoute();
+        showDrawerVisual();
+
+        return;
+      }
+
+      /*
+       * Normal application route.
+       */
+      if (
+        event.state &&
+        event.state.efRoute
+      ) {
+        state.page =
+          event.state.page || "home";
+
+        state.stageIndex =
+          Number.isInteger(
+            event.state.stageIndex
+          )
+            ? event.state.stageIndex
+            : -1;
+
+        state.sectionIndex =
+          Number.isInteger(
+            event.state.sectionIndex
+          )
+            ? event.state.sectionIndex
+            : -1;
+
+        state.itemIndex =
+          Number.isInteger(
+            event.state.itemIndex
+          )
+            ? event.state.itemIndex
+            : -1;
+
+        validateSavedRoute();
+        saveRoute();
+
+        renderCurrentPage(false);
+
+        return;
+      }
+
+      /*
+       * No application history state.
+       * This means the user is trying to leave
+       * the application.
+       */
+      if (state.page !== "home") {
+        state.page = "home";
+        state.stageIndex = -1;
+        state.sectionIndex = -1;
+        state.itemIndex = -1;
+
+        saveRoute();
+
+        showHome(false);
 
         return;
       }
 
       const leave =
         window.confirm(
-          langText("closeWarning")
+          currentLang() === "hi"
+            ? "क्या आप ऐप से बाहर जाना चाहते हैं?"
+            : "Do you want to exit the app?"
         );
 
       if (!leave) {
-        pushHistory();
+        replaceHistory();
       }
     }
   );
 
-  /* =======================================================
-     35. KEYBOARD BACK / ESC
-     ======================================================= */
+
+  /* =========================================================
+     ESC KEY
+     ========================================================= */
 
   document.addEventListener(
     "keydown",
-    event => {
-
-      if (event.key !== "Escape") {
-        return;
-      }
-
-      if (state.drawerOpen) {
-        closeDrawer();
-        return;
-      }
-
-      if (state.filterOpen) {
-
-        state.filterOpen =
-          false;
-
-        const panel =
-          $("#filterPanel");
-
-        if (panel) {
-          panel.style.display =
-            "none";
+    (event) => {
+      if (
+        event.key === "Escape"
+      ) {
+        if (state.drawerOpen) {
+          closeDrawer();
+          return;
         }
 
-        return;
-      }
-
-      if (state.viewOpen) {
-
-        state.viewOpen =
-          false;
-
-        const options =
-          $("#viewOptions");
-
-        if (options) {
-          options.style.display =
-            "none";
-        }
+        $$(".ef-view-options")
+          .forEach((el) =>
+            el.setAttribute(
+              "hidden",
+              ""
+            )
+          );
       }
     }
   );
 
-  /* =======================================================
-     36. BOTTOM NAV
-     ======================================================= */
 
-  function bindBottomNav() {
+  /* =========================================================
+     CLICK OUTSIDE VIEW OPTIONS
+     ========================================================= */
 
-    $$(".bottom-item")
-      .forEach(button => {
+  document.addEventListener(
+    "click",
+    (event) => {
+      const target =
+        event.target;
 
-        button.onclick = event => {
+      if (
+        target.closest &&
+        target.closest(
+          ".ef-view-picker"
+        )
+      ) {
+        return;
+      }
 
-          event.preventDefault();
+      $$(".ef-view-options")
+        .forEach((options) => {
+          options.setAttribute(
+            "hidden",
+            ""
+          );
+        });
 
-          const nav =
-            button.dataset.nav;
-
-          if (!nav) return;
-
-          navigate(nav);
-        };
-      });
-  }
-
-  /* =======================================================
-     37. DRAWER SEARCH
-     ======================================================= */
-
-  function bindDrawerSearch() {
-
-    const search =
-      $("#drawerSearch");
-
-    if (!search) return;
-
-    search.oninput =
-      () => {
-
-        const query =
-          search.value
-            .trim()
-            .toLowerCase();
-
-        $$(".drawer-item")
-          .forEach(item => {
-
-            const text =
-              item.textContent
-                .toLowerCase();
-
-            item.style.display =
-              !query ||
-              text.includes(query)
-                ? ""
-                : "none";
-          });
-      };
-  }
-
-  /* =======================================================
-     38. LANGUAGE ON EXISTING HTML
-     ======================================================= */
-
-  function bindExistingLanguageControls() {
-
-    const hi =
-      $("#langHi");
-
-    const en =
-      $("#langEn");
-
-    if (hi) {
-
-      hi.onclick =
-        event => {
-
-          event.preventDefault();
-
-          setLanguage("hi");
-        };
+      $$(".ef-view-trigger")
+        .forEach((trigger) => {
+          trigger.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+        });
     }
+  );
 
-    if (en) {
 
-      en.onclick =
-        event => {
-
-          event.preventDefault();
-
-          setLanguage("en");
-        };
-    }
-  }
-
-  /* =======================================================
-     39. UPDATE STATIC UI
-     ======================================================= */
-
-  function updateStaticUI() {
-
-    const mappings = {
-
-      "#homeNavText": "home",
-      "#estimateNavText": "estimate",
-      "#calculatorNavText": "calculator",
-      "#settingsNavText": "settings",
-
-      "#themeTitle": "theme"
-    };
-
-    Object.entries(mappings)
-      .forEach(
-        ([selector, key]) => {
-
-          const el =
-            $(selector);
-
-          if (el) {
-            el.textContent =
-              langText(key);
-          }
-        }
-      );
-
-    const search =
-      $("#main");
-
-    if (search) {
-
-      search.placeholder =
-        langText("search");
-    }
-
-    const filter =
-      $("#filter-icon");
-
-    if (filter) {
-
-      filter.setAttribute(
-        "aria-label",
-        langText("filter")
-      );
-    }
-
-    const clear =
-      $("#clearFilter");
-
-    if (clear) {
-
-      clear.textContent =
-        langText("clear");
-    }
-  }
-
-  /* =======================================================
-     40. FIX EXISTING THEME BUTTON
-     ======================================================= */
-
-  function bindThemeButton() {
-
-    const button =
-      $("#themeButton");
-
-    if (!button) return;
-
-    button.onclick =
-      event => {
-
-        event.preventDefault();
-
-        toggleTheme();
-      };
-  }
-
-  /* =======================================================
-     41. INITIAL ROUTE VALIDATION
-     ======================================================= */
-
-  function validateSavedRoute() {
-
-    if (
-      state.page === "stage" &&
-      !getStage(state.stageIndex)
-    ) {
-
-      state.page = "home";
-      state.stageIndex = -1;
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-    }
-
-    if (
-      state.page === "item" &&
-      !getItem(
-        state.stageIndex,
-        state.sectionIndex,
-        state.itemIndex
-      )
-    ) {
-
-      state.page = "home";
-      state.stageIndex = -1;
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-    }
-
-    saveRoute();
-  }
-
-  /* =======================================================
-     42. INITIALIZE
-     ======================================================= */
+  /* =========================================================
+     INIT
+     ========================================================= */
 
   function init() {
-
     injectDynamicCSS();
+
+    applyTheme();
 
     ensureDrawer();
 
     bindHamburger();
 
-    bindExistingLanguageControls();
-
-    bindThemeButton();
-
-    bindBottomNav();
-
-    bindDrawerSearch();
-
-    updateLanguageButtons();
-
-    applyTheme();
+    loadRoute();
 
     validateSavedRoute();
 
-    replaceHistory();
+    /*
+     * Build an internal history chain:
+     *
+     * Home
+     *  ↓
+     * Stage
+     *  ↓
+     * Section
+     *  ↓
+     * Item
+     *
+     * So Android/browser Back behaves correctly
+     * even after refresh.
+     */
+    seedHistoryForSavedRoute();
 
     if (state.page === "home") {
-
       showHome(false);
-
     } else {
-
-      showRoute(false);
+      renderCurrentPage(true);
     }
 
     buildDrawer();
 
     updateStaticUI();
 
-    /* Re-apply after Home DOM restoration */
-    if (homeIsStatic) {
-      bindHome();
-    }
+    applyBranding();
+
+    /*
+     * If an existing HTML hamburger exists,
+     * bind it again after all rendering.
+     */
+    bindHamburger();
   }
 
-  /* =======================================================
-     43. DOM READY
-     ======================================================= */
+
+  /* =========================================================
+     START
+     ========================================================= */
 
   if (
-    document.readyState ===
-    "loading"
+    document.readyState === "loading"
   ) {
-
     document.addEventListener(
       "DOMContentLoaded",
       init,
-      { once:true }
+      { once: true }
     );
-
   } else {
-
     init();
   }
 

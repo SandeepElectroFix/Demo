@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="hi">
-
 <head>
 
   <meta charset="UTF-8">
@@ -16,8 +15,8 @@
   >
 
   <meta
-    name="mobile-web-app-capable"
-    content="yes"
+    name="description"
+    content="Sandeep ElectroFix Estimate List - Electrical Material Estimate"
   >
 
   <meta
@@ -25,7 +24,19 @@
     content="yes"
   >
 
-  <title>Sandeep ElectroFix - Estimate List</title>
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+
+  <meta
+    name="apple-mobile-web-app-title"
+    content="ElectroFix"
+  >
+
+  <title>
+    Sandeep ElectroFix - Estimate List
+  </title>
 
   <link
     rel="icon"
@@ -39,11 +50,6 @@
   >
 
   <link
-    rel="manifest"
-    href="manifest.json"
-  >
-
-  <link
     rel="stylesheet"
     href="style.css"
   >
@@ -53,22 +59,299 @@
 
 <body>
 
+<!-- ======================================================
+     APP
+     ====================================================== -->
+
 <div id="app">
 
 
-  <!-- =====================================================
+  <!-- ====================================================
+       DRAWER OVERLAY
+       ==================================================== -->
+
+  <div
+    id="drawerOverlay"
+    class="drawer-overlay"
+    aria-hidden="true"
+  ></div>
+
+
+  <!-- ====================================================
+       SIDE DRAWER
+       ==================================================== -->
+
+  <aside
+    id="drawer"
+    class="side-drawer"
+    aria-hidden="true"
+  >
+
+    <div class="drawer-header">
+
+      <div class="drawer-brand">
+
+        <img
+          src="logo.png"
+          alt="Sandeep ElectroFix"
+          class="drawer-logo"
+        >
+
+        <div>
+
+          <strong>
+            Sandeep ElectroFix
+          </strong>
+
+          <span>
+            Powering Your Trust
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <button
+        id="closeMenu"
+        class="drawer-close"
+        type="button"
+        aria-label="Close Menu"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="drawer-body">
+
+
+      <!-- HOME -->
+
+      <button
+        type="button"
+        class="drawer-item"
+        data-route="home"
+      >
+
+        <span class="drawer-icon">
+          ⌂
+        </span>
+
+        <span
+          data-hi="होम"
+          data-en="Home"
+        >
+          होम
+        </span>
+
+      </button>
+
+
+      <!-- ESTIMATE -->
+
+      <button
+        type="button"
+        class="drawer-item"
+        data-route="estimate"
+      >
+
+        <span class="drawer-icon">
+          ₹
+        </span>
+
+        <span
+          data-hi="एस्टिमेट"
+          data-en="Estimate"
+        >
+          एस्टिमेट
+        </span>
+
+      </button>
+
+
+      <!-- CALCULATOR -->
+
+      <button
+        type="button"
+        class="drawer-item"
+        data-route="calculator"
+      >
+
+        <span class="drawer-icon">
+          ＋
+        </span>
+
+        <span
+          data-hi="कैलकुलेटर"
+          data-en="Calculator"
+        >
+          कैलकुलेटर
+        </span>
+
+      </button>
+
+
+      <div class="drawer-divider"></div>
+
+
+      <!-- LANGUAGE -->
+
+      <div class="drawer-setting">
+
+        <div class="drawer-setting-title">
+
+          <span class="drawer-icon">
+            文
+          </span>
+
+          <span
+            data-hi="भाषा"
+            data-en="Language"
+          >
+            भाषा
+          </span>
+
+        </div>
+
+
+        <div class="language-switch">
+
+          <button
+            id="langHi"
+            type="button"
+            class="language-option active"
+            data-lang="hi"
+          >
+            हिंदी
+          </button>
+
+          <button
+            id="langEn"
+            type="button"
+            class="language-option"
+            data-lang="en"
+          >
+            English
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- THEME -->
+
+      <div class="drawer-setting">
+
+        <div class="drawer-setting-title">
+
+          <span class="drawer-icon">
+            ☼
+          </span>
+
+          <span
+            data-hi="थीम"
+            data-en="Theme"
+          >
+            थीम
+          </span>
+
+        </div>
+
+
+        <button
+          id="themeButton"
+          type="button"
+          class="drawer-theme-btn"
+        >
+
+          <span
+            class="theme-button-icon"
+            aria-hidden="true"
+          >
+            ☾
+          </span>
+
+          <span
+            id="themeButtonText"
+            data-hi="डार्क मोड"
+            data-en="Dark Mode"
+          >
+            डार्क मोड
+          </span>
+
+        </button>
+
+      </div>
+
+
+      <div class="drawer-divider"></div>
+
+
+      <!-- SETTINGS -->
+
+      <button
+        type="button"
+        class="drawer-item"
+        data-route="settings"
+      >
+
+        <span class="drawer-icon">
+          ⚙
+        </span>
+
+        <span
+          data-hi="सेटिंग्स"
+          data-en="Settings"
+        >
+          सेटिंग्स
+        </span>
+
+      </button>
+
+
+      <!-- RESET -->
+
+      <button
+        id="resetApp"
+        type="button"
+        class="drawer-reset"
+      >
+
+        <span class="drawer-icon">
+          ↻
+        </span>
+
+        <span
+          data-hi="ऐप रीसेट करें"
+          data-en="Reset App"
+        >
+          ऐप रीसेट करें
+        </span>
+
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- ====================================================
        TOP HEADER
-  ====================================================== -->
+       ==================================================== -->
 
   <header class="top-header">
 
-    <!-- HAMBURGER -->
+
+    <!-- ELECTRIC GRADIENT HAMBURGER -->
 
     <button
       id="menuBtn"
-      class="icon-btn hamburger-btn"
+      class="hamburger-btn"
       type="button"
-      aria-label="Menu"
+      aria-label="Open Menu"
       aria-expanded="false"
     >
 
@@ -84,25 +367,18 @@
     <div class="brand-area">
 
       <img
-        id="brandLogo"
-        class="brand-logo"
         src="logo.png"
-        alt="Sandeep ElectroFix"
+        alt="Sandeep ElectroFix Logo"
+        class="brand-logo"
       >
 
       <div class="brand-text">
 
-        <div
-          id="brandName"
-          class="brand-name"
-        >
+        <div class="brand-name">
           Sandeep ElectroFix
         </div>
 
-        <div
-          id="brandTagline"
-          class="brand-tagline"
-        >
+        <div class="brand-tagline">
           Powering Your Trust
         </div>
 
@@ -113,315 +389,48 @@
   </header>
 
 
-
-  <!-- =====================================================
-       DRAWER OVERLAY
-  ====================================================== -->
-
-  <div
-    id="drawerOverlay"
-    class="drawer-overlay"
-    aria-hidden="true"
-  ></div>
-
-
-
-  <!-- =====================================================
-       SIDE DRAWER
-  ====================================================== -->
-
-  <aside
-    id="drawer"
-    class="side-drawer"
-    aria-hidden="true"
-  >
-
-    <!-- DRAWER HEADER -->
-
-    <div class="drawer-header">
-
-      <div class="drawer-brand">
-
-        <img
-          src="logo.png"
-          class="drawer-logo"
-          alt="Sandeep ElectroFix"
-        >
-
-        <div>
-
-          <strong>
-            Sandeep ElectroFix
-          </strong>
-
-          <small>
-            Powering Your Trust
-          </small>
-
-        </div>
-
-      </div>
-
-
-      <button
-        id="closeMenu"
-        class="drawer-close"
-        type="button"
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-    </div>
-
-
-
-    <!-- DRAWER BODY -->
-
-    <div class="drawer-body">
-
-
-      <!-- HOME -->
-
-      <button
-        class="drawer-item"
-        data-route="home"
-        type="button"
-      >
-
-        <span class="drawer-icon">
-          ⌂
-        </span>
-
-        <span data-i18n="home">
-          होम
-        </span>
-
-      </button>
-
-
-
-      <!-- ESTIMATE -->
-
-      <button
-        class="drawer-item"
-        data-route="estimate"
-        type="button"
-      >
-
-        <span class="drawer-icon">
-          ▣
-        </span>
-
-        <span data-i18n="estimate">
-          एस्टिमेट
-        </span>
-
-      </button>
-
-
-
-      <!-- CALCULATOR -->
-
-      <button
-        class="drawer-item"
-        data-route="calculator"
-        type="button"
-      >
-
-        <span class="drawer-icon">
-          ⌗
-        </span>
-
-        <span data-i18n="calculator">
-          कैलकुलेटर
-        </span>
-
-      </button>
-
-
-
-      <!-- SETTINGS -->
-
-      <button
-        class="drawer-item"
-        data-route="settings"
-        type="button"
-      >
-
-        <span class="drawer-icon">
-          ⚙
-        </span>
-
-        <span data-i18n="settings">
-          सेटिंग्स
-        </span>
-
-      </button>
-
-
-
-      <div class="drawer-divider"></div>
-
-
-
-      <!-- LANGUAGE -->
-
-      <div class="drawer-setting">
-
-        <div class="drawer-setting-title">
-
-          <span>
-            🌐
-          </span>
-
-          <span data-i18n="language">
-            भाषा
-          </span>
-
-        </div>
-
-
-        <div class="language-switch">
-
-          <button
-            id="langHi"
-            type="button"
-            class="language-option active"
-            data-language="hi"
-          >
-            हिन्दी
-          </button>
-
-          <button
-            id="langEn"
-            type="button"
-            class="language-option"
-            data-language="en"
-          >
-            English
-          </button>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- THEME -->
-
-      <div class="drawer-setting">
-
-        <div class="drawer-setting-title">
-
-          <span>
-            ◐
-          </span>
-
-          <span data-i18n="appearance">
-            दिखावट
-          </span>
-
-        </div>
-
-
-        <button
-          id="themeButton"
-          type="button"
-          class="drawer-theme-btn"
-        >
-
-          <span class="theme-button-icon">
-            ☀
-          </span>
-
-          <span
-            id="themeButtonText"
-            data-i18n="darkMode"
-          >
-            डार्क मोड
-          </span>
-
-        </button>
-
-      </div>
-
-
-
-      <div class="drawer-divider"></div>
-
-
-
-      <!-- RESET -->
-
-      <button
-        id="resetApp"
-        class="drawer-item drawer-reset"
-        type="button"
-      >
-
-        <span class="drawer-icon">
-          ↻
-        </span>
-
-        <span data-i18n="reset">
-          ऐप रीसेट करें
-        </span>
-
-      </button>
-
-    </div>
-
-  </aside>
-
-
-
-  <!-- =====================================================
-       MAIN CONTENT
-  ====================================================== -->
+  <!-- ====================================================
+       MAIN
+       ==================================================== -->
 
   <main id="main">
 
 
-    <!-- ===================================================
+    <!-- ==================================================
          HOME PAGE
-    ==================================================== -->
+         ================================================== -->
 
     <section
       id="home"
-      class="page active-page"
+      class="page active"
       data-page="home"
     >
 
 
-      <!-- PAGE BRAND -->
+      <!-- PAGE HEADING -->
 
       <div class="page-heading">
 
-        <div class="page-heading-logo">
-
-          <img
-            src="logo.png"
-            alt="Sandeep ElectroFix"
-          >
-
-        </div>
-
+        <img
+          src="logo.png"
+          alt="Sandeep ElectroFix"
+          class="page-heading-logo"
+        >
 
         <div>
 
           <h1
-            id="pageTitle"
-            data-i18n="estimateList"
+            data-hi="एस्टिमेट लिस्ट"
+            data-en="Estimate List"
           >
             एस्टिमेट लिस्ट
           </h1>
 
           <p
-            id="pageSubtitle"
-            data-i18n="selectStage"
+            data-hi="इलेक्ट्रिकल मटेरियल चुनें"
+            data-en="Select electrical materials"
           >
-            काम का स्टेज चुनें
+            इलेक्ट्रिकल मटेरियल चुनें
           </p>
 
         </div>
@@ -429,183 +438,184 @@
       </div>
 
 
-
-      <!-- =================================================
-           SEARCH
-      ================================================== -->
+      <!-- SEARCH -->
 
       <div class="search-section">
 
-        <div
-          id="searchBox"
-          class="search-box"
-        >
+        <div class="search-box">
 
-          <span class="search-symbol">
+          <span
+            class="search-symbol"
+            aria-hidden="true"
+          >
             ⌕
           </span>
-
 
           <input
             id="searchInput"
             type="search"
             autocomplete="off"
             spellcheck="false"
-            placeholder="सामग्री खोजें..."
-            data-i18n-placeholder="searchMaterial"
+            data-placeholder-hi="मटेरियल खोजें..."
+            data-placeholder-en="Search material..."
+            placeholder="मटेरियल खोजें..."
           >
 
-
           <button
-            id="clearSearch"
+            id="searchClear"
             class="search-clear"
             type="button"
-            aria-label="Clear"
+            aria-label="Clear Search"
           >
             ×
-          </button>
-
-
-          <button
-            id="filter-icon"
-            class="filter-btn"
-            type="button"
-            aria-label="Filter"
-          >
-            ☷
           </button>
 
         </div>
 
 
+        <!-- FILTER BUTTON -->
 
-        <!-- FILTER PANEL -->
-
-        <div
-          id="filterPanel"
-          class="filter-panel"
-          hidden
+        <button
+          id="filter-icon"
+          class="filter-btn"
+          type="button"
+          aria-label="Filter"
+          aria-expanded="false"
         >
+          ⚙
+        </button>
 
-          <div class="filter-header">
-
-            <strong data-i18n="filter">
-              फ़िल्टर
-            </strong>
+      </div>
 
 
-            <button
-              id="clearFilter"
-              type="button"
+      <!-- FILTER PANEL -->
+
+      <div
+        id="filterPanel"
+        class="filter-panel"
+        hidden
+      >
+
+        <div class="filter-header">
+
+          <strong
+            data-hi="फ़िल्टर"
+            data-en="Filter"
+          >
+            फ़िल्टर
+          </strong>
+
+          <button
+            id="clearFilter"
+            type="button"
+          >
+            <span
+              data-hi="साफ करें"
+              data-en="Clear"
             >
+              साफ करें
+            </span>
+          </button>
 
-              <span data-i18n="clear">
-                साफ करें
-              </span>
-
-            </button>
-
-          </div>
+        </div>
 
 
-
-          <div class="filter-grid">
-
-
-            <!-- STAGE -->
-
-            <label class="filter-field">
-
-              <span data-i18n="stage">
-                स्टेज
-              </span>
-
-              <select id="stageFilter">
-
-                <option value="">
-                  सभी स्टेज
-                </option>
-
-              </select>
-
-            </label>
+        <div class="filter-grid">
 
 
+          <!-- STAGE -->
 
-            <!-- TYPE -->
+          <label class="filter-field">
 
-            <label class="filter-field">
+            <span
+              data-hi="स्टेज"
+              data-en="Stage"
+            >
+              स्टेज
+            </span>
 
-              <span data-i18n="type">
-                प्रकार
-              </span>
+            <select id="stageFilter">
+              <option value="">
+                सभी
+              </option>
+            </select>
 
-              <select id="typeFilter">
-
-                <option value="">
-                  सभी प्रकार
-                </option>
-
-              </select>
-
-            </label>
-
-
-
-            <!-- SIZE -->
-
-            <label class="filter-field">
-
-              <span data-i18n="size">
-                साइज
-              </span>
-
-              <select id="sizeFilter">
-
-                <option value="">
-                  सभी साइज
-                </option>
-
-              </select>
-
-            </label>
+          </label>
 
 
+          <!-- TYPE -->
 
-            <!-- BRAND -->
+          <label class="filter-field">
 
-            <label class="filter-field">
+            <span
+              data-hi="टाइप"
+              data-en="Type"
+            >
+              टाइप
+            </span>
 
-              <span data-i18n="brand">
-                ब्रांड
-              </span>
+            <select id="typeFilter">
+              <option value="">
+                सभी
+              </option>
+            </select>
 
-              <select id="brandFilter">
+          </label>
 
-                <option value="">
-                  सभी ब्रांड
-                </option>
 
-              </select>
+          <!-- SIZE -->
 
-            </label>
+          <label class="filter-field">
 
-          </div>
+            <span
+              data-hi="साइज़"
+              data-en="Size"
+            >
+              साइज़
+            </span>
+
+            <select id="sizeFilter">
+              <option value="">
+                सभी
+              </option>
+            </select>
+
+          </label>
+
+
+          <!-- BRAND -->
+
+          <label class="filter-field">
+
+            <span
+              data-hi="ब्रांड"
+              data-en="Brand"
+            >
+              ब्रांड
+            </span>
+
+            <select id="brandFilter">
+              <option value="">
+                सभी
+              </option>
+            </select>
+
+          </label>
 
         </div>
 
       </div>
 
 
-
-      <!-- =================================================
-           STAGE TITLE
-      ================================================== -->
+      <!-- STAGE TITLE -->
 
       <div class="section-title-row">
 
-        <h2 data-i18n="workStages">
-          काम के स्टेज
+        <h2
+          data-hi="काम के चरण"
+          data-en="Work Stages"
+        >
+          काम के चरण
         </h2>
 
         <span
@@ -618,7 +628,6 @@
       </div>
 
 
-
       <!-- STAGE GRID -->
 
       <div
@@ -626,30 +635,28 @@
         class="stage-grid"
       ></div>
 
+
     </section>
 
 
-
-    <!-- ===================================================
-         MATERIAL PAGE
-    ==================================================== -->
+    <!-- ==================================================
+         MATERIAL / SECTION PAGE
+         ================================================== -->
 
     <section
       id="materialPage"
       class="page"
-      data-page="materials"
+      data-page="material"
       hidden
     >
-
-
-      <!-- MATERIAL HEADER -->
 
       <div class="material-page-header">
 
         <button
           id="materialBack"
-          class="back-btn"
           type="button"
+          class="back-btn"
+          aria-label="Back"
         >
           ←
         </button>
@@ -657,46 +664,33 @@
 
         <div class="material-page-title">
 
-          <small id="materialStageTitle"></small>
-
-          <h2 id="materialSectionTitle">
+          <div id="materialPageTitle">
             Material
-          </h2>
+          </div>
+
+          <div
+            id="materialPageSubtitle"
+            class="route-bar"
+          >
+            Sandeep ElectroFix
+          </div>
 
         </div>
 
       </div>
 
 
-
-      <!-- ROUTE -->
-
-      <div
-        id="efRoute"
-        class="route-bar"
-      ></div>
-
-
-
       <!-- MATERIAL TOOLBAR -->
 
       <div class="material-toolbar">
 
-        <div class="material-result-info">
 
-          <strong
-            id="materialResultTitle"
-            data-i18n="materials"
-          >
-            सामग्री
-          </strong>
-
-          <span id="materialCount">
-            0
-          </span>
-
+        <div
+          id="materialResultInfo"
+          class="material-result-info"
+        >
+          0
         </div>
-
 
 
         <!-- VIEW SELECTOR -->
@@ -705,10 +699,10 @@
 
           <button
             id="viewTrigger"
-            class="view-trigger"
             type="button"
+            class="view-trigger"
             aria-expanded="false"
-            aria-label="View"
+            aria-label="Change View"
           >
             ▦
           </button>
@@ -725,88 +719,69 @@
               data-view="grid"
             >
               ▦
-              <span>Grid</span>
             </button>
-
 
             <button
               type="button"
               data-view="list"
             >
               ☷
-              <span>List</span>
             </button>
-
 
             <button
               type="button"
               data-view="compact"
             >
               ▤
-              <span>Compact</span>
             </button>
-
 
             <button
               type="button"
               data-view="large"
             >
               ▦
-              <span>Large</span>
             </button>
-
 
             <button
               type="button"
               data-view="mini"
             >
               ▪
-              <span>Mini</span>
             </button>
-
 
             <button
               type="button"
               data-view="2column"
             >
               ▥
-              <span>2 Column</span>
             </button>
-
 
             <button
               type="button"
               data-view="horizontal"
             >
               ▬
-              <span>Horizontal</span>
             </button>
-
 
             <button
               type="button"
               data-view="icon"
             >
               ◉
-              <span>Icon List</span>
             </button>
-
 
             <button
               type="button"
               data-view="timeline"
             >
-              ◌
-              <span>Timeline</span>
+              ⋮
             </button>
-
 
             <button
               type="button"
               data-view="dense"
             >
               ≡
-              <span>Dense</span>
             </button>
 
           </div>
@@ -816,21 +791,20 @@
       </div>
 
 
-
       <!-- MATERIAL GRID -->
 
       <div
         id="materialGrid"
-        class="material-grid"
+        class="material-grid view-grid"
       ></div>
+
 
     </section>
 
 
-
-    <!-- ===================================================
-         MATERIAL EDITOR
-    ==================================================== -->
+    <!-- ==================================================
+         EDITOR PAGE
+         ================================================== -->
 
     <section
       id="editorPage"
@@ -840,14 +814,13 @@
     >
 
 
-      <!-- EDITOR HEADER -->
-
       <div class="editor-header">
 
         <button
           id="editorBack"
-          class="back-btn"
           type="button"
+          class="back-btn"
+          aria-label="Back"
         >
           ←
         </button>
@@ -855,19 +828,26 @@
 
         <div>
 
-          <small id="editorStageTitle"></small>
-
-          <h2 id="editorMaterialName">
+          <div
+            id="editorMaterialName"
+            class="material-page-title"
+          >
             Material
-          </h2>
+          </div>
+
+          <div
+            id="efRoute"
+            class="route-bar"
+          >
+            Stage → Section → Material
+          </div>
 
         </div>
 
       </div>
 
 
-
-      <!-- EDITOR FORM -->
+      <!-- MATERIAL FORM -->
 
       <form
         id="materialForm"
@@ -875,70 +855,83 @@
         autocomplete="off"
       >
 
-
-        <!-- DYNAMIC MATERIAL FIELDS -->
-
         <div
           id="materialFields"
           class="material-fields"
         ></div>
 
 
-
         <!-- QUANTITY -->
 
         <div class="form-group quantity-group">
 
-          <label
-            for="quantityInput"
-            data-i18n="quantity"
-          >
-            मात्रा
-          </label>
+          <label for="quantityInput">
 
+            <span
+              data-hi="मात्रा"
+              data-en="Quantity"
+            >
+              मात्रा
+            </span>
+
+            <span class="required-mark">
+              *
+            </span>
+
+          </label>
 
           <input
             id="quantityInput"
             type="number"
-            inputmode="decimal"
-            min="0"
+            min="1"
             step="any"
-            required
+            inputmode="decimal"
+            placeholder="0"
           >
 
         </div>
-
 
 
         <!-- UNIT -->
 
         <div class="form-group">
 
-          <label
-            for="unitInput"
-            data-i18n="unit"
-          >
-            यूनिट
+          <label for="unitInput">
+
+            <span
+              data-hi="यूनिट"
+              data-en="Unit"
+            >
+              यूनिट
+            </span>
+
           </label>
 
+          <select id="unitInput">
 
-          <select id="unitInput"></select>
+            <option value="">
+              —
+            </option>
+
+          </select>
 
         </div>
-
 
 
         <!-- BRAND -->
 
         <div class="form-group">
 
-          <label
-            for="brandInput"
-            data-i18n="brand"
-          >
-            ब्रांड
-          </label>
+          <label for="brandInput">
 
+            <span
+              data-hi="ब्रांड"
+              data-en="Brand"
+            >
+              ब्रांड
+            </span>
+
+          </label>
 
           <select id="brandInput">
 
@@ -951,32 +944,35 @@
         </div>
 
 
-
         <!-- PRICE -->
 
         <div
           id="priceGroup"
           class="form-group optional-price"
+          hidden
         >
 
-          <label
-            for="priceInput"
-            data-i18n="price"
-          >
-            कीमत
-          </label>
+          <label for="priceInput">
 
+            <span
+              data-hi="कीमत"
+              data-en="Price"
+            >
+              कीमत
+            </span>
+
+          </label>
 
           <input
             id="priceInput"
             type="number"
-            inputmode="decimal"
             min="0"
-            step="any"
+            step="0.01"
+            inputmode="decimal"
+            placeholder="0"
           >
 
         </div>
-
 
 
         <!-- ACTIONS -->
@@ -985,11 +981,14 @@
 
           <button
             id="saveItem"
+            type="button"
             class="primary-btn"
-            type="submit"
           >
 
-            <span data-i18n="add">
+            <span
+              data-hi="जोड़ें"
+              data-en="Add"
+            >
               जोड़ें
             </span>
 
@@ -998,15 +997,32 @@
 
           <button
             id="nextItem"
-            class="secondary-btn"
             type="button"
+            class="secondary-btn"
           >
 
-            <span data-i18n="next">
+            <span
+              data-hi="अगला"
+              data-en="Next"
+            >
               अगला
             </span>
 
-            →
+          </button>
+
+
+          <button
+            id="clearItem"
+            type="button"
+            class="danger-btn"
+          >
+
+            <span
+              data-hi="साफ करें"
+              data-en="Clear"
+            >
+              साफ करें
+            </span>
 
           </button>
 
@@ -1014,48 +1030,48 @@
 
       </form>
 
+
     </section>
 
 
-
-    <!-- ===================================================
+    <!-- ==================================================
          ESTIMATE PAGE
-    ==================================================== -->
+         ================================================== -->
 
     <section
-      id="estimatePage"
+      id="estimate"
       class="page"
       data-page="estimate"
       hidden
     >
 
-
       <div class="page-heading compact-heading">
 
-        <div class="page-heading-logo">
-
-          <img
-            src="logo.png"
-            alt="Sandeep ElectroFix"
-          >
-
-        </div>
-
+        <img
+          src="logo.png"
+          alt="Sandeep ElectroFix"
+          class="page-heading-logo"
+        >
 
         <div>
 
-          <h1 data-i18n="estimate">
+          <h1
+            data-hi="एस्टिमेट"
+            data-en="Estimate"
+          >
             एस्टिमेट
           </h1>
 
-          <p data-i18n="savedItems">
-            जोड़ी गई सामग्री
+          <p
+            data-hi="चुने गए मटेरियल"
+            data-en="Selected materials"
+          >
+            चुने गए मटेरियल
           </p>
 
         </div>
 
       </div>
-
 
 
       <!-- SUMMARY -->
@@ -1064,11 +1080,14 @@
 
         <div class="summary-card">
 
-          <span data-i18n="totalItems">
-            कुल सामग्री
+          <span
+            data-hi="कुल आइटम"
+            data-en="Total Items"
+          >
+            कुल आइटम
           </span>
 
-          <strong id="estimateItemCount">
+          <strong id="estimateCount">
             0
           </strong>
 
@@ -1077,8 +1096,27 @@
 
         <div class="summary-card">
 
-          <span data-i18n="totalAmount">
-            कुल राशि
+          <span
+            data-hi="कुल मात्रा"
+            data-en="Total Quantity"
+          >
+            कुल मात्रा
+          </span>
+
+          <strong id="estimateQuantity">
+            0
+          </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+          <span
+            data-hi="कुल कीमत"
+            data-en="Total Price"
+          >
+            कुल कीमत
           </span>
 
           <strong id="estimateTotal">
@@ -1090,7 +1128,6 @@
       </div>
 
 
-
       <!-- ESTIMATE LIST -->
 
       <div
@@ -1099,26 +1136,30 @@
       ></div>
 
 
-
-      <!-- EMPTY -->
+      <!-- EMPTY STATE -->
 
       <div
         id="emptyEstimate"
         class="empty-state"
+        hidden
       >
 
         <div class="empty-icon">
-          ▱
+          ₹
         </div>
 
-
-        <h3 data-i18n="noItems">
-          अभी कोई सामग्री नहीं
+        <h3
+          data-hi="अभी कोई आइटम नहीं है"
+          data-en="No items added yet"
+        >
+          अभी कोई आइटम नहीं है
         </h3>
 
-
-        <p data-i18n="addMaterial">
-          सामग्री जोड़ने के लिए एस्टिमेट में जाएँ।
+        <p
+          data-hi="मटेरियल चुनकर एस्टिमेट में जोड़ें"
+          data-en="Select materials and add them to estimate"
+        >
+          मटेरियल चुनकर एस्टिमेट में जोड़ें
         </p>
 
       </div>
@@ -1126,39 +1167,39 @@
     </section>
 
 
-
-    <!-- ===================================================
+    <!-- ==================================================
          CALCULATOR PAGE
-    ==================================================== -->
+         ================================================== -->
 
     <section
-      id="calculatorPage"
+      id="calculator"
       class="page"
       data-page="calculator"
       hidden
     >
 
+      <div class="page-heading compact-heading">
 
-      <div class="page-heading">
-
-        <div class="page-heading-logo">
-
-          <img
-            src="logo.png"
-            alt="Sandeep ElectroFix"
-          >
-
-        </div>
-
+        <img
+          src="logo.png"
+          alt="Sandeep ElectroFix"
+          class="page-heading-logo"
+        >
 
         <div>
 
-          <h1 data-i18n="calculator">
+          <h1
+            data-hi="कैलकुलेटर"
+            data-en="Calculator"
+          >
             कैलकुलेटर
           </h1>
 
-          <p data-i18n="electricalCalculation">
-            इलेक्ट्रिकल कैलकुलेशन
+          <p
+            data-hi="इलेक्ट्रिकल गणना"
+            data-en="Electrical calculations"
+          >
+            इलेक्ट्रिकल गणना
           </p>
 
         </div>
@@ -1166,20 +1207,20 @@
       </div>
 
 
-
       <!-- CALCULATOR TABS -->
 
       <div class="calculator-tabs">
 
         <button
-          class="calculator-tab active"
           type="button"
-          data-calc="power"
+          class="calculator-tab active"
+          data-calc="ohm"
         >
 
-          ⚡
-
-          <span data-i18n="power">
+          <span
+            data-hi="पावर"
+            data-en="Power"
+          >
             पावर
           </span>
 
@@ -1187,14 +1228,15 @@
 
 
         <button
-          class="calculator-tab"
           type="button"
+          class="calculator-tab"
           data-calc="cable"
         >
 
-          ⌁
-
-          <span data-i18n="cable">
+          <span
+            data-hi="केबल"
+            data-en="Cable"
+          >
             केबल
           </span>
 
@@ -1202,21 +1244,21 @@
 
 
         <button
-          class="calculator-tab"
           type="button"
+          class="calculator-tab"
           data-calc="inverter"
         >
 
-          ◉
-
-          <span data-i18n="inverter">
+          <span
+            data-hi="इन्वर्टर"
+            data-en="Inverter"
+          >
             इन्वर्टर
           </span>
 
         </button>
 
       </div>
-
 
 
       <!-- CALCULATOR CONTENT -->
@@ -1229,38 +1271,38 @@
     </section>
 
 
-
-    <!-- ===================================================
+    <!-- ==================================================
          SETTINGS PAGE
-    ==================================================== -->
+         ================================================== -->
 
     <section
-      id="settingsPage"
+      id="settings"
       class="page"
       data-page="settings"
       hidden
     >
 
+      <div class="page-heading compact-heading">
 
-      <div class="page-heading">
-
-        <div class="page-heading-logo">
-
-          <img
-            src="logo.png"
-            alt="Sandeep ElectroFix"
-          >
-
-        </div>
-
+        <img
+          src="logo.png"
+          alt="Sandeep ElectroFix"
+          class="page-heading-logo"
+        >
 
         <div>
 
-          <h1 data-i18n="settings">
+          <h1
+            data-hi="सेटिंग्स"
+            data-en="Settings"
+          >
             सेटिंग्स
           </h1>
 
-          <p data-i18n="appSettings">
+          <p
+            data-hi="ऐप सेटिंग्स"
+            data-en="App settings"
+          >
             ऐप सेटिंग्स
           </p>
 
@@ -1268,9 +1310,6 @@
 
       </div>
 
-
-
-      <!-- SETTINGS LIST -->
 
       <div class="settings-list">
 
@@ -1280,33 +1319,35 @@
         <div class="setting-card">
 
           <div class="setting-card-icon">
-            🌐
+            文
           </div>
-
 
           <div class="setting-card-content">
 
-            <strong data-i18n="language">
+            <strong
+              data-hi="भाषा"
+              data-en="Language"
+            >
               भाषा
             </strong>
 
-            <small id="settingsLanguageText">
-              हिन्दी
-            </small>
+            <span
+              id="currentLanguageText"
+            >
+              हिंदी
+            </span>
 
           </div>
 
-
           <button
-            id="settingsLanguage"
-            class="setting-action"
             type="button"
+            class="setting-action"
+            data-setting="language"
           >
-            बदलें
+            →
           </button>
 
         </div>
-
 
 
         <!-- THEME -->
@@ -1314,36 +1355,38 @@
         <div class="setting-card">
 
           <div class="setting-card-icon">
-            ◐
+            ☼
           </div>
-
 
           <div class="setting-card-content">
 
-            <strong data-i18n="appearance">
-              दिखावट
+            <strong
+              data-hi="थीम"
+              data-en="Theme"
+            >
+              थीम
             </strong>
 
-            <small id="settingsThemeText">
+            <span
+              id="currentThemeText"
+            >
               डार्क
-            </small>
+            </span>
 
           </div>
 
-
           <button
-            id="settingsTheme"
-            class="setting-action"
+            id="settingsThemeButton"
             type="button"
+            class="setting-action"
           >
-            बदलें
+            →
           </button>
 
         </div>
 
 
-
-        <!-- MATERIAL VIEW -->
+        <!-- VIEW -->
 
         <div class="setting-card">
 
@@ -1351,30 +1394,32 @@
             ▦
           </div>
 
-
           <div class="setting-card-content">
 
-            <strong data-i18n="materialView">
-              सामग्री दृश्य
+            <strong
+              data-hi="मटेरियल व्यू"
+              data-en="Material View"
+            >
+              मटेरियल व्यू
             </strong>
 
-            <small id="settingsViewText">
+            <span
+              id="currentViewText"
+            >
               Grid
-            </small>
+            </span>
 
           </div>
 
-
           <button
-            id="settingsView"
-            class="setting-action"
             type="button"
+            class="setting-action"
+            data-setting="view"
           >
-            बदलें
+            →
           </button>
 
         </div>
-
 
 
         <!-- RESET -->
@@ -1385,54 +1430,67 @@
             ↻
           </div>
 
-
           <div class="setting-card-content">
 
-            <strong data-i18n="reset">
+            <strong
+              data-hi="ऐप रीसेट करें"
+              data-en="Reset App"
+            >
               ऐप रीसेट करें
             </strong>
 
-            <small data-i18n="resetDescription">
-              सेव की गई सेटिंग और एस्टिमेट हटाएँ
-            </small>
+            <span
+              data-hi="सभी ऐप सेटिंग्स रीसेट करें"
+              data-en="Reset all app settings"
+            >
+              सभी ऐप सेटिंग्स रीसेट करें
+            </span>
 
           </div>
 
-
           <button
             id="settingsReset"
-            class="setting-action danger-action"
             type="button"
+            class="danger-action"
           >
-            Reset
+
+            <span
+              data-hi="रीसेट"
+              data-en="Reset"
+            >
+              रीसेट
+            </span>
+
           </button>
 
         </div>
+
 
       </div>
 
     </section>
 
+
   </main>
 
 
-
-  <!-- =====================================================
+  <!-- ====================================================
        BOTTOM NAVIGATION
-  ====================================================== -->
+       ==================================================== -->
 
   <nav
     id="bottomNav"
     class="bottom-nav"
+    aria-label="Bottom Navigation"
   >
 
 
     <!-- HOME -->
 
     <button
+      type="button"
       class="bottom-item active"
       data-route="home"
-      type="button"
     >
 
       <span class="bottom-icon">
@@ -1441,7 +1499,8 @@
 
       <span
         class="bottom-label"
-        data-i18n="home"
+        data-hi="होम"
+        data-en="Home"
       >
         होम
       </span>
@@ -1449,22 +1508,22 @@
     </button>
 
 
-
     <!-- ESTIMATE -->
 
     <button
+      type="button"
       class="bottom-item"
       data-route="estimate"
-      type="button"
     >
 
       <span class="bottom-icon">
-        ▣
+        ₹
       </span>
 
       <span
         class="bottom-label"
-        data-i18n="estimate"
+        data-hi="एस्टिमेट"
+        data-en="Estimate"
       >
         एस्टिमेट
       </span>
@@ -1472,22 +1531,22 @@
     </button>
 
 
-
     <!-- CALCULATOR -->
 
     <button
+      type="button"
       class="bottom-item"
       data-route="calculator"
-      type="button"
     >
 
       <span class="bottom-icon">
-        ⌗
+        ＋
       </span>
 
       <span
         class="bottom-label"
-        data-i18n="calculator"
+        data-hi="कैलकुलेटर"
+        data-en="Calculator"
       >
         कैलकुलेटर
       </span>
@@ -1495,13 +1554,12 @@
     </button>
 
 
-
     <!-- SETTINGS -->
 
     <button
+      type="button"
       class="bottom-item"
       data-route="settings"
-      type="button"
     >
 
       <span class="bottom-icon">
@@ -1510,20 +1568,21 @@
 
       <span
         class="bottom-label"
-        data-i18n="settings"
+        data-hi="सेटिंग्स"
+        data-en="Settings"
       >
         सेटिंग्स
       </span>
 
     </button>
 
+
   </nav>
 
 
-
-  <!-- =====================================================
+  <!-- ====================================================
        TOAST
-  ====================================================== -->
+       ==================================================== -->
 
   <div
     id="toast"
@@ -1533,15 +1592,15 @@
   ></div>
 
 
-
-  <!-- =====================================================
-       RESET CONFIRM MODAL
-  ====================================================== -->
+  <!-- ====================================================
+       RESET CONFIRMATION MODAL
+       ==================================================== -->
 
   <div
-    id="confirmModal"
+    id="resetModal"
     class="modal"
     hidden
+    aria-hidden="true"
   >
 
     <div class="modal-card">
@@ -1550,32 +1609,33 @@
         ⚠
       </div>
 
-
       <h3
-        id="confirmTitle"
-        data-i18n="confirmReset"
+        data-hi="ऐप रीसेट करें?"
+        data-en="Reset App?"
       >
         ऐप रीसेट करें?
       </h3>
 
-
       <p
-        id="confirmMessage"
-        data-i18n="resetWarning"
+        data-hi="ऐप की सेव की गई सेटिंग्स और एस्टिमेट डेटा रीसेट हो जाएगा।"
+        data-en="Saved app settings and estimate data will be reset."
       >
-        सभी सेव की गई सामग्री और सेटिंग हट जाएगी।
+        ऐप की सेव की गई सेटिंग्स और एस्टिमेट डेटा रीसेट हो जाएगा।
       </p>
 
 
       <div class="modal-actions">
 
         <button
-          id="confirmCancel"
+          id="resetCancel"
           type="button"
           class="secondary-btn"
         >
 
-          <span data-i18n="cancel">
+          <span
+            data-hi="रद्द करें"
+            data-en="Cancel"
+          >
             रद्द करें
           </span>
 
@@ -1583,13 +1643,16 @@
 
 
         <button
-          id="confirmReset"
+          id="resetConfirm"
           type="button"
           class="danger-btn"
         >
 
-          <span data-i18n="reset">
-            रीसेट
+          <span
+            data-hi="रीसेट करें"
+            data-en="Reset"
+          >
+            रीसेट करें
           </span>
 
         </button>
@@ -1600,18 +1663,21 @@
 
   </div>
 
+
 </div>
 
 
-
-<!-- =======================================================
+<!-- ======================================================
      JAVASCRIPT
-     ORDER IMPORTANT
-======================================================== -->
+     IMPORTANT ORDER
+     ====================================================== -->
 
 <script src="config.js"></script>
+
 <script src="material.js"></script>
+
 <script src="app.js"></script>
+
 
 </body>
 </html>

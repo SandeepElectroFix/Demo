@@ -2,6 +2,9 @@
    SANDEEP ELECTROFIX - ESTIMATE LIST
    app.js
    ---------------------------------------------------------
+   FINAL MASTER DATA:
+   material.js = 91 MATERIAL ENTRIES
+
    FILES:
    index.html
    style.css
@@ -9,5732 +12,4646 @@
    material.js
    app.js
 
-   IMPORTANT:
-   material.js MASTER DATA IS NOT MODIFIED.
-
    FLOW:
-   HOME -> STAGE -> SECTION -> MATERIAL -> EDITOR
+   HOME
+     ↓
+   STAGE
+     ↓
+   SECTION
+     ↓
+   MATERIAL
+     ↓
+   EDITOR
+     ↓
+   ADD / NEXT
 
-   LANGUAGE:
-   HI = Hindi only
-   EN = English only
+   IMPORTANT:
+   - material.js is NOT modified
+   - No duplicate master data here
+   - Quantity required
+   - Other fields optional
+   - Brand optional
+   - Price optional
+   - No auto-add on Next
+   - Unit carry-forward
    ========================================================= */
 
-(() => {
-  "use strict";
+"use strict";
 
-  /* =========================================================
-     BASIC HELPERS
-     ========================================================= */
 
-  const $ = (selector, root = document) =>
-    root.querySelector(selector);
+/* =========================================================
+   GLOBAL
+   ========================================================= */
 
-  const $$ = (selector, root = document) =>
-    Array.from(root.querySelectorAll(selector));
+const EF = {
 
-  const safeText = (value) =>
-    value == null ? "" : String(value);
+  materials: Array.isArray(window.MATERIALS)
+    ? window.MATERIALS
+    : [],
 
-  const esc = (value) =>
-    safeText(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  estimate: [],
 
-  const storageGet = (key, fallback = "") => {
-    try {
-      const value = localStorage.getItem(key);
-      return value === null ? fallback : value;
-    } catch {
-      return fallback;
+  language: localStorage.getItem("sandeepMaterialLang") || "hi",
+
+  theme: localStorage.getItem("sandeepTheme") || "dark",
+
+  view: localStorage.getItem("sandeepMaterialView") || "grid",
+
+  route: localStorage.getItem("sandeepEstimateRoute") || "home",
+
+  currentStage: null,
+
+  currentSection: null,
+
+  currentMaterial: null,
+
+  currentMaterialIndex: 0,
+
+  currentSectionItems: [],
+
+  currentDraft: {},
+
+  selectedFilters: {
+    stage: "",
+    section: "",
+    type: "",
+    size: "",
+    brand: ""
+  },
+
+  searchText: "",
+
+  drawerOpen: false,
+
+  filterOpen: false,
+
+  ignorePopState: false,
+
+  unitCarry: localStorage.getItem("sandeepLastUnit") || "",
+
+  ids: {},
+
+  initialized: false
+
+};
+
+
+/* =========================================================
+   DOM HELPER
+   ========================================================= */
+
+function $(selector, root = document) {
+  return root.querySelector(selector);
+}
+
+function $all(selector, root = document) {
+  return Array.from(root.querySelectorAll(selector));
+}
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+
+/* =========================================================
+   DOM ALIASES
+   Works with old + latest index.html IDs
+   ========================================================= */
+
+function cacheDOM() {
+
+  EF.ids = {
+
+    app:
+      byId("app"),
+
+    main:
+      byId("main"),
+
+    home:
+      byId("home"),
+
+    topBar:
+      byId("topBar"),
+
+    topBarTitle:
+      byId("topBarTitle"),
+
+    menuBtn:
+      byId("menuBtn") ||
+      byId("hamburgerButton"),
+
+    drawer:
+      byId("drawer") ||
+      byId("sideMenu"),
+
+    drawerOverlay:
+      byId("drawerOverlay") ||
+      byId("menuOverlay"),
+
+    closeMenu:
+      byId("closeMenu") ||
+      byId("sideMenuClose"),
+
+    langBtn:
+      byId("langBtn") ||
+      byId("languageButton"),
+
+    themeBtn:
+      byId("themeBtn") ||
+      byId("themeButton") ||
+      byId("themeToggleButton"),
+
+    stageGrid:
+      byId("stageGrid"),
+
+    materialGrid:
+      byId("materialGrid"),
+
+    bottomNav:
+      byId("bottomNav") ||
+      byId("bottomNavigation"),
+
+    toast:
+      byId("toast"),
+
+    search:
+      byId("searchInput") ||
+      byId("materialSearch") ||
+      $("input[type='search']"),
+
+    filterIcon:
+      byId("filter-icon") ||
+      byId("filterIcon"),
+
+    filterPanel:
+      byId("filterPanel"),
+
+    clearFilter:
+      byId("clearFilter"),
+
+    stageFilter:
+      byId("stageFilter"),
+
+    typeFilter:
+      byId("typeFilter"),
+
+    sizeFilter:
+      byId("sizeFilter"),
+
+    brandFilter:
+      byId("brandFilter"),
+
+    viewTrigger:
+      byId("viewTrigger"),
+
+    viewOptions:
+      byId("viewOptions"),
+
+    route:
+      byId("efRoute"),
+
+    saveItem:
+      byId("saveItem"),
+
+    nextItem:
+      byId("nextItem"),
+
+    quantityInput:
+      byId("quantityInput"),
+
+    unitInput:
+      byId("unitInput"),
+
+    brandInput:
+      byId("brandInput"),
+
+    estimateList:
+      byId("estimateList"),
+
+    estimateCount:
+      byId("estimateCount"),
+
+    langHi:
+      byId("langHi"),
+
+    langEn:
+      byId("langEn"),
+
+    loadingScreen:
+      byId("loadingScreen")
+
+  };
+
+}
+
+
+/* =========================================================
+   CONFIG HELPER
+   ========================================================= */
+
+function configValue(path, fallback) {
+
+  try {
+
+    let obj = window.EF_CONFIG ||
+              window.CONFIG ||
+              window.APP_CONFIG ||
+              {};
+
+    const parts = path.split(".");
+
+    for (const part of parts) {
+
+      if (obj && Object.prototype.hasOwnProperty.call(obj, part)) {
+        obj = obj[part];
+      } else {
+        return fallback;
+      }
+
     }
-  };
 
-  const storageSet = (key, value) => {
-    try {
-      localStorage.setItem(key, value);
-    } catch {}
-  };
+    return obj;
 
-  const storageRemove = (key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch {}
-  };
+  } catch (e) {
 
-  const parseJSON = (value, fallback) => {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return fallback;
-    }
-  };
+    return fallback;
 
-  const makeId = () =>
-    "ef-" +
-    Date.now().toString(36) +
-    "-" +
-    Math.random().toString(36).slice(2, 8);
+  }
+
+}
 
 
-  /* =========================================================
-     BRAND
-     ========================================================= */
+/* =========================================================
+   LANGUAGE
+   ========================================================= */
 
-  const BRAND = {
-    name: "Sandeep ElectroFix",
-    taglineHi: "आपके विश्वास को रोशन करते हुए",
-    taglineEn: "Powering Your Trust",
-    logo: "logo.png"
-  };
+const HI = {
+
+  home: "होम",
+  estimate: "एस्टिमेट",
+  calculator: "कैलकुलेटर",
+  settings: "सेटिंग्स",
+
+  stage: "स्टेज",
+  section: "सेक्शन",
+  material: "मटेरियल",
+
+  search: "मटेरियल खोजें",
+  filter: "फ़िल्टर",
+  clear: "साफ करें",
+
+  add: "जोड़ें",
+  save: "सेव करें",
+  update: "अपडेट करें",
+  next: "अगला",
+  back: "वापस",
+
+  quantity: "मात्रा",
+  unit: "इकाई",
+  brand: "ब्रांड",
+  price: "कीमत",
+
+  select: "चुनें",
+  optional: "वैकल्पिक",
+
+  edit: "एडिट",
+  delete: "डिलीट",
+
+  noMaterials: "कोई मटेरियल नहीं मिला",
+  noEstimate: "अभी कोई एस्टिमेट आइटम नहीं है",
+
+  requiredQuantity: "मात्रा भरना जरूरी है",
+
+  saved: "आइटम सेव हो गया",
+  updated: "आइटम अपडेट हो गया",
+  deleted: "आइटम डिलीट हो गया",
+
+  reset: "रीसेट",
+  resetConfirm: "क्या आप पूरा एस्टिमेट डेटा रीसेट करना चाहते हैं?",
+
+  language: "भाषा",
+  theme: "थीम",
+
+  dark: "डार्क",
+  light: "लाइट",
+
+  hindi: "हिंदी",
+  english: "English",
+
+  all: "सभी",
+
+  stageView: "स्टेज व्यू",
+  materialView: "मटेरियल व्यू",
+
+  grid: "ग्रिड",
+  list: "लिस्ट",
+  compact: "कॉम्पैक्ट",
+  large: "बड़ा",
+  mini: "मिनी",
+  twoColumn: "2 कॉलम",
+  horizontal: "हॉरिज़ॉन्टल",
+  iconList: "आइकन लिस्ट",
+  timeline: "टाइमलाइन",
+  dense: "डेंस",
+
+  close: "बंद करें",
+
+  yes: "हाँ",
+  no: "नहीं",
+
+  chooseStage: "स्टेज चुनें",
+  chooseSection: "सेक्शन चुनें",
+  chooseMaterial: "मटेरियल चुनें",
+
+  calculatorTitle: "कैलकुलेटर",
+  settingsTitle: "सेटिंग्स",
+
+  estimateTitle: "एस्टिमेट लिस्ट",
+
+  itemAdded: "मटेरियल एस्टिमेट में जोड़ दिया गया",
+
+  previousItem: "पिछला मटेरियल",
+  nextMaterial: "अगला मटेरियल",
+
+  emptySearch: "सर्च करने पर मटेरियल यहाँ दिखाई देंगे",
+
+  filterApplied: "फ़िल्टर लागू है",
+
+  selectValue: "विकल्प चुनें"
+
+};
 
 
-  /* =========================================================
-     STORAGE
-     ========================================================= */
+/* =========================================================
+   FIELD TRANSLATIONS
+   ========================================================= */
 
-  const STORAGE = {
-    lang: "sandeepMaterialLang",
-    theme: "sandeepTheme",
-    estimate: "sandeepEstimateItems",
-    route: "sandeepEstimateRoute",
-    stageView: "sandeepStageView",
-    materialView: "sandeepMaterialView",
-    lastUnit: "sandeepLastUnit"
-  };
+const FIELD_HI = {
+
+  "Size": "साइज़",
+  "Type": "टाइप",
+  "Sub Type": "सब टाइप",
+  "Conduit Size": "कंड्यूट साइज़",
+  "Shape / Ways": "शेप / वेज़",
+  "Material": "मटेरियल",
+  "Material Type": "मटेरियल टाइप",
+  "Depth": "गहराई",
+  "Ways": "वेज़",
+  "Hook Rod": "हुक रॉड",
+  "Diameter": "डायमीटर",
+  "Size (Width)": "चौड़ाई",
+  "Pack Size": "पैक साइज़",
+  "Pack Size (Weight)": "पैक वजन",
+  "Gauge / Size": "गेज / साइज़",
+  "Size (Length)": "लंबाई",
+  "Colour": "रंग",
+  "Color": "रंग",
+  "Size (Width × Length)": "साइज़ (चौड़ाई × लंबाई)",
+  "Size / Diameter": "साइज़ / डायमीटर",
+  "Length": "लंबाई",
+  "Module": "मॉड्यूल",
+  "Phase Selection": "फेज़",
+  "Door Type": "डोर टाइप",
+  "Amp": "एम्पियर",
+  "Curve": "कर्व",
+  "Voltage": "वोल्टेज",
+  "Sensitivity": "सेंसिटिविटी",
+  "Door": "डोर",
+  "Mounting": "माउंटिंग",
+  "Wattage": "वॉटेज",
+  "Base": "बेस",
+  "Colour Temp": "कलर टेम्परेचर",
+  "Shape": "शेप",
+  "Movement": "मूवमेंट",
+  "Beam Angle": "बीम एंगल",
+  "Body Finish": "बॉडी फिनिश",
+  "Density": "डेंसिटी",
+  "Supply Voltage": "सप्लाई वोल्टेज",
+  "Dimensions (W × D)": "डायमेंशन (W × D)",
+  "Diffuser": "डिफ्यूज़र",
+  "Output Voltage": "आउटपुट वोल्टेज",
+  "User Input (Meters)": "लंबाई दर्ज करें",
+  "User Input (ft / inch)": "लंबाई दर्ज करें",
+  "Size (Diameter × Length)": "साइज़ (डायमीटर × लंबाई)",
+  "Size (Cable Size × Stud Size)": "केबल साइज़ × स्टड साइज़"
+};
 
 
-  /* =========================================================
-     LANGUAGE DICTIONARY
-     ========================================================= */
+/* =========================================================
+   MATERIAL NAME TRANSLATIONS
+   ========================================================= */
 
-  const DICT = {
-    /* ---------- STAGES ---------- */
-    "Stage 1": "स्टेज 1",
-    "Stage 2": "स्टेज 2",
-    "Stage 3": "स्टेज 3",
-    "Stage 4": "स्टेज 4",
-    "Stage 5": "स्टेज 5",
+const MATERIAL_HI = {
 
-    "Slab Conduit Installation": "स्लैब कंड्यूट इंस्टॉलेशन",
-    "Wall Conduit": "वॉल कंड्यूट",
-    "Wiring": "वायरिंग",
-    "Final Electrical Fittings": "फाइनल इलेक्ट्रिकल फिटिंग्स",
-    "False Ceiling Wiring Material": "फॉल्स सीलिंग वायरिंग मटेरियल",
+  "Pipe": "पाइप",
+  "Bend": "बेंड",
+  "Junction Box": "जंक्शन बॉक्स",
+  "Fan Box": "फैन बॉक्स",
+  "Concealed Light Box": "कन्सील्ड लाइट बॉक्स",
 
-    "Conduit & Box": "कंड्यूट और बॉक्स",
+  "Tape (Shuttering & Joint Sealing)": "शटरिंग व जॉइंट सीलिंग टेप",
+  "Solvent Cement": "सॉल्वेंट सीमेंट",
+  "Neel Powder (Marking Powder)": "नील पाउडर",
+  "Binding Wire": "बाइंडिंग वायर",
+  "Cable Tie / Zip Tie": "केबल टाई / ज़िप टाई",
 
-    /* ---------- MATERIALS ---------- */
-    "Pipe": "पाइप",
-    "Bend": "बेंड",
-    "Junction Box": "जंक्शन बॉक्स",
-    "Fan Box": "फैन बॉक्स",
-    "Concealed Light Box": "कंसील्ड लाइट बॉक्स",
-    "Tape": "टेप",
-    "Solvent Cement": "सॉल्वेंट सीमेंट",
-    "Neel Powder": "नील पाउडर",
-    "Binding Wire": "बाइंडिंग वायर",
-    "Cable Tie": "केबल टाई",
+  "Modular Board (Concealed Metal/PVC Box)": "मॉड्यूलर बोर्ड",
+  "MCB Box (Distribution Board)": "एमसीबी बॉक्स / डिस्ट्रीब्यूशन बोर्ड",
+  "Tape (Masking & Plaster Protection)": "मास्किंग व प्लास्टर प्रोटेक्शन टेप",
+  "Cable Clip": "केबल क्लिप",
 
-    "Modular Board": "मॉड्यूलर बोर्ड",
-    "MCB Box": "एमसीबी बॉक्स",
-    "Cable Clip": "केबल क्लिप",
+  "Wire": "वायर",
+  "Flexible Pipe": "फ्लेक्सिबल पाइप",
+  "Electrical Tape": "इलेक्ट्रिकल टेप",
+  "Fastener": "फास्टनर",
+  "Steel Wire / Spring Wire (Fish Tape)": "स्टील वायर / स्प्रिंग वायर",
 
-    "Wire": "वायर",
-    "Flexible Pipe": "फ्लेक्सिबल पाइप",
-    "Electrical Tape": "इलेक्ट्रिकल टेप",
-    "Fastener": "फास्टनर",
-    "Fish Tape": "फिश टेप",
+  "Switch Plate": "स्विच प्लेट",
+  "Switch Board (Surface Gang Box)": "स्विच बोर्ड",
+  "Switch": "स्विच",
+  "Socket": "सॉकेट",
+  "Fan Regulator": "फैन रेगुलेटर",
+  "2 Way Switch": "2 वे स्विच",
+  "Bell Push": "बेल पुश",
+  "Neon Indicator": "नियॉन इंडिकेटर",
+  "Blank Plate / Dummy Switch": "ब्लैंक प्लेट / डमी स्विच",
+  "DP Switch (Double Pole Switch)": "डीपी स्विच",
 
-    "Switch": "स्विच",
-    "Socket": "सॉकेट",
-    "Fan Regulator": "फैन रेगुलेटर",
-    "Fan": "फैन",
-    "Holder": "होल्डर",
-    "Bulb": "बल्ब",
-    "LED": "एलईडी",
-    "MCB": "एमसीबी",
-    "RCCB": "आरसीसीबी",
-    "DB": "डीबी",
-    "Distribution Board": "डिस्ट्रीब्यूशन बोर्ड",
-    "Isolator": "आइसोलेटर",
-    "Indicator": "इंडिकेटर",
-    "Bell": "बेल",
-    "Door Bell": "डोर बेल",
-    "Exhaust Fan": "एग्जॉस्ट फैन",
-    "Ceiling Fan": "सीलिंग फैन",
+  "Mini MCB": "मिनी एमसीबी",
+  "SP MCB (Single Pole)": "एसपी एमसीबी",
+  "DP MCB (Double Pole)": "डीपी एमसीबी",
+  "TPN MCB (Three Pole with Neutral)": "टीपीएन एमसीबी",
+  "MCB Changeover": "एमसीबी चेंजओवर",
+  "DP Isolator": "डीपी आइसोलेटर",
+  "TPN Isolator (3P / 4P)": "टीपीएन आइसोलेटर",
+  "RCCB / RCD": "आरसीसीबी / आरसीडी",
+  "MCB Box": "एमसीबी बॉक्स",
+  "Kit Kat Fuse": "किट-कैट फ्यूज़",
+
+  "Fan Sheet": "फैन शीट",
+  "Round Sheet": "राउंड शीट",
+  "Fan Rod": "फैन रॉड",
+  "Fan Clamp": "फैन क्लैम्प",
+  "Holder": "होल्डर",
+  "Ceiling Rose": "सीलिंग रोज़",
+  "Chain": "चेन",
+
+  "LED Bulb": "एलईडी बल्ब",
+  "LED Tube Light": "एलईडी ट्यूब लाइट",
+  "Foot Light": "फुट लाइट",
+  "Up Down Light": "अप डाउन लाइट",
+  "Panel Light": "पैनल लाइट",
+  "Surface Light": "सरफेस लाइट",
+  "COB Light": "सीओबी लाइट",
+  "COB Spot Light": "सीओबी स्पॉट लाइट",
+  "Down Light": "डाउन लाइट",
+  "Strip Light": "स्ट्रिप लाइट",
+  "Rope Light": "रोप लाइट",
+  "LED Profile Channel": "एलईडी प्रोफाइल चैनल",
+  "LED Strip Driver (SMPS)": "एलईडी स्ट्रिप ड्राइवर",
+
+  "Door Bell": "डोर बेल",
+  "Tape (Mounting / Double Sided)": "माउंटिंग / डबल साइडेड टेप",
+  "Instant Glue": "इंस्टेंट ग्लू",
+  "Araldite Glue (Epoxy)": "अराल्डाइट ग्लू",
+  "POP (Plaster of Paris)": "पीओपी",
+  "Putty Blade / Patta": "पुट्टी ब्लेड / पट्टा",
+  "Screw": "स्क्रू",
+  "Lug (Cable Terminal Lug)": "केबल टर्मिनल लग",
+  "Washer": "वॉशर",
+
+  "PVC Wall Plug / Gulli / Gitti": "पीवीसी वॉल प्लग / गुल्ली / गिट्टी",
+  "Saddle (Pipe Clamp)": "सैडल / पाइप क्लैम्प"
+
+};
+
+
+/* =========================================================
+   SECTION TRANSLATIONS
+   ========================================================= */
+
+const SECTION_HI = {
+
+  "Conduit & Box": "कंड्यूट और बॉक्स",
+  "Installation Material": "इंस्टॉलेशन मटेरियल",
+  "Wiring Material": "वायरिंग मटेरियल",
+  "Pulling Material": "पुलिंग मटेरियल",
+  "Switch & Socket": "स्विच और सॉकेट",
+  "MCB & Protection": "एमसीबी और प्रोटेक्शन",
+  "Fan & Ceiling": "फैन और सीलिंग",
+  "Lighting": "लाइटिंग",
+  "Installation & Finishing": "इंस्टॉलेशन और फिनिशिंग",
+  "Installation & Fastening": "इंस्टॉलेशन और फास्टनिंग",
+  "Wiring & Conduit": "वायरिंग और कंड्यूट"
+};
+
+
+/* =========================================================
+   STAGE TRANSLATIONS
+   ========================================================= */
+
+const STAGE_HI = {
+
+  "STAGE 1": "स्टेज 1",
+  "STAGE 2": "स्टेज 2",
+  "STAGE 3": "स्टेज 3",
+  "STAGE 4": "स्टेज 4",
+  "STAGE 5": "स्टेज 5",
+
+  "Slab Conduit Installation": "स्लैब कंड्यूट इंस्टॉलेशन",
+  "Wall Conduit Installation": "वॉल कंड्यूट इंस्टॉलेशन",
+  "Wiring Installation": "वायरिंग इंस्टॉलेशन",
+  "Final Electrical Fittings": "फाइनल इलेक्ट्रिकल फिटिंग्स",
+  "False Ceiling Wiring Material": "फॉल्स सीलिंग वायरिंग मटेरियल"
+};
+
+
+/* =========================================================
+   TEXT TRANSLATOR
+   ========================================================= */
+
+function t(text) {
+
+  if (text === null || text === undefined) {
+    return "";
+  }
+
+  const value = String(text);
+
+  if (EF.language === "en") {
+    return value;
+  }
+
+  if (FIELD_HI[value]) {
+    return FIELD_HI[value];
+  }
+
+  if (MATERIAL_HI[value]) {
+    return MATERIAL_HI[value];
+  }
+
+  if (SECTION_HI[value]) {
+    return SECTION_HI[value];
+  }
+
+  if (STAGE_HI[value]) {
+    return STAGE_HI[value];
+  }
+
+  const map = {
+
+    "Heavy": "हेवी",
+    "Medium": "मीडियम",
     "Light": "लाइट",
-    "Downlight": "डाउनलाइट",
-    "Panel Light": "पैनल लाइट",
-    "Spot Light": "स्पॉट लाइट",
 
-    /* ---------- FIELDS ---------- */
-    "Size": "साइज",
-    "Type": "टाइप",
-    "Sub Type": "सब टाइप",
-    "Way": "वे",
-    "Ways": "वे",
-    "Depth": "डेप्थ",
-    "Material": "मटेरियल",
-    "Quantity": "मात्रा",
-    "Unit": "यूनिट",
-    "Brand": "ब्रांड",
-    "Price": "कीमत",
-
-    /* ---------- OPTIONS ---------- */
-    "Normal": "नॉर्मल",
-    "Deep": "डीप",
-    "Short": "शॉर्ट",
-    "Long": "लॉन्ग",
-    "Straight": "स्ट्रेट",
-    "Angle": "एंगल",
-    "T": "टी",
-    "Cross": "क्रॉस",
     "PVC": "पीवीसी",
-    "GI": "जीआई",
-    "HMS": "एचएमएस",
-    "MMS": "एमएमएस",
-    "LMS": "एलएमएस",
+    "GI Metal": "जीआई मेटल",
+    "GI Steel": "जीआई स्टील",
+    "MS Metal": "एमएस मेटल",
+
+    "Short Bend": "शॉर्ट बेंड",
+    "Long Bend": "लॉन्ग बेंड",
+
+    "Normal Junction Box": "नॉर्मल जंक्शन बॉक्स",
+    "Deep Junction Box": "डीप जंक्शन बॉक्स",
 
     "1 Way": "1 वे",
-    "2 Way": "2 वे",
-    "2 Straight": "2 स्ट्रेट",
-    "2 Angle": "2 एंगल",
-    "3 T": "3 टी",
-    "4 Cross": "4 क्रॉस",
+    "2 Way Straight": "2 वे स्ट्रेट",
+    "2 Way Angle": "2 वे एंगल",
+    "3 Way T-Type": "3 वे टी-टाइप",
+    "4 Way Cross Type": "4 वे क्रॉस",
+    "Y-Type": "वाई-टाइप",
+    "H-Type": "एच-टाइप",
+    "U-Type": "यू-टाइप",
+    "V-Type": "वी-टाइप",
 
-    "Other": "अन्य",
+    "White": "सफेद",
+    "Black": "काला",
+    "Red": "लाल",
+    "Green": "हरा",
+    "Yellow": "पीला",
+    "Blue": "नीला",
+    "Grey": "ग्रे",
+
     "Local": "लोकल",
-    "Skip": "स्किप",
+    "Standard / Local": "स्टैंडर्ड / लोकल",
+    "Local / Non-Brand": "लोकल / नॉन-ब्रांड",
+    "Commercial / Local": "कमर्शियल / लोकल",
+
+    "Fixed": "फिक्स्ड",
+    "Surface": "सरफेस",
+    "Round": "गोल",
+    "Square": "स्क्वायर",
 
     "pcs": "पीस",
-    "pc": "पीस",
-    "piece": "पीस",
-    "pieces": "पीस",
+    "bx": "बॉक्स",
     "pkt": "पैकेट",
-    "packet": "पैकेट",
-    "bndl": "बंडल",
-    "bundle": "बंडल",
     "doz": "दर्जन",
-    "dozen": "दर्जन",
-    "meter": "मीटर",
-    "metre": "मीटर",
-    "m": "मीटर",
     "roll": "रोल",
-    "box": "बॉक्स",
-    "set": "सेट",
-    "point": "पॉइंट",
+    "mtr": "मीटर",
+    "kg": "किलो",
+    "gm": "ग्राम",
+    "bag": "बैग",
 
-    /* ---------- COMMON ---------- */
-    "Home": "होम",
-    "Estimate": "एस्टिमेट",
-    "Calculator": "कैलकुलेटर",
-    "Settings": "सेटिंग्स",
-    "Search": "सर्च",
-    "Search materials": "मटेरियल सर्च करें",
-    "Filter": "फ़िल्टर",
-    "Clear": "क्लियर",
-    "Reset": "रीसेट",
-    "Reset App": "ऐप रीसेट करें",
-    "Close": "बंद करें",
-    "Apply": "लागू करें",
-    "Save": "सेव करें",
-    "Update": "अपडेट करें",
-    "Add": "जोड़ें",
-    "Next": "अगला",
-    "Back": "वापस",
-    "Previous": "पिछला",
-    "Delete": "डिलीट",
-    "Edit": "एडिट",
-    "Cancel": "रद्द करें",
-    "Yes": "हाँ",
-    "No": "नहीं",
+    "Optional": "वैकल्पिक",
 
-    "Stages": "स्टेज",
-    "Sections": "सेक्शन",
-    "Materials": "मटेरियल",
-    "Items": "आइटम",
-    "No materials found": "कोई मटेरियल नहीं मिला",
-    "No estimate items": "एस्टिमेट में कोई आइटम नहीं है",
-    "Added successfully": "सफलतापूर्वक जोड़ा गया",
-    "Updated successfully": "सफलतापूर्वक अपडेट किया गया",
-    "Quantity is required": "मात्रा जरूरी है",
-    "Please enter quantity": "कृपया मात्रा दर्ज करें",
-    "App reset successfully": "ऐप रीसेट हो गया",
-    "Nothing to show": "दिखाने के लिए कुछ नहीं है",
+    "Single Door": "सिंगल डोर",
+    "Double Door": "डबल डोर",
 
-    /* ---------- VIEW MODES ---------- */
-    "Grid": "ग्रिड",
-    "List": "लिस्ट",
-    "Compact": "कॉम्पैक्ट",
-    "Large": "बड़ा",
-    "Mini": "मिनी",
-    "2 Column": "2 कॉलम",
-    "Horizontal": "हॉरिज़ॉन्टल",
-    "Icon List": "आइकन लिस्ट",
-    "Timeline": "टाइमलाइन",
-    "Dense": "डेंस",
+    "B Curve": "बी कर्व",
+    "C Curve": "सी कर्व",
+    "D Curve": "डी कर्व",
 
-    "Stage View": "स्टेज व्यू",
-    "Material View": "मटेरियल व्यू",
+    "Single Phase (SPN)": "सिंगल फेज़",
+    "Three Phase (TPN)": "थ्री फेज़",
 
-    /* ---------- THEME ---------- */
-    "Dark": "डार्क",
-    "Light": "लाइट",
+    "30mA": "30mA",
+    "100mA": "100mA",
+    "300mA": "300mA",
 
-    /* ---------- CALCULATOR ---------- */
-    "Electrical Calculator": "इलेक्ट्रिकल कैलकुलेटर",
-    "Voltage": "वोल्टेज",
-    "Current": "करंट",
-    "Resistance": "रेज़िस्टेंस",
-    "Power": "पावर",
-    "Inverter": "इन्वर्टर",
-    "Input": "इनपुट",
-    "Output": "आउटपुट",
-    "Calculate": "कैलकुलेट करें",
-    "12V": "12V",
-    "24V": "24V",
-    "230V": "230V"
+    "Warm White": "वार्म व्हाइट",
+    "Cool White": "कूल व्हाइट",
+    "Natural White": "नेचुरल व्हाइट",
+
+    "Recessed / Concealed": "रिसेस्ड / कन्सील्ड",
+    "Surface Mount": "सरफेस माउंट",
+
+    "No. 4": "नंबर 4",
+    "No. 5": "नंबर 5",
+    "No. 6": "नंबर 6",
+    "No. 8": "नंबर 8",
+    "No. 10 (30mm, 35mm, 40mm)": "नंबर 10 (30mm, 35mm, 40mm)"
+
   };
 
-
-  /* =========================================================
-     UI TEXT
-     ========================================================= */
-
-  const UI = {
-    hi: {
-      home: "होम",
-      estimate: "एस्टिमेट",
-      calculator: "कैलकुलेटर",
-      settings: "सेटिंग्स",
-
-      search: "सर्च करें",
-      searchPlaceholder: "मटेरियल / स्टेज / सेक्शन सर्च करें",
-      filter: "फ़िल्टर",
-      clear: "क्लियर",
-      reset: "ऐप रीसेट करें",
-      close: "बंद करें",
-
-      stages: "स्टेज",
-      sections: "सेक्शन",
-      materials: "मटेरियल",
-
-      back: "वापस",
-      previous: "पिछला",
-      next: "अगला",
-      add: "जोड़ें",
-      update: "अपडेट करें",
-      save: "सेव करें",
-      edit: "एडिट",
-      delete: "डिलीट",
-      cancel: "रद्द करें",
-
-      quantity: "मात्रा",
-      unit: "यूनिट",
-      brand: "ब्रांड",
-
-      emptyEstimate: "एस्टिमेट में कोई आइटम नहीं है",
-      noMaterials: "कोई मटेरियल नहीं मिला",
-
-      language: "भाषा",
-      theme: "थीम",
-      dark: "डार्क",
-      light: "लाइट",
-
-      stageView: "स्टेज व्यू",
-      materialView: "मटेरियल व्यू",
-
-      calculatorTitle: "इलेक्ट्रिकल कैलकुलेटर",
-      voltage: "वोल्टेज",
-      current: "करंट",
-      resistance: "रेज़िस्टेंस",
-      power: "पावर",
-      inverter: "इन्वर्टर",
-
-      saved: "सेव हो गया",
-      added: "सफलतापूर्वक जोड़ा गया",
-      updated: "सफलतापूर्वक अपडेट किया गया",
-      quantityRequired: "मात्रा जरूरी है",
-      resetDone: "ऐप रीसेट हो गया"
-    },
-
-    en: {
-      home: "Home",
-      estimate: "Estimate",
-      calculator: "Calculator",
-      settings: "Settings",
-
-      search: "Search",
-      searchPlaceholder: "Search material / stage / section",
-      filter: "Filter",
-      clear: "Clear",
-      reset: "Reset App",
-      close: "Close",
-
-      stages: "Stages",
-      sections: "Sections",
-      materials: "Materials",
-
-      back: "Back",
-      previous: "Previous",
-      next: "Next",
-      add: "Add",
-      update: "Update",
-      save: "Save",
-      edit: "Edit",
-      delete: "Delete",
-      cancel: "Cancel",
-
-      quantity: "Quantity",
-      unit: "Unit",
-      brand: "Brand",
-
-      emptyEstimate: "No estimate items",
-      noMaterials: "No materials found",
-
-      language: "Language",
-      theme: "Theme",
-      dark: "Dark",
-      light: "Light",
-
-      stageView: "Stage View",
-      materialView: "Material View",
-
-      calculatorTitle: "Electrical Calculator",
-      voltage: "Voltage",
-      current: "Current",
-      resistance: "Resistance",
-      power: "Power",
-      inverter: "Inverter",
-
-      saved: "Saved",
-      added: "Added successfully",
-      updated: "Updated successfully",
-      quantityRequired: "Quantity is required",
-      resetDone: "App reset successfully"
-    }
-  };
+  return map[value] || value;
+}
 
 
-  /* =========================================================
-     TRANSLATION
-     ========================================================= */
+/* =========================================================
+   STORAGE
+   ========================================================= */
 
-  function currentLang() {
-    return state.lang === "en" ? "en" : "hi";
-  }
+function loadEstimate() {
 
-  function langText(key) {
-    const lang = currentLang();
+  try {
 
-    if (UI[lang] && UI[lang][key] != null) {
-      return UI[lang][key];
+    const key =
+      configValue(
+        "storageKey",
+        "sandeepEstimateItems"
+      );
+
+    const data =
+      localStorage.getItem(key);
+
+    if (!data) {
+
+      EF.estimate = [];
+
+      return;
+
     }
 
-    return key;
+    const parsed =
+      JSON.parse(data);
+
+    EF.estimate =
+      Array.isArray(parsed)
+        ? parsed
+        : [];
+
+  } catch (error) {
+
+    console.error(
+      "Estimate load error:",
+      error
+    );
+
+    EF.estimate = [];
+
   }
 
-  function tr(value) {
-    const text = safeText(value);
+}
 
-    if (!text) return "";
 
-    if (currentLang() === "en") {
-      return text;
+function saveEstimate() {
+
+  try {
+
+    const key =
+      configValue(
+        "storageKey",
+        "sandeepEstimateItems"
+      );
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(EF.estimate)
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Estimate save error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ROUTE STORAGE
+   ========================================================= */
+
+function saveRoute(route) {
+
+  EF.route = route;
+
+  localStorage.setItem(
+    "sandeepEstimateRoute",
+    route
+  );
+
+}
+
+
+/* =========================================================
+   THEME
+   ========================================================= */
+
+function applyTheme() {
+
+  document.documentElement.setAttribute(
+    "data-theme",
+    EF.theme
+  );
+
+  document.body.classList.toggle(
+    "dark",
+    EF.theme === "dark"
+  );
+
+  document.body.classList.toggle(
+    "light",
+    EF.theme === "light"
+  );
+
+  localStorage.setItem(
+    "sandeepTheme",
+    EF.theme
+  );
+
+}
+
+
+function toggleTheme() {
+
+  EF.theme =
+    EF.theme === "dark"
+      ? "light"
+      : "dark";
+
+  applyTheme();
+
+  showToast(
+    EF.theme === "dark"
+      ? "Dark Theme"
+      : "Light Theme"
+  );
+
+}
+
+
+/* =========================================================
+   LANGUAGE
+   ========================================================= */
+
+function setLanguage(language) {
+
+  if (
+    language !== "hi" &&
+    language !== "en"
+  ) {
+    language = "hi";
+  }
+
+  EF.language = language;
+
+  localStorage.setItem(
+    "sandeepMaterialLang",
+    language
+  );
+
+  renderLanguageButtons();
+
+  renderCurrentPage();
+
+}
+
+
+function renderLanguageButtons() {
+
+  const hi =
+    EF.ids.langHi;
+
+  const en =
+    EF.ids.langEn;
+
+  if (hi) {
+
+    hi.classList.toggle(
+      "active",
+      EF.language === "hi"
+    );
+
+    hi.setAttribute(
+      "aria-pressed",
+      EF.language === "hi"
+        ? "true"
+        : "false"
+    );
+
+  }
+
+  if (en) {
+
+    en.classList.toggle(
+      "active",
+      EF.language === "en"
+    );
+
+    en.setAttribute(
+      "aria-pressed",
+      EF.language === "en"
+        ? "true"
+        : "false"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DRAWER
+   ========================================================= */
+
+function openDrawer() {
+
+  const drawer =
+    EF.ids.drawer;
+
+  const overlay =
+    EF.ids.drawerOverlay;
+
+  if (!drawer) {
+    return;
+  }
+
+  EF.drawerOpen = true;
+
+  drawer.classList.add("open");
+  drawer.classList.add("active");
+
+  if (overlay) {
+
+    overlay.classList.add("open");
+    overlay.classList.add("active");
+
+  }
+
+  document.body.classList.add(
+    "drawer-open"
+  );
+
+}
+
+
+function closeDrawer() {
+
+  const drawer =
+    EF.ids.drawer;
+
+  const overlay =
+    EF.ids.drawerOverlay;
+
+  EF.drawerOpen = false;
+
+  if (drawer) {
+
+    drawer.classList.remove("open");
+    drawer.classList.remove("active");
+
+  }
+
+  if (overlay) {
+
+    overlay.classList.remove("open");
+    overlay.classList.remove("active");
+
+  }
+
+  document.body.classList.remove(
+    "drawer-open"
+  );
+
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function resetApplication() {
+
+  const message =
+    EF.language === "hi"
+      ? HI.resetConfirm
+      : "Reset all estimate data?";
+
+  if (!window.confirm(message)) {
+    return;
+  }
+
+  EF.estimate = [];
+
+  saveEstimate();
+
+  EF.currentStage = null;
+  EF.currentSection = null;
+  EF.currentMaterial = null;
+  EF.currentMaterialIndex = 0;
+  EF.currentDraft = {};
+
+  localStorage.removeItem(
+    "sandeepEstimateRoute"
+  );
+
+  localStorage.removeItem(
+    "sandeepLastUnit"
+  );
+
+  saveRoute("home");
+
+  closeDrawer();
+
+  renderHome();
+
+  showToast(
+    EF.language === "hi"
+      ? "एस्टिमेट डेटा रीसेट हो गया"
+      : "Estimate data reset"
+  );
+
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+let toastTimer = null;
+
+function showToast(message) {
+
+  const toast =
+    EF.ids.toast;
+
+  if (!toast) {
+
+    console.log(message);
+
+    return;
+
+  }
+
+  toast.textContent =
+    message;
+
+  toast.classList.add("show");
+  toast.classList.add("active");
+
+  clearTimeout(
+    toastTimer
+  );
+
+  toastTimer =
+    setTimeout(() => {
+
+      toast.classList.remove("show");
+      toast.classList.remove("active");
+
+    }, 1800);
+
+}
+
+
+/* =========================================================
+   MATERIAL DATA HELPERS
+   ========================================================= */
+
+function getStageName(stage) {
+
+  return stage[0];
+
+}
+
+function getStageTitle(stage) {
+
+  return stage[1];
+
+}
+
+function getStageCategory(stage) {
+
+  return stage[2];
+
+}
+
+function getStageMaterials(stage) {
+
+  return Array.isArray(stage[3])
+    ? stage[3]
+    : [];
+
+}
+
+function getStageSections(stage) {
+
+  return Array.isArray(stage[4])
+    ? stage[4]
+    : [];
+
+}
+
+function getSectionName(section) {
+
+  return section[0];
+
+}
+
+function getSectionMaterials(section) {
+
+  return Array.isArray(section[1])
+    ? section[1]
+    : [];
+
+}
+
+
+/* =========================================================
+   FLATTEN MATERIALS
+   ========================================================= */
+
+function getAllMaterialEntries() {
+
+  const output = [];
+
+  EF.materials.forEach(
+    (stage) => {
+
+      const stageName =
+        getStageName(stage);
+
+      const stageTitle =
+        getStageTitle(stage);
+
+      const stageCategory =
+        getStageCategory(stage);
+
+      const mainMaterials =
+        getStageMaterials(stage);
+
+      mainMaterials.forEach(
+        (material) => {
+
+          output.push({
+
+            stageName,
+            stageTitle,
+            stageCategory,
+
+            sectionName:
+              stageCategory,
+
+            material
+
+          });
+
+        }
+      );
+
+      const sections =
+        getStageSections(stage);
+
+      sections.forEach(
+        (section) => {
+
+          const sectionName =
+            getSectionName(section);
+
+          const materials =
+            getSectionMaterials(section);
+
+          materials.forEach(
+            (material) => {
+
+              output.push({
+
+                stageName,
+                stageTitle,
+                stageCategory,
+
+                sectionName,
+
+                material
+
+              });
+
+            }
+          );
+
+        }
+      );
+
     }
+  );
 
-    return DICT[text] || text;
+  return output;
+
+}
+
+
+/* =========================================================
+   MATERIAL SEARCH
+   ========================================================= */
+
+function materialMatchesSearch(
+  material,
+  search
+) {
+
+  if (!search) {
+    return true;
   }
 
+  const name =
+    String(material[0] || "")
+      .toLowerCase();
 
-  /* =========================================================
-     VIEW MODES
-     ========================================================= */
-
-  const VIEW_MODES = [
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "two-column",
-    "horizontal",
-    "icon-list",
-    "timeline",
-    "dense"
-  ];
-
-  const VIEW_LABELS = {
-    grid: "Grid",
-    list: "List",
-    compact: "Compact",
-    large: "Large",
-    mini: "Mini",
-    "two-column": "2 Column",
-    horizontal: "Horizontal",
-    "icon-list": "Icon List",
-    timeline: "Timeline",
-    dense: "Dense"
-  };
-
-  function validView(value) {
-    return VIEW_MODES.includes(value) ? value : "grid";
-  }
-
-
-  /* =========================================================
-     STATE
-     ========================================================= */
-
-  const state = {
-    lang: storageGet(STORAGE.lang, "hi") === "en" ? "en" : "hi",
-
-    theme:
-      storageGet(STORAGE.theme, "dark") === "light"
-        ? "light"
-        : "dark",
-
-    page: "home",
-
-    stageIndex: -1,
-    sectionIndex: -1,
-    itemIndex: -1,
-
-    stageView: validView(
-      storageGet(STORAGE.stageView, "grid")
-    ),
-
-    materialView: validView(
-      storageGet(STORAGE.materialView, "grid")
-    ),
-
-    editingEstimateId: null,
-
-    draft: {},
-
-    drawerOpen: false,
-    drawerHistoryPushed: false,
-
-    filterOpen: false,
-    viewOpen: false,
-
-    historyReady: false,
-
-    currentViewContext: "stage"
-  };
-
-
-  /* =========================================================
-     DATA
-     ========================================================= */
-
-  let DATA = [];
-
-  function normalizeField(raw) {
-    if (!Array.isArray(raw)) {
-      return {
-        name: safeText(raw),
-        options: []
-      };
-    }
-
-    return {
-      name: safeText(raw[0]),
-      options: Array.isArray(raw[1])
-        ? raw[1].map(safeText)
-        : []
-    };
-  }
-
-  function normalizeItem(raw) {
-    if (!Array.isArray(raw)) {
-      return {
-        name: "",
-        fields: [],
-        units: [],
-        brands: []
-      };
-    }
-
-    return {
-      name: safeText(raw[0]),
-
-      fields: Array.isArray(raw[1])
-        ? raw[1].map(normalizeField)
-        : [],
-
-      units: Array.isArray(raw[2])
-        ? raw[2].map(safeText)
-        : [],
-
-      brands: Array.isArray(raw[3])
-        ? raw[3].map(safeText)
-        : []
-    };
-  }
-
-  function parseMaterials() {
-    const raw = Array.isArray(window.MATERIALS)
-      ? window.MATERIALS
+  const fields =
+    Array.isArray(material[1])
+      ? material[1]
       : [];
 
-    return raw.map((stage, stageIndex) => {
-      const stageId = safeText(stage[0]);
-      const stageName = safeText(stage[1]);
+  let text =
+    name;
 
-      const sections = [];
+  fields.forEach(
+    (field) => {
 
-      /*
-       * MASTER FORMAT:
-       * [
-       *   "STAGE 1",
-       *   "Slab Conduit Installation",
-       *   "Conduit & Box",
-       *   [...]
-       * ]
-       */
+      text += " " +
+        String(field[0] || "");
 
-      if (Array.isArray(stage[3])) {
-        sections.push({
-          name: safeText(stage[2] || "Conduit & Box"),
-          items: stage[3].map(normalizeItem)
-        });
-      }
+      const values =
+        Array.isArray(field[1])
+          ? field[1]
+          : [];
 
-      for (let i = 4; i < stage.length; i++) {
-        if (!Array.isArray(stage[i])) continue;
+      text += " " +
+        values.join(" ");
 
-        const section = stage[i];
+    }
+  );
 
-        if (
-          Array.isArray(section) &&
-          typeof section[0] === "string" &&
-          Array.isArray(section[1])
-        ) {
-          sections.push({
-            name: safeText(section[0]),
-            items: section[1].map(normalizeItem)
-          });
+  return text
+    .toLowerCase()
+    .includes(
+      search.toLowerCase()
+    );
+
+}
+
+
+/* =========================================================
+   HOME
+   ========================================================= */
+
+function renderHome() {
+
+  saveRoute("home");
+
+  EF.currentStage = null;
+  EF.currentSection = null;
+  EF.currentMaterial = null;
+
+  const home =
+    EF.ids.home;
+
+  if (!home) {
+
+    renderStageGrid();
+
+    return;
+
+  }
+
+  showOnlyPage(
+    "home"
+  );
+
+  renderStageGrid();
+
+  updateTopTitle(
+    "Sandeep ElectroFix"
+  );
+
+}
+
+
+function renderStageGrid() {
+
+  const grid =
+    EF.ids.stageGrid;
+
+  if (!grid) {
+    return;
+  }
+
+  grid.innerHTML = "";
+
+  EF.materials.forEach(
+    (stage, index) => {
+
+      const card =
+        document.createElement("button");
+
+      card.type = "button";
+
+      card.className =
+        "stage-card";
+
+      card.dataset.stageIndex =
+        String(index);
+
+      const stageNo =
+        getStageName(stage);
+
+      const title =
+        getStageTitle(stage);
+
+      const category =
+        getStageCategory(stage);
+
+      const count =
+        countStageMaterials(stage);
+
+      card.innerHTML = `
+
+        <div class="stage-inner">
+
+          <div class="stage-number">
+            ${escapeHTML(t(stageNo))}
+          </div>
+
+          <div class="stage-title">
+            ${escapeHTML(t(title))}
+          </div>
+
+          <div class="stage-category">
+            ${escapeHTML(t(category))}
+          </div>
+
+          <div class="stage-count">
+            ${count} ${
+              EF.language === "hi"
+                ? "मटेरियल"
+                : "Materials"
+            }
+          </div>
+
+        </div>
+
+      `;
+
+      card.addEventListener(
+        "click",
+        () => {
+
+          openStage(index);
+
         }
+      );
+
+      grid.appendChild(card);
+
+    }
+  );
+
+}
+
+
+function countStageMaterials(stage) {
+
+  let count = 0;
+
+  count +=
+    getStageMaterials(stage).length;
+
+  getStageSections(stage)
+    .forEach(
+      section => {
+
+        count +=
+          getSectionMaterials(section)
+            .length;
+
       }
-
-      return {
-        id: stageId,
-        name: stageName,
-        index: stageIndex,
-        sections
-      };
-    });
-  }
-
-  DATA = parseMaterials();
-
-
-  /* =========================================================
-     ESTIMATE DATA
-     ========================================================= */
-
-  function getEstimateItems() {
-    return parseJSON(
-      storageGet(STORAGE.estimate, "[]"),
-      []
-    );
-  }
-
-  function saveEstimateItems(items) {
-    storageSet(
-      STORAGE.estimate,
-      JSON.stringify(items)
-    );
-  }
-
-
-  /* =========================================================
-     ROUTE
-     ========================================================= */
-
-  function saveRoute() {
-    storageSet(
-      STORAGE.route,
-      JSON.stringify({
-        page: state.page,
-        stageIndex: state.stageIndex,
-        sectionIndex: state.sectionIndex,
-        itemIndex: state.itemIndex
-      })
-    );
-  }
-
-  function loadRoute() {
-    const saved = parseJSON(
-      storageGet(STORAGE.route, ""),
-      null
     );
 
-    if (!saved || typeof saved !== "object") {
-      return;
-    }
+  return count;
 
-    state.page = safeText(saved.page || "home");
+}
 
-    state.stageIndex = Number.isInteger(saved.stageIndex)
-      ? saved.stageIndex
-      : -1;
 
-    state.sectionIndex = Number.isInteger(saved.sectionIndex)
-      ? saved.sectionIndex
-      : -1;
+/* =========================================================
+   STAGE
+   ========================================================= */
 
-    state.itemIndex = Number.isInteger(saved.itemIndex)
-      ? saved.itemIndex
-      : -1;
+function openStage(index) {
 
-    validateSavedRoute();
+  const stage =
+    EF.materials[index];
+
+  if (!stage) {
+    return;
   }
 
-  function validateSavedRoute() {
-    if (state.page === "home") {
-      state.stageIndex = -1;
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-      return;
-    }
+  EF.currentStage =
+    index;
 
-    if (
-      state.stageIndex < 0 ||
-      state.stageIndex >= DATA.length
-    ) {
-      state.page = "home";
-      state.stageIndex = -1;
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-      return;
-    }
+  EF.currentSection =
+    null;
 
-    if (state.page === "stage") {
-      state.sectionIndex = -1;
-      state.itemIndex = -1;
-      return;
-    }
+  EF.currentMaterial =
+    null;
 
-    if (
-      state.page === "section" ||
-      state.page === "item"
-    ) {
-      const stage = DATA[state.stageIndex];
+  EF.currentMaterialIndex =
+    0;
 
-      if (
-        !stage ||
-        state.sectionIndex < 0 ||
-        state.sectionIndex >= stage.sections.length
-      ) {
-        state.page = "stage";
-        state.sectionIndex = -1;
-        state.itemIndex = -1;
-        return;
-      }
-    }
+  saveRoute(
+    "stage"
+  );
 
-    if (state.page === "item") {
-      const section =
-        DATA[state.stageIndex].sections[
-          state.sectionIndex
-        ];
+  renderStagePage();
 
-      if (
-        !section ||
-        state.itemIndex < 0 ||
-        state.itemIndex >= section.items.length
-      ) {
-        state.page = "section";
-        state.itemIndex = -1;
-      }
-    }
+}
 
-    if (
-      ![
-        "home",
-        "stage",
-        "section",
-        "item",
-        "estimate",
-        "calculator",
-        "settings"
-      ].includes(state.page)
-    ) {
-      state.page = "home";
-    }
+
+function renderStagePage() {
+
+  showOnlyPage(
+    "main"
+  );
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
   }
 
+  const stage =
+    EF.materials[
+      EF.currentStage
+    ];
 
-  /* =========================================================
-     BRANDING
-     ========================================================= */
+  if (!stage) {
 
-  function applyBranding() {
-    $$("[data-brand-logo]").forEach((img) => {
-      img.src = BRAND.logo;
-      img.alt = BRAND.name;
-    });
+    renderHome();
 
-    $$("#brandLogo, .brand-logo img").forEach((img) => {
-      if (!img.getAttribute("src")) {
-        img.src = BRAND.logo;
-      }
-      img.alt = BRAND.name;
-    });
+    return;
 
-    $$("[data-brand-name]").forEach((el) => {
-      el.textContent = BRAND.name;
-    });
-
-    $$("[data-brand-tagline]").forEach((el) => {
-      el.textContent =
-        currentLang() === "hi"
-          ? BRAND.taglineHi
-          : BRAND.taglineEn;
-    });
   }
 
-  function brandLogoHTML(className = "") {
-    return `
-      <img
-        class="ef-brand-logo ${className}"
-        src="${esc(BRAND.logo)}"
-        alt="${esc(BRAND.name)}"
-        onerror="this.style.display='none'"
+  updateTopTitle(
+    t(stage[1])
+  );
+
+  renderStageContent(
+    stage
+  );
+
+}
+
+
+function renderStageContent(stage) {
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
+  }
+
+  let html = `
+
+    <div class="ef-page-header">
+
+      <button
+        type="button"
+        class="ef-back-button"
+        id="stageBackButton"
       >
-    `;
-  }
-
-
-  /* =========================================================
-     DYNAMIC CSS
-     ========================================================= */
-
-  function injectDynamicCSS() {
-    if ($("#efDynamicCSS")) return;
-
-    const style = document.createElement("style");
-    style.id = "efDynamicCSS";
-
-    style.textContent = `
-      /* =====================================================
-         GENERAL
-         ===================================================== */
-
-      #efRoute {
-        width: 100%;
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 12px 12px 90px;
-        box-sizing: border-box;
-        text-align: center;
-      }
-
-      .ef-page {
-        width: 100%;
-        text-align: center;
-      }
-
-      .ef-page-head {
-        display: grid;
-        grid-template-columns: 42px 1fr 42px;
-        align-items: center;
-        gap: 8px;
-        width: 100%;
-        margin-bottom: 14px;
-      }
-
-      .ef-page-brand {
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-      }
-
-      .ef-brand-logo {
-        width: 42px;
-        height: 42px;
-        object-fit: contain;
-        border-radius: 50%;
-        flex: 0 0 42px;
-      }
-
-      .ef-page-title {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 800;
-        line-height: 1.2;
-      }
-
-      .ef-page-subtitle {
-        margin: 3px 0 0;
-        font-size: 11px;
-        opacity: .75;
-      }
-
-      .ef-back-btn,
-      .ef-view-trigger {
-        width: 42px;
-        height: 42px;
-        border: 1px solid rgba(14,165,233,.55);
-        border-radius: 12px;
-        background: #07182e;
-        color: #38bdf8;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 19px;
-        font-weight: 900;
-        box-shadow:
-          0 0 10px rgba(14,165,233,.16),
-          inset 0 0 10px rgba(14,165,233,.06);
-      }
-
-      .ef-back-btn:active,
-      .ef-view-trigger:active {
-        transform: scale(.95);
-      }
-
-      .ef-view-picker {
-        position: relative;
-        display: inline-flex;
-        justify-content: center;
-        z-index: 20;
-      }
-
-      .ef-view-trigger {
-        background:
-          linear-gradient(
-            135deg,
-            rgba(14,165,233,.18),
-            rgba(250,204,21,.12)
-          );
-        color: #facc15;
-      }
-
-      .ef-view-options {
-        position: absolute;
-        top: 48px;
-        right: 0;
-        width: 170px;
-        padding: 7px;
-        border: 1px solid rgba(14,165,233,.45);
-        border-radius: 14px;
-        background: #07182e;
-        box-shadow: 0 12px 35px rgba(0,0,0,.45);
-        display: grid;
-        gap: 5px;
-        z-index: 9999;
-      }
-
-      .ef-view-options[hidden] {
-        display: none;
-      }
-
-      .ef-view-option {
-        border: 1px solid rgba(56,189,248,.16);
-        border-radius: 9px;
-        background: transparent;
-        color: #dbeafe;
-        padding: 8px 9px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 12px;
-      }
-
-      .ef-view-option.active {
-        color: #050816;
-        background:
-          linear-gradient(
-            90deg,
-            #38bdf8,
-            #facc15
-          );
-        font-weight: 800;
-      }
-
-      .ef-breadcrumb {
-        margin: 5px 0 14px;
-        font-size: 11px;
-        opacity: .7;
-        text-align: center;
-      }
-
-      /* =====================================================
-         STAGE / SECTION GRID
-         ===================================================== */
-
-      #stageGrid,
-      #sectionGrid {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-        align-items: stretch;
-      }
-
-      #stageGrid.view-grid,
-      #sectionGrid.view-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      #stageGrid.view-two-column,
-      #sectionGrid.view-two-column {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      #stageGrid.view-list,
-      #sectionGrid.view-list,
-      #stageGrid.view-horizontal,
-      #sectionGrid.view-horizontal,
-      #stageGrid.view-dense,
-      #sectionGrid.view-dense,
-      #stageGrid.view-large,
-      #sectionGrid.view-large {
-        grid-template-columns: 1fr;
-      }
-
-      #stageGrid.view-compact,
-      #sectionGrid.view-compact,
-      #stageGrid.view-mini,
-      #sectionGrid.view-mini,
-      #stageGrid.view-icon-list,
-      #sectionGrid.view-icon-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      #stageGrid.view-timeline,
-      #sectionGrid.view-timeline {
-        grid-template-columns: 1fr;
-      }
-
-      #stageGrid.view-list .stage-card,
-      #stageGrid.view-horizontal .stage-card,
-      #stageGrid.view-dense .stage-card {
-        min-height: 66px !important;
-        height: auto !important;
-        padding: 9px 12px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 10px;
-        text-align: center !important;
-      }
-
-      #stageGrid.view-mini .stage-card {
-        min-height: 54px !important;
-        height: auto !important;
-        padding: 7px !important;
-      }
-
-      #stageGrid.view-compact .stage-card {
-        min-height: 64px !important;
-        height: auto !important;
-        padding: 8px !important;
-      }
-
-      #stageGrid.view-large .stage-card {
-        min-height: 130px !important;
-      }
-
-      #stageGrid.view-list .stage-card *,
-      #stageGrid.view-horizontal .stage-card *,
-      #stageGrid.view-dense .stage-card * {
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-      }
-
-      /* =====================================================
-         SECTION CARDS
-         ===================================================== */
-
-      .ef-section-card {
-        min-height: 120px;
-        padding: 15px 12px;
-        border-radius: 16px;
-        border: 1px solid rgba(14,165,233,.30);
-        background: #07182e;
-        color: inherit;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        cursor: pointer;
-        box-sizing: border-box;
-        transition: .18s ease;
-      }
-
-      .ef-section-card:active {
-        transform: scale(.98);
-      }
-
-      .ef-section-card h3 {
-        margin: 0;
-        font-size: 14px;
-        line-height: 1.35;
-      }
-
-      .ef-section-card p {
-        margin: 6px 0 0;
-        font-size: 11px;
-        opacity: .7;
-      }
-
-      #sectionGrid.view-list .ef-section-card,
-      #sectionGrid.view-horizontal .ef-section-card,
-      #sectionGrid.view-dense .ef-section-card {
-        min-height: 62px;
-        padding: 8px 12px;
-        flex-direction: row;
-        justify-content: space-between;
-      }
-
-      #sectionGrid.view-mini .ef-section-card {
-        min-height: 55px;
-        padding: 7px;
-      }
-
-      #sectionGrid.view-compact .ef-section-card {
-        min-height: 65px;
-        padding: 8px;
-      }
-
-      /* =====================================================
-         MATERIAL GRID
-         ===================================================== */
-
-      .ef-material-section {
-        width: 100%;
-        margin-bottom: 16px;
-      }
-
-      .ef-material-section-title {
-        margin: 0 0 8px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(250,204,21,.25);
-        background: rgba(250,204,21,.05);
-        color: #facc15;
-        font-size: 13px;
-        font-weight: 800;
-        text-align: center;
-      }
-
-      .ef-material-grid {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0,1fr));
-        gap: 9px;
-      }
-
-      .ef-material-grid.view-grid,
-      .ef-material-grid.view-two-column {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-      }
-
-      .ef-material-grid.view-list,
-      .ef-material-grid.view-horizontal,
-      .ef-material-grid.view-large,
-      .ef-material-grid.view-dense {
-        grid-template-columns: 1fr;
-      }
-
-      .ef-material-grid.view-compact,
-      .ef-material-grid.view-mini,
-      .ef-material-grid.view-icon-list {
-        grid-template-columns: repeat(2, minmax(0,1fr));
-      }
-
-      .ef-material-grid.view-timeline {
-        grid-template-columns: 1fr;
-      }
-
-      .ef-material-card {
-        min-width: 0;
-        min-height: 76px;
-        padding: 10px 9px;
-        border-radius: 13px;
-        border: 1px solid rgba(14,165,233,.30);
-        background: #07182e;
-        color: inherit;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        cursor: pointer;
-        box-sizing: border-box;
-        transition: .18s ease;
-      }
-
-      .ef-material-card:active {
-        transform: scale(.98);
-      }
-
-      .ef-material-name {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 750;
-        line-height: 1.25;
-        word-break: break-word;
-      }
-
-      /* REAL SMALL LIST VIEW */
-      .ef-material-grid.view-list .ef-material-card {
-        min-height: 46px;
-        height: 46px;
-        padding: 6px 10px;
-        border-radius: 9px;
-        justify-content: center;
-      }
-
-      .ef-material-grid.view-list .ef-material-name {
-        font-size: 11.5px;
-        font-weight: 700;
-        line-height: 1.1;
-      }
-
-      .ef-material-grid.view-dense .ef-material-card {
-        min-height: 40px;
-        height: 40px;
-        padding: 5px 8px;
-        border-radius: 8px;
-      }
-
-      .ef-material-grid.view-dense .ef-material-name {
-        font-size: 11px;
-      }
-
-      .ef-material-grid.view-mini .ef-material-card {
-        min-height: 48px;
-        height: 48px;
-        padding: 6px;
-      }
-
-      .ef-material-grid.view-mini .ef-material-name {
-        font-size: 10.5px;
-      }
-
-      .ef-material-grid.view-compact .ef-material-card {
-        min-height: 56px;
-        height: 56px;
-        padding: 7px;
-      }
-
-      .ef-material-grid.view-compact .ef-material-name {
-        font-size: 11.5px;
-      }
-
-      .ef-material-grid.view-large .ef-material-card {
-        min-height: 105px;
-      }
-
-      .ef-material-grid.view-horizontal .ef-material-card {
-        min-height: 55px;
-        height: 55px;
-        justify-content: flex-start;
-        padding: 8px 14px;
-        text-align: left;
-      }
-
-      .ef-material-grid.view-icon-list .ef-material-card {
-        min-height: 50px;
-        height: 50px;
-        padding: 6px 10px;
-      }
-
-      .ef-material-grid.view-timeline .ef-material-card {
-        min-height: 58px;
-        text-align: center;
-      }
-
-      /* =====================================================
-         EDITOR
-         ===================================================== */
-
-      .ef-editor {
-        width: 100%;
-        max-width: 720px;
-        margin: 0 auto;
-        text-align: center;
-      }
-
-      .ef-editor-card {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 14px;
-        border-radius: 17px;
-        border: 1px solid rgba(14,165,233,.28);
-        background: #07182e;
-      }
-
-      .ef-editor-title {
-        margin: 0 0 5px;
-        font-size: 18px;
-        font-weight: 850;
-      }
-
-      .ef-editor-subtitle {
-        margin: 0 0 16px;
-        font-size: 11px;
-        opacity: .7;
-      }
-
-      .ef-field {
-        width: 100%;
-        margin-bottom: 12px;
-        text-align: center;
-      }
-
-      .ef-field-label {
-        display: block;
-        margin-bottom: 6px;
-        font-size: 11px;
-        font-weight: 750;
-        opacity: .85;
-      }
-
-      .ef-field-row {
-        display: grid;
-        grid-template-columns: 1fr 34px;
-        gap: 6px;
-        align-items: center;
-      }
-
-      .ef-input,
-      .ef-select {
-        width: 100%;
-        min-height: 43px;
-        padding: 9px 10px;
-        box-sizing: border-box;
-        border-radius: 10px;
-        border: 1px solid rgba(14,165,233,.35);
-        background: #050816;
-        color: inherit;
-        outline: none;
-        text-align: center;
-      }
-
-      .ef-clear-field {
-        width: 34px;
-        height: 34px;
-        border-radius: 9px;
-        border: 1px solid rgba(239,68,68,.35);
-        background: rgba(239,68,68,.08);
-        color: #fca5a5;
-        cursor: pointer;
-        font-weight: 900;
-      }
-
-      .ef-quantity-row {
-        display: grid;
-        grid-template-columns: 44px 1fr 44px 34px;
-        gap: 6px;
-        align-items: center;
-      }
-
-      .ef-qty-btn {
-        height: 43px;
-        border-radius: 10px;
-        border: 1px solid rgba(14,165,233,.35);
-        background: #07182e;
-        color: #38bdf8;
-        font-size: 20px;
-        font-weight: 900;
-        cursor: pointer;
-      }
-
-      .ef-action-row {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0,1fr));
-        gap: 8px;
-        margin-top: 14px;
-      }
-
-      .ef-action-row.three {
-        grid-template-columns: repeat(3, minmax(0,1fr));
-      }
-
-      .ef-primary-btn,
-      .ef-secondary-btn,
-      .ef-danger-btn {
-        min-height: 43px;
-        border-radius: 10px;
-        padding: 8px 10px;
-        border: 1px solid rgba(14,165,233,.35);
-        cursor: pointer;
-        font-weight: 800;
-      }
-
-      .ef-primary-btn {
-        color: #050816;
-        background: linear-gradient(90deg,#38bdf8,#facc15);
-      }
-
-      .ef-secondary-btn {
-        color: #38bdf8;
-        background: #07182e;
-      }
-
-      .ef-danger-btn {
-        color: #fecaca;
-        background: rgba(239,68,68,.08);
-        border-color: rgba(239,68,68,.35);
-      }
-
-      /* =====================================================
-         ESTIMATE
-         ===================================================== */
-
-      .ef-estimate-list {
-        width: 100%;
-        display: grid;
-        gap: 10px;
-        text-align: center;
-      }
-
-      .ef-estimate-card {
-        width: 100%;
-        padding: 12px;
-        box-sizing: border-box;
-        border-radius: 14px;
-        border: 1px solid rgba(14,165,233,.28);
-        background: #07182e;
-      }
-
-      .ef-estimate-title {
-        margin: 0 0 6px;
-        font-size: 14px;
-        font-weight: 800;
-      }
-
-      .ef-estimate-meta {
-        font-size: 11px;
-        opacity: .75;
-        line-height: 1.5;
-      }
-
-      .ef-estimate-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 7px;
-        margin-top: 9px;
-      }
-
-      /* =====================================================
-         SETTINGS / CALCULATOR
-         ===================================================== */
-
-      .ef-setting-card,
-      .ef-calc-card {
-        width: 100%;
-        max-width: 720px;
-        margin: 0 auto 10px;
-        padding: 13px;
-        box-sizing: border-box;
-        border-radius: 15px;
-        border: 1px solid rgba(14,165,233,.28);
-        background: #07182e;
-        text-align: center;
-      }
-
-      .ef-setting-title {
-        margin: 0 0 10px;
-        font-size: 14px;
-        font-weight: 800;
-      }
-
-      .ef-setting-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 7px;
-      }
-
-      .ef-setting-btn {
-        border: 1px solid rgba(14,165,233,.28);
-        border-radius: 9px;
-        padding: 8px 11px;
-        background: #050816;
-        color: inherit;
-        cursor: pointer;
-        font-size: 11px;
-      }
-
-      .ef-setting-btn.active {
-        color: #050816;
-        background: linear-gradient(90deg,#38bdf8,#facc15);
-        font-weight: 800;
-      }
-
-      .ef-calc-grid {
-        display: grid;
-        grid-template-columns: repeat(2,minmax(0,1fr));
-        gap: 8px;
-      }
-
-      .ef-calc-result {
-        margin-top: 10px;
-        min-height: 43px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #050816;
-        border: 1px solid rgba(250,204,21,.25);
-        color: #facc15;
-        font-weight: 800;
-      }
-
-      /* =====================================================
-         DRAWER
-         ===================================================== */
-
-      #drawerOverlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.58);
-        z-index: 99990;
-        display: none;
-      }
-
-      #drawerOverlay.open {
-        display: block;
-      }
-
-      #drawer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: min(320px,88vw);
-        height: 100vh;
-        z-index: 99999;
-        box-sizing: border-box;
-        padding: 15px;
-        background: #050816;
-        border-right: 1px solid rgba(14,165,233,.35);
-        transform: translateX(-105%);
-        transition: transform .22s ease;
-        overflow-y: auto;
-        text-align: center;
-      }
-
-      #drawer.open {
-        transform: translateX(0);
-      }
-
-      .ef-drawer-brand {
-        padding: 12px 8px 17px;
-        border-bottom: 1px solid rgba(14,165,233,.18);
-        margin-bottom: 10px;
-      }
-
-      .ef-drawer-brand .ef-brand-logo {
-        width: 62px;
-        height: 62px;
-        margin-bottom: 7px;
-      }
-
-      .ef-drawer-name {
-        font-size: 17px;
-        font-weight: 900;
-      }
-
-      .ef-drawer-tagline {
-        margin-top: 4px;
-        font-size: 10px;
-        opacity: .68;
-      }
-
-      .ef-drawer-menu {
-        display: grid;
-        gap: 7px;
-      }
-
-      .ef-drawer-btn {
-        width: 100%;
-        min-height: 44px;
-        border-radius: 10px;
-        border: 1px solid rgba(14,165,233,.20);
-        background: #07182e;
-        color: inherit;
-        cursor: pointer;
-        text-align: center;
-        font-weight: 700;
-      }
-
-      .ef-drawer-btn.active {
-        border-color: rgba(250,204,21,.50);
-        color: #facc15;
-      }
-
-      .ef-drawer-separator {
-        height: 1px;
-        background: rgba(14,165,233,.16);
-        margin: 7px 0;
-      }
-
-      /* =====================================================
-         TOAST
-         ===================================================== */
-
-      .ef-toast {
-        position: fixed;
-        left: 50%;
-        bottom: 78px;
-        transform: translateX(-50%);
-        z-index: 100000;
-        max-width: calc(100vw - 30px);
-        padding: 9px 13px;
-        border-radius: 10px;
-        background: #07182e;
-        border: 1px solid rgba(56,189,248,.35);
-        color: #e0f2fe;
-        font-size: 11px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      }
-
-      /* =====================================================
-         LIGHT MODE
-         ===================================================== */
-
-      body.light-mode #drawer {
-        background: #f8fafc;
-        color: #111827;
-        border-color: rgba(14,165,233,.35);
-      }
-
-      body.light-mode .ef-drawer-btn,
-      body.light-mode .ef-view-options,
-      body.light-mode .ef-section-card,
-      body.light-mode .ef-material-card,
-      body.light-mode .ef-editor-card,
-      body.light-mode .ef-setting-card,
-      body.light-mode .ef-calc-card,
-      body.light-mode .ef-estimate-card,
-      body.light-mode .ef-view-trigger,
-      body.light-mode .ef-back-btn,
-      body.light-mode .ef-secondary-btn,
-      body.light-mode .ef-qty-btn {
-        background: #ffffff;
-        color: #111827;
-      }
-
-      body.light-mode .ef-input,
-      body.light-mode .ef-select {
-        background: #ffffff;
-        color: #111827;
-      }
-
-      body.light-mode .ef-view-option {
-        color: #111827;
-      }
-
-      body.light-mode .ef-toast {
-        background: #ffffff;
-        color: #111827;
-      }
-
-      /* =====================================================
-         SMALL SCREENS
-         ===================================================== */
-
-      @media (max-width: 360px) {
-        #stageGrid,
-        #sectionGrid,
-        .ef-material-grid,
-        #stageGrid.view-compact,
-        #sectionGrid.view-compact,
-        #stageGrid.view-mini,
-        #sectionGrid.view-mini,
-        #stageGrid.view-icon-list,
-        #sectionGrid.view-icon-list {
-          grid-template-columns: 1fr;
-        }
-
-        .ef-action-row,
-        .ef-action-row.three {
-          grid-template-columns: 1fr;
-        }
-
-        .ef-calc-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-  }
-
-
-  /* =========================================================
-     TOAST
-     ========================================================= */
-
-  let toastTimer = null;
-
-  function showToast(message) {
-    $$(".ef-toast").forEach((el) => el.remove());
-
-    const toast = document.createElement("div");
-    toast.className = "ef-toast";
-    toast.textContent = message;
-
-    document.body.appendChild(toast);
-
-    clearTimeout(toastTimer);
-
-    toastTimer = setTimeout(() => {
-      toast.remove();
-    }, 1500);
-  }
-
-
-  /* =========================================================
-     THEME
-     ========================================================= */
-
-  function applyTheme() {
-    document.body.classList.toggle(
-      "light-mode",
-      state.theme === "light"
-    );
-
-    const themeMeta = $('meta[name="theme-color"]');
-
-    if (themeMeta) {
-      themeMeta.setAttribute(
-        "content",
-        state.theme === "light"
-          ? "#f8fafc"
-          : "#050816"
-      );
-    }
-  }
-
-  function setTheme(theme) {
-    state.theme =
-      theme === "light"
-        ? "light"
-        : "dark";
-
-    storageSet(STORAGE.theme, state.theme);
-
-    applyTheme();
-
-    buildDrawer();
-
-    if (state.page === "settings") {
-      renderCurrentPage(false);
-    }
-  }
-
-
-  /* =========================================================
-     LANGUAGE
-     ========================================================= */
-
-  function setLanguage(lang) {
-    state.lang = lang === "en" ? "en" : "hi";
-
-    storageSet(STORAGE.lang, state.lang);
-
-    if (state.page === "home") {
-      showHome(false);
-    } else {
-      renderCurrentPage(false);
-    }
-
-    buildDrawer();
-    updateStaticUI();
-    applyBranding();
-  }
-
-
-  /* =========================================================
-     DRAWER
-     ========================================================= */
-
-  function getCurrentRouteState() {
-    return {
-      efRoute: true,
-      page: state.page,
-      stageIndex: state.stageIndex,
-      sectionIndex: state.sectionIndex,
-      itemIndex: state.itemIndex
-    };
-  }
-
-  function ensureDrawer() {
-    let drawer = $("#drawer");
-    let overlay = $("#drawerOverlay");
-
-    if (!drawer) {
-      drawer = document.createElement("aside");
-      drawer.id = "drawer";
-      document.body.appendChild(drawer);
-    }
-
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.id = "drawerOverlay";
-      document.body.appendChild(overlay);
-    }
-
-    overlay.onclick = () => {
-      closeDrawer();
-    };
-
-    buildDrawer();
-
-    return { drawer, overlay };
-  }
-
-  function buildDrawer() {
-    const drawer = $("#drawer");
-
-    if (!drawer) return;
-
-    const isHindi = currentLang() === "hi";
-
-    drawer.innerHTML = `
-      <div class="ef-drawer-brand">
-        ${brandLogoHTML()}
-
-        <div class="ef-drawer-name">
-          ${esc(BRAND.name)}
-        </div>
-
-        <div class="ef-drawer-tagline">
-          ${
-            isHindi
-              ? esc(BRAND.taglineHi)
-              : esc(BRAND.taglineEn)
-          }
-        </div>
-      </div>
-
-      <div class="ef-drawer-menu">
-
-        <button
-          type="button"
-          class="ef-drawer-btn ${
-            state.page === "home" ? "active" : ""
-          }"
-          data-drawer-nav="home">
-          ${esc(langText("home"))}
-        </button>
-
-        <button
-          type="button"
-          class="ef-drawer-btn ${
-            state.page === "estimate" ? "active" : ""
-          }"
-          data-drawer-nav="estimate">
-          ${esc(langText("estimate"))}
-        </button>
-
-        <button
-          type="button"
-          class="ef-drawer-btn ${
-            state.page === "calculator" ? "active" : ""
-          }"
-          data-drawer-nav="calculator">
-          ${esc(langText("calculator"))}
-        </button>
-
-        <button
-          type="button"
-          class="ef-drawer-btn ${
-            state.page === "settings" ? "active" : ""
-          }"
-          data-drawer-nav="settings">
-          ${esc(langText("settings"))}
-        </button>
-
-        <div class="ef-drawer-separator"></div>
-
-        <div class="ef-setting-title">
-          ${esc(langText("language"))}
-        </div>
-
-        <div class="ef-setting-buttons">
-          <button
-            type="button"
-            class="ef-setting-btn ${
-              state.lang === "hi" ? "active" : ""
-            }"
-            data-drawer-lang="hi">
-            हिन्दी
-          </button>
-
-          <button
-            type="button"
-            class="ef-setting-btn ${
-              state.lang === "en" ? "active" : ""
-            }"
-            data-drawer-lang="en">
-            English
-          </button>
-        </div>
-
-        <div class="ef-drawer-separator"></div>
-
-        <div class="ef-setting-title">
-          ${esc(langText("theme"))}
-        </div>
-
-        <div class="ef-setting-buttons">
-          <button
-            type="button"
-            class="ef-setting-btn ${
-              state.theme === "dark" ? "active" : ""
-            }"
-            data-drawer-theme="dark">
-            ${esc(langText("dark"))}
-          </button>
-
-          <button
-            type="button"
-            class="ef-setting-btn ${
-              state.theme === "light" ? "active" : ""
-            }"
-            data-drawer-theme="light">
-            ${esc(langText("light"))}
-          </button>
-        </div>
-
-        <div class="ef-drawer-separator"></div>
-
-        <button
-          type="button"
-          class="ef-drawer-btn"
-          id="drawerResetBtn">
-          ${esc(langText("reset"))}
-        </button>
-
-      </div>
-    `;
-
-    $$("[data-drawer-nav]", drawer).forEach((btn) => {
-      btn.onclick = () => {
-        navigate(btn.dataset.drawerNav);
-      };
-    });
-
-    $$("[data-drawer-lang]", drawer).forEach((btn) => {
-      btn.onclick = () => {
-        setLanguage(btn.dataset.drawerLang);
-      };
-    });
-
-    $$("[data-drawer-theme]", drawer).forEach((btn) => {
-      btn.onclick = () => {
-        setTheme(btn.dataset.drawerTheme);
-      };
-    });
-
-    const resetBtn = $("#drawerResetBtn", drawer);
-
-    if (resetBtn) {
-      resetBtn.onclick = resetApplication;
-    }
-  }
-
-  function showDrawerVisual() {
-    const drawer = $("#drawer");
-    const overlay = $("#drawerOverlay");
-    const menu = $("#menuBtn");
-
-    if (drawer) drawer.classList.add("open");
-    if (overlay) overlay.classList.add("open");
-
-    if (menu) {
-      menu.classList.add("active");
-      menu.setAttribute("aria-expanded", "true");
-    }
-  }
-
-  function hideDrawerVisual() {
-    const drawer = $("#drawer");
-    const overlay = $("#drawerOverlay");
-    const menu = $("#menuBtn");
-
-    if (drawer) drawer.classList.remove("open");
-    if (overlay) overlay.classList.remove("open");
-
-    if (menu) {
-      menu.classList.remove("active");
-      menu.setAttribute("aria-expanded", "false");
-    }
-  }
-
-  function openDrawer() {
-    ensureDrawer();
-
-    if (state.drawerOpen) return;
-
-    state.drawerOpen = true;
-
-    try {
-      history.pushState(
-        {
-          ...getCurrentRouteState(),
-          efDrawer: true
-        },
-        "",
-        location.href
-      );
-
-      state.drawerHistoryPushed = true;
-    } catch {
-      state.drawerHistoryPushed = false;
-    }
-
-    showDrawerVisual();
-  }
-
-  function closeDrawer(fromPopState = false) {
-    if (!state.drawerOpen) {
-      hideDrawerVisual();
-      return;
-    }
-
-    const hadHistoryEntry =
-      state.drawerHistoryPushed;
-
-    state.drawerOpen = false;
-    state.drawerHistoryPushed = false;
-
-    hideDrawerVisual();
-
-    if (
-      hadHistoryEntry &&
-      !fromPopState
-    ) {
-      try {
-        history.back();
-      } catch {}
-    }
-  }
-
-  function prepareNavigationFromDrawer() {
-    if (!state.drawerOpen) return;
-
-    if (state.drawerHistoryPushed) {
-      try {
-        history.replaceState(
-          getCurrentRouteState(),
-          "",
-          location.href
-        );
-      } catch {}
-    }
-
-    state.drawerHistoryPushed = false;
-    state.drawerOpen = false;
-
-    hideDrawerVisual();
-  }
-
-  function toggleDrawer() {
-    if (state.drawerOpen) {
-      closeDrawer();
-    } else {
-      openDrawer();
-    }
-  }
-
-
-  /* =========================================================
-     HAMBURGER
-     ========================================================= */
-
-  function bindHamburger() {
-    const btn = $("#menuBtn");
-
-    if (!btn) return;
-
-    btn.onclick = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleDrawer();
-    };
-  }
-
-
-  /* =========================================================
-     HISTORY
-     ========================================================= */
-
-  function routeStateFor(
-    page,
-    stageIndex = -1,
-    sectionIndex = -1,
-    itemIndex = -1
-  ) {
-    return {
-      efRoute: true,
-      page,
-      stageIndex,
-      sectionIndex,
-      itemIndex
-    };
-  }
-
-  function pushHistory() {
-    try {
-      history.pushState(
-        routeStateFor(
-          state.page,
-          state.stageIndex,
-          state.sectionIndex,
-          state.itemIndex
-        ),
-        "",
-        location.href
-      );
-    } catch {}
-
-    state.historyReady = true;
-  }
-
-  function replaceHistory() {
-    try {
-      history.replaceState(
-        routeStateFor(
-          state.page,
-          state.stageIndex,
-          state.sectionIndex,
-          state.itemIndex
-        ),
-        "",
-        location.href
-      );
-    } catch {}
-
-    state.historyReady = true;
-  }
-
-  function seedHistoryForSavedRoute() {
-    const currentPage = state.page;
-    const currentStage = state.stageIndex;
-    const currentSection = state.sectionIndex;
-    const currentItem = state.itemIndex;
-
-    try {
-      history.replaceState(
-        routeStateFor("home", -1, -1, -1),
-        "",
-        location.href
-      );
-
-      if (currentPage === "home") {
-        state.historyReady = true;
-        return;
-      }
-
-      if (
-        currentPage === "stage" ||
-        currentPage === "section" ||
-        currentPage === "item"
-      ) {
-        history.pushState(
-          routeStateFor(
-            "stage",
-            currentStage,
-            -1,
-            -1
-          ),
-          "",
-          location.href
-        );
-      }
-
-      if (
-        currentPage === "section" ||
-        currentPage === "item"
-      ) {
-        history.pushState(
-          routeStateFor(
-            "section",
-            currentStage,
-            currentSection,
-            -1
-          ),
-          "",
-          location.href
-        );
-      }
-
-      if (currentPage === "item") {
-        history.pushState(
-          routeStateFor(
-            "item",
-            currentStage,
-            currentSection,
-            currentItem
-          ),
-          "",
-          location.href
-        );
-      }
-
-      if (
-        currentPage === "estimate" ||
-        currentPage === "calculator" ||
-        currentPage === "settings"
-      ) {
-        history.pushState(
-          routeStateFor(
-            currentPage,
-            -1,
-            -1,
-            -1
-          ),
-          "",
-          location.href
-        );
-      }
-    } catch {
-      replaceHistory();
-    }
-
-    state.historyReady = true;
-  }
-
-
-  /* =========================================================
-     NAVIGATION
-     ========================================================= */
-
-  function navigate(
-    page,
-    stageIndex = state.stageIndex,
-    sectionIndex = state.sectionIndex,
-    itemIndex = state.itemIndex,
-    options = {}
-  ) {
-    if (state.drawerOpen) {
-      prepareNavigationFromDrawer();
-    }
-
-    state.page = page;
-
-    state.stageIndex =
-      Number.isInteger(stageIndex)
-        ? stageIndex
-        : -1;
-
-    state.sectionIndex =
-      Number.isInteger(sectionIndex)
-        ? sectionIndex
-        : -1;
-
-    state.itemIndex =
-      Number.isInteger(itemIndex)
-        ? itemIndex
-        : -1;
-
-    if (page !== "item") {
-      state.editingEstimateId = null;
-    }
-
-    saveRoute();
-
-    if (options.replace) {
-      replaceHistory();
-    } else {
-      pushHistory();
-    }
-
-    renderCurrentPage(false);
-  }
-
-
-  /* =========================================================
-     HOME
-     ========================================================= */
-
-  const homeEl = $("#home");
-
-  const homeMarkup = homeEl
-    ? homeEl.innerHTML
-    : "";
-
-  let homeIsStatic = true;
-
-  function showHome(push = false) {
-    state.page = "home";
-    state.stageIndex = -1;
-    state.sectionIndex = -1;
-    state.itemIndex = -1;
-    state.editingEstimateId = null;
-
-    saveRoute();
-
-    if (push) {
-      pushHistory();
-    }
-
-    if (homeEl) {
-      homeEl.innerHTML = homeMarkup;
-      homeIsStatic = true;
-    }
-
-    bindHome();
-
-    applyBranding();
-
-    window.scrollTo({
-      top: 0,
-      behavior: "auto"
-    });
-  }
-
-
-  /* =========================================================
-     HOME STAGES
-     ========================================================= */
-
-  function stageItemCount(stage) {
-    return stage.sections.reduce(
-      (total, section) =>
-        total + section.items.length,
-      0
-    );
-  }
-
-  function renderHomeStages() {
-    const grid = $("#stageGrid");
-
-    if (!grid) return;
-
-    grid.classList.remove(
-      "view-grid",
-      "view-list",
-      "view-compact",
-      "view-large",
-      "view-mini",
-      "view-two-column",
-      "view-horizontal",
-      "view-icon-list",
-      "view-timeline",
-      "view-dense"
-    );
-
-    grid.classList.add(
-      `view-${state.stageView}`
-    );
-
-    grid.innerHTML = DATA.map(
-      (stage, index) => `
-        <button
-          type="button"
-          class="stage-card"
-          data-stage-index="${index}">
-
-          <div class="ef-stage-logo-wrap">
-            ${brandLogoHTML()}
-          </div>
-
-          <div>
-            <h3>
-              ${esc(tr(stage.name))}
-            </h3>
-
-            <p>
-              ${stageItemCount(stage)}
-              ${
-                currentLang() === "hi"
-                  ? " मटेरियल"
-                  : " Materials"
-              }
-            </p>
-          </div>
-        </button>
-      `
-    ).join("");
-
-    $$(".stage-card", grid).forEach((card) => {
-      card.onclick = () => {
-        openStage(
-          Number(card.dataset.stageIndex)
-        );
-      };
-    });
-  }
-
-
-  /* =========================================================
-     HOME VIEW SELECTOR
-     ========================================================= */
-
-  function viewOptionsHTML(
-    active,
-    prefix,
-    context
-  ) {
-    return VIEW_MODES.map((mode) => `
-      <button
-        type="button"
-        class="ef-view-option ${
-          active === mode ? "active" : ""
-        }"
-        data-view-mode="${mode}"
-        data-view-context="${context}"
-        data-view-prefix="${prefix}">
-        ${esc(tr(VIEW_LABELS[mode]))}
-      </button>
-    `).join("");
-  }
-
-  function createFallbackHomeViewSelector() {
-    const stageGrid = $("#stageGrid");
-
-    if (!stageGrid) return;
-
-    if (
-      $("#viewTrigger") &&
-      $("#viewOptions")
-    ) {
-      return;
-    }
-
-    const parent = stageGrid.parentElement;
-
-    if (!parent) return;
-
-    let picker = $("#efHomeViewPicker");
-
-    if (!picker) {
-      picker = document.createElement("div");
-      picker.id = "efHomeViewPicker";
-      picker.className = "ef-view-picker";
-
-      parent.insertBefore(
-        picker,
-        stageGrid
-      );
-    }
-
-    picker.innerHTML = `
-      <button
-        type="button"
-        id="homeViewTrigger"
-        class="ef-view-trigger"
-        aria-expanded="false"
-        aria-label="${esc(
-          langText("stageView")
-        )}">
-        ◈
+        ← ${escapeHTML(t(HI.back))}
       </button>
 
-      <div
-        id="homeViewOptions"
-        class="ef-view-options"
-        hidden>
-        ${viewOptionsHTML(
-          state.stageView,
-          "home",
-          "stage"
-        )}
+      <div class="ef-page-title">
+        ${escapeHTML(t(stage[0]))}
       </div>
+
+      <div class="ef-page-subtitle">
+        ${escapeHTML(t(stage[1]))}
+      </div>
+
+    </div>
+
+    <div
+      class="ef-section-grid"
+      id="efSectionGrid"
+    ></div>
+
+  `;
+
+  main.innerHTML =
+    html;
+
+  const grid =
+    byId("efSectionGrid");
+
+  const directMaterials =
+    getStageMaterials(stage);
+
+  if (directMaterials.length) {
+
+    const direct =
+      document.createElement("button");
+
+    direct.type =
+      "button";
+
+    direct.className =
+      "ef-section-card";
+
+    direct.innerHTML = `
+
+      <div class="ef-section-card-title">
+        ${escapeHTML(t(stage[2]))}
+      </div>
+
+      <div class="ef-section-card-count">
+        ${directMaterials.length}
+      </div>
+
     `;
 
-    bindHomeViewSelector(
-      $("#homeViewTrigger"),
-      $("#homeViewOptions")
+    direct.addEventListener(
+      "click",
+      () => {
+
+        openDirectStageMaterials();
+
+      }
     );
+
+    grid.appendChild(
+      direct
+    );
+
   }
 
-  function bindHomeViewSelector(
-    trigger,
-    options
-  ) {
-    if (!trigger || !options) return;
+  const sections =
+    getStageSections(stage);
 
-    trigger.onclick = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
+  sections.forEach(
+    (section, index) => {
 
-      const willOpen =
-        options.hasAttribute("hidden");
+      const card =
+        document.createElement("button");
 
-      if (willOpen) {
-        options.removeAttribute("hidden");
-      } else {
-        options.setAttribute("hidden", "");
-      }
+      card.type =
+        "button";
 
-      trigger.setAttribute(
-        "aria-expanded",
-        String(willOpen)
+      card.className =
+        "ef-section-card";
+
+      card.innerHTML = `
+
+        <div class="ef-section-card-title">
+          ${escapeHTML(
+            t(getSectionName(section))
+          )}
+        </div>
+
+        <div class="ef-section-card-count">
+          ${getSectionMaterials(section).length}
+        </div>
+
+      `;
+
+      card.addEventListener(
+        "click",
+        () => {
+
+          openSection(index);
+
+        }
       );
-    };
 
-    $$(
-      ".ef-view-option",
-      options
-    ).forEach((btn) => {
-      btn.onclick = (event) => {
-        event.preventDefault();
+      grid.appendChild(
+        card
+      );
+
+    }
+  );
+
+  const back =
+    byId("stageBackButton");
+
+  if (back) {
+
+    back.addEventListener(
+      "click",
+      () => {
+
+        renderHome();
+
+      }
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   DIRECT STAGE MATERIALS
+   ========================================================= */
+
+function openDirectStageMaterials() {
+
+  EF.currentSection =
+    -1;
+
+  EF.currentSectionItems =
+    getStageMaterials(
+      EF.materials[
+        EF.currentStage
+      ]
+    );
+
+  saveRoute(
+    "materials"
+  );
+
+  renderMaterialPage();
+
+}
+
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+function openSection(index) {
+
+  const stage =
+    EF.materials[
+      EF.currentStage
+    ];
+
+  const section =
+    getStageSections(stage)[
+      index
+    ];
+
+  if (!section) {
+    return;
+  }
+
+  EF.currentSection =
+    index;
+
+  EF.currentSectionItems =
+    getSectionMaterials(
+      section
+    );
+
+  saveRoute(
+    "materials"
+  );
+
+  renderMaterialPage();
+
+}
+
+
+/* =========================================================
+   MATERIAL PAGE
+   ========================================================= */
+
+function renderMaterialPage() {
+
+  showOnlyPage(
+    "main"
+  );
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
+  }
+
+  const stage =
+    EF.materials[
+      EF.currentStage
+    ];
+
+  let sectionTitle =
+    stage[2];
+
+  if (
+    EF.currentSection !== null &&
+    EF.currentSection >= 0
+  ) {
+
+    const section =
+      getStageSections(stage)[
+        EF.currentSection
+      ];
+
+    if (section) {
+
+      sectionTitle =
+        section[0];
+
+    }
+
+  }
+
+  updateTopTitle(
+    t(sectionTitle)
+  );
+
+  renderMaterialToolbar(
+    main
+  );
+
+  renderMaterials(
+    EF.currentSectionItems
+  );
+
+}
+
+
+/* =========================================================
+   MATERIAL TOOLBAR
+   ========================================================= */
+
+function renderMaterialToolbar(main) {
+
+  const old =
+    byId("efMaterialToolbar");
+
+  if (old) {
+    old.remove();
+  }
+
+  const toolbar =
+    document.createElement("div");
+
+  toolbar.id =
+    "efMaterialToolbar";
+
+  toolbar.className =
+    "ef-material-toolbar";
+
+  toolbar.innerHTML = `
+
+    <div class="ef-toolbar-row">
+
+      <button
+        type="button"
+        class="ef-back-button"
+        id="materialsBackButton"
+      >
+        ← ${escapeHTML(t(HI.back))}
+      </button>
+
+      <button
+        type="button"
+        class="view-trigger"
+        id="efLocalViewTrigger"
+      >
+        ☷
+      </button>
+
+    </div>
+
+    <div
+      class="ef-local-view-options"
+      id="efLocalViewOptions"
+      hidden
+    >
+
+      <button data-view="grid">
+        ${escapeHTML(t(HI.grid))}
+      </button>
+
+      <button data-view="list">
+        ${escapeHTML(t(HI.list))}
+      </button>
+
+      <button data-view="compact">
+        ${escapeHTML(t(HI.compact))}
+      </button>
+
+      <button data-view="large">
+        ${escapeHTML(t(HI.large))}
+      </button>
+
+      <button data-view="mini">
+        ${escapeHTML(t(HI.mini))}
+      </button>
+
+      <button data-view="2column">
+        ${escapeHTML(t(HI.twoColumn))}
+      </button>
+
+      <button data-view="horizontal">
+        ${escapeHTML(t(HI.horizontal))}
+      </button>
+
+      <button data-view="icon">
+        ${escapeHTML(t(HI.iconList))}
+      </button>
+
+      <button data-view="timeline">
+        ${escapeHTML(t(HI.timeline))}
+      </button>
+
+      <button data-view="dense">
+        ${escapeHTML(t(HI.dense))}
+      </button>
+
+    </div>
+
+  `;
+
+  main.prepend(
+    toolbar
+  );
+
+  const back =
+    byId("materialsBackButton");
+
+  if (back) {
+
+    back.addEventListener(
+      "click",
+      () => {
+
+        renderStagePage();
+
+      }
+    );
+
+  }
+
+  const trigger =
+    byId("efLocalViewTrigger");
+
+  const options =
+    byId("efLocalViewOptions");
+
+  if (trigger && options) {
+
+    trigger.addEventListener(
+      "click",
+      (event) => {
+
         event.stopPropagation();
 
-        const mode =
-          btn.dataset.viewMode;
+        options.hidden =
+          !options.hidden;
 
-        state.stageView =
-          validView(mode);
+      }
+    );
 
-        storageSet(
-          STORAGE.stageView,
-          state.stageView
-        );
-
-        options.setAttribute(
-          "hidden",
-          ""
-        );
-
-        trigger.setAttribute(
-          "aria-expanded",
-          "false"
-        );
-
-        applyStageView();
-
-        $$(
-          ".ef-view-option",
-          options
-        ).forEach((option) => {
-          option.classList.toggle(
-            "active",
-            option.dataset.viewMode ===
-              state.stageView
-          );
-        });
-      };
-    });
   }
 
-  function bindExistingHomeViewSelector() {
-    const trigger = $("#viewTrigger");
-    const options = $("#viewOptions");
+  $all(
+    "[data-view]",
+    options
+  ).forEach(
+    button => {
 
-    if (!trigger || !options) {
-      createFallbackHomeViewSelector();
-      return;
+      button.addEventListener(
+        "click",
+        () => {
+
+          EF.view =
+            button.dataset.view;
+
+          localStorage.setItem(
+            "sandeepMaterialView",
+            EF.view
+          );
+
+          options.hidden =
+            true;
+
+          renderMaterials(
+            EF.currentSectionItems
+          );
+
+        }
+      );
+
     }
+  );
 
-    trigger.textContent = "◈";
-
-    trigger.setAttribute(
-      "aria-label",
-      langText("stageView")
-    );
-
-    $$(
-      ".view-option, .ef-view-option",
-      options
-    ).forEach((btn) => {
-      if (!btn.dataset.viewMode) return;
-
-      btn.textContent = tr(
-        VIEW_LABELS[
-          btn.dataset.viewMode
-        ] || btn.dataset.viewMode
-      );
-
-      btn.classList.toggle(
-        "active",
-        btn.dataset.viewMode ===
-          state.stageView
-      );
-    });
-
-    bindHomeViewSelector(
-      trigger,
-      options
-    );
-  }
-
-  function applyStageView() {
-    const grids = [
-      $("#stageGrid"),
-      $("#sectionGrid")
-    ].filter(Boolean);
-
-    grids.forEach((grid) => {
-      VIEW_MODES.forEach((mode) => {
-        grid.classList.remove(
-          `view-${mode}`
-        );
-      });
-
-      grid.classList.add(
-        `view-${state.stageView}`
-      );
-    });
-  }
+}
 
 
-  /* =========================================================
-     SEARCH / FILTER
-     ========================================================= */
+/* =========================================================
+   MATERIAL FILTER + SEARCH
+   ========================================================= */
 
-  function getAllSearchText(stage) {
-    const parts = [
-      stage.id,
-      stage.name
-    ];
+function getFilteredMaterials(
+  materials
+) {
 
-    stage.sections.forEach((section) => {
-      parts.push(section.name);
+  const search =
+    EF.searchText.trim();
 
-      section.items.forEach((item) => {
-        parts.push(item.name);
-
-        item.fields.forEach((field) => {
-          parts.push(field.name);
-          parts.push(...field.options);
-        });
-
-        parts.push(...item.units);
-        parts.push(...item.brands);
-      });
-    });
-
-    return parts
-      .join(" ")
-      .toLowerCase();
-  }
-
-  function populateFilters() {
-    const typeFilter = $("#typeFilter");
-    const sizeFilter = $("#sizeFilter");
-    const brandFilter = $("#brandFilter");
-
-    const types = new Set();
-    const sizes = new Set();
-    const brands = new Set();
-
-    DATA.forEach((stage) => {
-      stage.sections.forEach((section) => {
-        section.items.forEach((item) => {
-          item.fields.forEach((field) => {
-            const name =
-              field.name.toLowerCase();
-
-            if (
-              name.includes("type") ||
-              name.includes("sub type")
-            ) {
-              field.options.forEach((v) =>
-                types.add(v)
-              );
-            }
-
-            if (
-              name.includes("size")
-            ) {
-              field.options.forEach((v) =>
-                sizes.add(v)
-              );
-            }
-          });
-
-          item.brands.forEach((v) =>
-            brands.add(v)
-          );
-        });
-      });
-    });
-
-    function fillSelect(
-      select,
-      values
-    ) {
-      if (!select) return;
-
-      const old = select.value;
-
-      select.innerHTML = `
-        <option value="">
-          ${esc(
-            currentLang() === "hi"
-              ? "सभी"
-              : "All"
-          )}
-        </option>
-
-        ${Array.from(values)
-          .sort()
-          .map(
-            (value) => `
-              <option value="${esc(value)}">
-                ${esc(tr(value))}
-              </option>
-            `
-          )
-          .join("")}
-      `;
+  return materials.filter(
+    material => {
 
       if (
-        Array.from(values).includes(old)
+        !materialMatchesSearch(
+          material,
+          search
+        )
       ) {
-        select.value = old;
+        return false;
       }
+
+      return true;
+
     }
+  );
 
-    fillSelect(typeFilter, types);
-    fillSelect(sizeFilter, sizes);
-    fillSelect(brandFilter, brands);
+}
+
+
+/* =========================================================
+   MATERIAL RENDER
+   ========================================================= */
+
+function renderMaterials(materials) {
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
   }
 
-  function applySearchAndFilter() {
-    const searchInput =
-      $("#searchInput") ||
-      $("#mainSearch") ||
-      $("#search");
+  let grid =
+    byId("efMaterialCards");
 
-    const query =
-      searchInput?.value
-        ?.trim()
-        .toLowerCase() || "";
+  if (!grid) {
 
-    const typeValue =
-      $("#typeFilter")?.value || "";
+    grid =
+      document.createElement("div");
 
-    const sizeValue =
-      $("#sizeFilter")?.value || "";
+    grid.id =
+      "efMaterialCards";
 
-    const brandValue =
-      $("#brandFilter")?.value || "";
+    grid.className =
+      "material-grid";
 
-    $$(".stage-card").forEach(
-      (card) => {
-        const index =
-          Number(card.dataset.stageIndex);
-
-        const stage = DATA[index];
-
-        if (!stage) return;
-
-        const text =
-          getAllSearchText(stage);
-
-        let visible =
-          !query ||
-          text.includes(query);
-
-        if (
-          visible &&
-          typeValue
-        ) {
-          visible = stage.sections.some(
-            (section) =>
-              section.items.some(
-                (item) =>
-                  item.fields.some(
-                    (field) =>
-                      (
-                        field.name
-                          .toLowerCase()
-                          .includes("type")
-                      ) &&
-                      field.options.includes(
-                        typeValue
-                      )
-                  )
-              )
-          );
-        }
-
-        if (
-          visible &&
-          sizeValue
-        ) {
-          visible = stage.sections.some(
-            (section) =>
-              section.items.some(
-                (item) =>
-                  item.fields.some(
-                    (field) =>
-                      field.name
-                        .toLowerCase()
-                        .includes("size") &&
-                      field.options.includes(
-                        sizeValue
-                      )
-                  )
-              )
-          );
-        }
-
-        if (
-          visible &&
-          brandValue
-        ) {
-          visible = stage.sections.some(
-            (section) =>
-              section.items.some(
-                (item) =>
-                  item.brands.includes(
-                    brandValue
-                  )
-              )
-          );
-        }
-
-        card.style.display =
-          visible ? "" : "none";
-      }
-    );
-  }
-
-  function clearFilters() {
-    [
-      "#searchInput",
-      "#mainSearch",
-      "#search"
-    ].forEach((selector) => {
-      const el = $(selector);
-      if (el) el.value = "";
-    });
-
-    [
-      "#typeFilter",
-      "#sizeFilter",
-      "#brandFilter"
-    ].forEach((selector) => {
-      const el = $(selector);
-      if (el) el.value = "";
-    });
-
-    applySearchAndFilter();
-  }
-
-  function bindHomeSearch() {
-    const searchInput =
-      $("#searchInput") ||
-      $("#mainSearch") ||
-      $("#search");
-
-    if (searchInput) {
-      searchInput.placeholder =
-        langText("searchPlaceholder");
-
-      searchInput.oninput =
-        applySearchAndFilter;
-    }
-
-    [
-      "#typeFilter",
-      "#sizeFilter",
-      "#brandFilter"
-    ].forEach((selector) => {
-      const el = $(selector);
-
-      if (el) {
-        el.onchange =
-          applySearchAndFilter;
-      }
-    });
-
-    const clearBtn =
-      $("#clearFilter") ||
-      $("#clearSearch");
-
-    if (clearBtn) {
-      clearBtn.onclick =
-        clearFilters;
-    }
-  }
-
-
-  /* =========================================================
-     HOME BIND
-     ========================================================= */
-
-  function bindHome() {
-    state.currentViewContext =
-      "stage";
-
-    renderHomeStages();
-
-    populateFilters();
-
-    bindHomeSearch();
-
-    bindExistingHomeViewSelector();
-
-    applyStageView();
-
-    bindHamburger();
-
-    bindBottomNav();
-
-    updateStaticUI();
-
-    applyBranding();
-  }
-
-
-  /* =========================================================
-     STAGE PAGE
-     ========================================================= */
-
-  function openStage(stageIndex) {
-    if (
-      stageIndex < 0 ||
-      stageIndex >= DATA.length
-    ) {
-      return;
-    }
-
-    navigate(
-      "stage",
-      stageIndex,
-      -1,
-      -1
-    );
-  }
-
-  function renderStagePage() {
-    const stage =
-      DATA[state.stageIndex];
-
-    if (!stage) {
-      showHome(false);
-      return;
-    }
-
-    state.currentViewContext =
-      "stage";
-
-    return `
-      <div class="ef-page">
-
-        <div class="ef-page-head">
-
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn"
-            aria-label="${esc(
-              langText("back")
-            )}">
-            ←
-          </button>
-
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
-
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(tr(stage.name))}
-              </h2>
-
-              <p class="ef-page-subtitle">
-                ${esc(BRAND.name)}
-              </p>
-            </div>
-          </div>
-
-          <div class="ef-view-picker">
-
-            <button
-              type="button"
-              class="ef-view-trigger"
-              id="stageViewTrigger"
-              aria-expanded="false"
-              aria-label="${esc(
-                langText("stageView")
-              )}">
-              ◈
-            </button>
-
-            <div
-              id="stageViewOptions"
-              class="ef-view-options"
-              hidden>
-              ${viewOptionsHTML(
-                state.stageView,
-                "stage",
-                "stage"
-              )}
-            </div>
-
-          </div>
-
-        </div>
-
-        <div class="ef-breadcrumb">
-          ${esc(langText("stages"))}
-          &nbsp;›&nbsp;
-          ${esc(tr(stage.name))}
-          &nbsp;›&nbsp;
-          ${esc(langText("sections"))}
-        </div>
-
-        <div
-          id="sectionGrid"
-          class="view-${esc(state.stageView)}">
-          ${renderStageSections(stage)}
-        </div>
-
-      </div>
-    `;
-  }
-
-  function renderStageSections(stage) {
-    if (!stage.sections.length) {
-      return `
-        <div class="ef-setting-card">
-          ${esc(langText("nothing"))}
-        </div>
-      `;
-    }
-
-    return stage.sections
-      .map(
-        (section, index) => `
-          <button
-            type="button"
-            class="ef-section-card"
-            data-section-index="${index}">
-
-            <h3>
-              ${esc(tr(section.name))}
-            </h3>
-
-            <p>
-              ${section.items.length}
-              ${
-                currentLang() === "hi"
-                  ? " मटेरियल"
-                  : " Materials"
-              }
-            </p>
-
-          </button>
-        `
-      )
-      .join("");
-  }
-
-  function bindStagePage() {
-    const backBtn =
-      $("#routeBackBtn");
-
-    if (backBtn) {
-      backBtn.onclick =
-        goBackRoute;
-    }
-
-    $$(".ef-section-card").forEach(
-      (card) => {
-        card.onclick = () => {
-          openSection(
-            state.stageIndex,
-            Number(
-              card.dataset.sectionIndex
-            )
-          );
-        };
-      }
+    main.appendChild(
+      grid
     );
 
-    bindRouteViewPicker(
-      "stage",
-      state.stageView
+  }
+
+  grid.className =
+    "material-grid " +
+    "view-" +
+    EF.view;
+
+  grid.innerHTML = "";
+
+  const filtered =
+    getFilteredMaterials(
+      materials
     );
 
-    applyStageView();
-  }
+  if (!filtered.length) {
 
+    grid.innerHTML = `
 
-  /* =========================================================
-     SECTION PAGE
-     ========================================================= */
+      <div class="ef-empty-state">
 
-  function openSection(
-    stageIndex,
-    sectionIndex
-  ) {
-    const stage =
-      DATA[stageIndex];
-
-    if (!stage) return;
-
-    const section =
-      stage.sections[sectionIndex];
-
-    if (!section) return;
-
-    navigate(
-      "section",
-      stageIndex,
-      sectionIndex,
-      -1
-    );
-  }
-
-  function renderSectionPage() {
-    const stage =
-      DATA[state.stageIndex];
-
-    const section =
-      stage?.sections[
-        state.sectionIndex
-      ];
-
-    if (!stage || !section) {
-      showHome(false);
-      return "";
-    }
-
-    state.currentViewContext =
-      "material";
-
-    return `
-      <div class="ef-page">
-
-        <div class="ef-page-head">
-
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn"
-            aria-label="${esc(
-              langText("back")
-            )}">
-            ←
-          </button>
-
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
-
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(tr(section.name))}
-              </h2>
-
-              <p class="ef-page-subtitle">
-                ${esc(tr(stage.name))}
-              </p>
-            </div>
-          </div>
-
-          <div class="ef-view-picker">
-
-            <button
-              type="button"
-              class="ef-view-trigger"
-              id="materialViewTrigger"
-              aria-expanded="false"
-              aria-label="${esc(
-                langText("materialView")
-              )}">
-              ◈
-            </button>
-
-            <div
-              id="materialViewOptions"
-              class="ef-view-options"
-              hidden>
-              ${viewOptionsHTML(
-                state.materialView,
-                "material",
-                "material"
-              )}
-            </div>
-
-          </div>
-
+        <div class="ef-empty-icon">
+          ⌕
         </div>
 
-        <div class="ef-breadcrumb">
-          ${esc(langText("stages"))}
-          &nbsp;›&nbsp;
-          ${esc(tr(stage.name))}
-          &nbsp;›&nbsp;
-          ${esc(tr(section.name))}
-        </div>
-
-        <div
-          id="materialGrid"
-          class="ef-material-grid view-${esc(
-            state.materialView
-          )}">
-
-          ${renderSectionMaterials(section)}
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  function renderSectionMaterials(
-    section
-  ) {
-    if (!section.items.length) {
-      return `
-        <div class="ef-setting-card">
-          ${esc(
-            langText("noMaterials")
+        <div>
+          ${escapeHTML(
+            EF.searchText
+              ? t(HI.noMaterials)
+              : t(HI.emptySearch)
           )}
         </div>
-      `;
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  filtered.forEach(
+    (material, index) => {
+
+      const card =
+        createMaterialCard(
+          material,
+          index
+        );
+
+      grid.appendChild(
+        card
+      );
+
     }
+  );
 
-    return section.items
+}
+
+
+/* =========================================================
+   MATERIAL CARD
+   ========================================================= */
+
+function createMaterialCard(
+  material,
+  filteredIndex
+) {
+
+  const card =
+    document.createElement("button");
+
+  card.type =
+    "button";
+
+  card.className =
+    "ef-material-card";
+
+  card.dataset.material =
+    material[0];
+
+  const fields =
+    Array.isArray(material[1])
+      ? material[1]
+      : [];
+
+  const units =
+    Array.isArray(material[2])
+      ? material[2]
+      : [];
+
+  const brands =
+    Array.isArray(material[3])
+      ? material[3]
+      : [];
+
+  const previewFields =
+    fields
+      .slice(0, 3)
       .map(
-        (item, index) => `
-          <button
-            type="button"
-            class="ef-material-card"
-            data-item-index="${index}">
+        field => {
 
-            <div class="ef-material-name">
-              ${esc(tr(item.name))}
+          const name =
+            field[0];
+
+          const values =
+            Array.isArray(field[1])
+              ? field[1]
+              : [];
+
+          return `
+            <div class="ef-material-meta">
+              <span>${escapeHTML(t(name))}</span>
+              <b>${escapeHTML(
+                t(values[0] || "")
+              )}</b>
             </div>
+          `;
 
-          </button>
-        `
+        }
       )
       .join("");
-  }
 
-  function bindSectionPage() {
-    const backBtn =
-      $("#routeBackBtn");
+  card.innerHTML = `
 
-    if (backBtn) {
-      backBtn.onclick =
-        goBackRoute;
-    }
+    <div class="ef-material-card-inner">
 
-    $$(".ef-material-card").forEach(
-      (card) => {
-        card.onclick = () => {
-          openItem(
-            state.stageIndex,
-            state.sectionIndex,
-            Number(
-              card.dataset.itemIndex
-            )
-          );
-        };
-      }
-    );
+      <div class="ef-material-icon">
+        ⚡
+      </div>
 
-    bindRouteViewPicker(
-      "material",
-      state.materialView
-    );
+      <div class="ef-material-name">
+        ${escapeHTML(
+          t(material[0])
+        )}
+      </div>
 
-    applyMaterialView();
-  }
+      <div class="ef-material-meta-list">
+        ${previewFields}
+      </div>
 
+      <div class="ef-material-unit">
+        ${escapeHTML(
+          units
+            .map(t)
+            .join(" • ")
+        )}
+      </div>
 
-  /* =========================================================
-     ROUTE VIEW PICKER
-     ========================================================= */
+      <div class="ef-material-arrow">
+        →
+      </div>
 
-  function bindRouteViewPicker(
-    context,
-    active
-  ) {
-    const trigger =
-      context === "material"
-        ? $("#materialViewTrigger")
-        : $("#stageViewTrigger");
+    </div>
 
-    const options =
-      context === "material"
-        ? $("#materialViewOptions")
-        : $("#stageViewOptions");
+  `;
 
-    if (!trigger || !options) return;
+  card.addEventListener(
+    "click",
+    () => {
 
-    trigger.textContent = "◈";
+      const realIndex =
+        EF.currentSectionItems
+          .indexOf(material);
 
-    trigger.onclick = (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const willOpen =
-        options.hasAttribute("hidden");
-
-      if (willOpen) {
-        options.removeAttribute("hidden");
-      } else {
-        options.setAttribute(
-          "hidden",
-          ""
-        );
-      }
-
-      trigger.setAttribute(
-        "aria-expanded",
-        String(willOpen)
+      openMaterial(
+        realIndex
       );
-    };
 
-    $$(".ef-view-option", options)
-      .forEach((btn) => {
-        btn.onclick = (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-
-          const mode =
-            validView(
-              btn.dataset.viewMode
-            );
-
-          if (context === "material") {
-            state.materialView =
-              mode;
-
-            storageSet(
-              STORAGE.materialView,
-              mode
-            );
-          } else {
-            state.stageView =
-              mode;
-
-            storageSet(
-              STORAGE.stageView,
-              mode
-            );
-          }
-
-          options.setAttribute(
-            "hidden",
-            ""
-          );
-
-          trigger.setAttribute(
-            "aria-expanded",
-            "false"
-          );
-
-          renderCurrentPage(false);
-        };
-      });
-  }
-
-  function applyMaterialView() {
-    $$(".ef-material-grid").forEach(
-      (grid) => {
-        VIEW_MODES.forEach((mode) => {
-          grid.classList.remove(
-            `view-${mode}`
-          );
-        });
-
-        grid.classList.add(
-          `view-${state.materialView}`
-        );
-      }
-    );
-  }
-
-
-  /* =========================================================
-     ITEM
-     ========================================================= */
-
-  function getCurrentItem() {
-    const stage =
-      DATA[state.stageIndex];
-
-    const section =
-      stage?.sections[
-        state.sectionIndex
-      ];
-
-    return (
-      section?.items[
-        state.itemIndex
-      ] || null
-    );
-  }
-
-  function getEstimateForCurrentItem() {
-    const items =
-      getEstimateItems();
-
-    if (state.editingEstimateId) {
-      const byId =
-        items.find(
-          (item) =>
-            item.id ===
-            state.editingEstimateId
-        );
-
-      if (byId) return byId;
     }
+  );
 
-    return (
-      items.find(
-        (item) =>
-          item.stageIndex ===
-            state.stageIndex &&
-          item.sectionIndex ===
-            state.sectionIndex &&
-          item.itemIndex ===
-            state.itemIndex
-      ) || null
-    );
+  return card;
+
+}
+
+
+/* =========================================================
+   MATERIAL EDITOR
+   ========================================================= */
+
+function openMaterial(index) {
+
+  const material =
+    EF.currentSectionItems[
+      index
+    ];
+
+  if (!material) {
+    return;
   }
 
-  function openItem(
-    stageIndex,
-    sectionIndex,
-    itemIndex,
-    editingId = null
-  ) {
-    const stage =
-      DATA[stageIndex];
+  EF.currentMaterialIndex =
+    index;
 
-    const section =
-      stage?.sections[sectionIndex];
+  EF.currentMaterial =
+    material;
 
-    const item =
-      section?.items[itemIndex];
+  EF.currentDraft =
+    {};
 
-    if (!stage || !section || !item) {
-      return;
-    }
+  saveRoute(
+    "editor"
+  );
 
-    state.editingEstimateId =
-      editingId;
+  renderEditor();
 
-    state.draft = {};
+}
 
-    navigate(
-      "item",
-      stageIndex,
-      sectionIndex,
-      itemIndex
-    );
+
+/* =========================================================
+   EDITOR
+   ========================================================= */
+
+function renderEditor() {
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
   }
 
-  function renderItemPage() {
-    const stage =
-      DATA[state.stageIndex];
+  const material =
+    EF.currentMaterial;
 
-    const section =
-      stage?.sections[
-        state.sectionIndex
-      ];
+  if (!material) {
+    return;
+  }
 
-    const item =
-      section?.items[
-        state.itemIndex
-      ];
+  const fields =
+    Array.isArray(material[1])
+      ? material[1]
+      : [];
 
-    if (!stage || !section || !item) {
-      showHome(false);
-      return "";
-    }
+  const units =
+    Array.isArray(material[2])
+      ? material[2]
+      : [];
 
-    const existing =
-      getEstimateForCurrentItem();
+  const brands =
+    Array.isArray(material[3])
+      ? material[3]
+      : [];
 
-    return `
-      <div class="ef-page">
+  updateTopTitle(
+    t(material[0])
+  );
 
-        <div class="ef-page-head">
+  let html = `
 
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn"
-            aria-label="${esc(
-              langText("back")
-            )}">
-            ←
-          </button>
+    <div class="ef-editor">
 
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
+      <div class="ef-editor-head">
 
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(tr(item.name))}
-              </h2>
+        <button
+          type="button"
+          class="ef-back-button"
+          id="editorBackButton"
+        >
+          ← ${escapeHTML(t(HI.back))}
+        </button>
 
-              <p class="ef-page-subtitle">
-                ${esc(BRAND.name)}
-              </p>
-            </div>
-          </div>
-
-          <div></div>
-
-        </div>
-
-        <div class="ef-breadcrumb">
-          ${esc(tr(stage.name))}
-          &nbsp;›&nbsp;
-          ${esc(tr(section.name))}
-          &nbsp;›&nbsp;
-          ${esc(tr(item.name))}
-        </div>
-
-        <div class="ef-editor">
-
-          <div class="ef-editor-card">
-
-            <h2 class="ef-editor-title">
-              ${esc(tr(item.name))}
-            </h2>
-
-            <p class="ef-editor-subtitle">
-              ${esc(
-                currentLang() === "hi"
-                  ? "मटेरियल डिटेल भरें"
-                  : "Enter material details"
-              )}
-            </p>
-
-            ${renderFields(
-              item,
-              existing
-            )}
-
-            ${renderQuantity(
-              existing
-            )}
-
-            ${renderUnit(
-              item,
-              existing
-            )}
-
-            ${renderBrand(
-              item,
-              existing
-            )}
-
-            <div class="ef-action-row three">
-
-              <button
-                type="button"
-                class="ef-secondary-btn"
-                id="itemBackBtn">
-                ${esc(
-                  langText("back")
-                )}
-              </button>
-
-              <button
-                type="button"
-                class="ef-primary-btn"
-                id="saveItemBtn">
-                ${esc(
-                  existing
-                    ? langText("update")
-                    : langText("add")
-                )}
-              </button>
-
-              <button
-                type="button"
-                class="ef-secondary-btn"
-                id="nextItemBtn">
-                ${esc(
-                  langText("next")
-                )}
-              </button>
-
-            </div>
-
-          </div>
-
+        <div class="ef-editor-title">
+          ${escapeHTML(t(material[0]))}
         </div>
 
       </div>
-    `;
-  }
 
+      <div class="ef-fields">
 
-  /* =========================================================
-     ITEM FIELDS
-     ========================================================= */
+  `;
 
-  function getExistingFieldValue(
-    existing,
-    fieldName
-  ) {
-    if (!existing?.values) {
-      return "";
-    }
+  fields.forEach(
+    (field, index) => {
 
-    return (
-      existing.values[fieldName] ||
-      ""
-    );
-  }
+      const fieldName =
+        field[0];
 
-  function renderFields(
-    item,
-    existing
-  ) {
-    if (!item.fields.length) {
-      return "";
-    }
+      const values =
+        Array.isArray(field[1])
+          ? field[1]
+          : [];
 
-    return item.fields
-      .map((field, fieldIndex) => {
-        const value =
-          getExistingFieldValue(
-            existing,
-            field.name
-          );
+      html += `
 
-        return `
-          <div class="ef-field">
+        <div class="ef-field">
 
-            <label
-              class="ef-field-label">
-              ${esc(tr(field.name))}
-            </label>
-
-            <div class="ef-field-row">
-
-              <select
-                class="ef-select ef-item-field"
-                data-field-index="${fieldIndex}"
-                data-field-name="${esc(
-                  field.name
-                )}">
-
-                <option value="">
-                  ${
-                    currentLang() === "hi"
-                      ? "चुनें"
-                      : "Select"
-                  }
-                </option>
-
-                ${field.options
-                  .map(
-                    (option) => `
-                      <option
-                        value="${esc(option)}"
-                        ${
-                          value === option
-                            ? "selected"
-                            : ""
-                        }>
-                        ${esc(
-                          tr(option)
-                        )}
-                      </option>
-                    `
-                  )
-                  .join("")}
-
-              </select>
-
-              <button
-                type="button"
-                class="ef-clear-field"
-                data-clear-field="${fieldIndex}"
-                aria-label="${esc(
-                  langText("clear")
-                )}">
-                ×
-              </button>
-
-            </div>
-
-          </div>
-        `;
-      })
-      .join("");
-  }
-
-
-  /* =========================================================
-     QUANTITY
-     ========================================================= */
-
-  function renderQuantity(existing) {
-    const quantity =
-      existing?.quantity != null
-        ? existing.quantity
-        : 1;
-
-    return `
-      <div class="ef-field">
-
-        <label class="ef-field-label">
-          ${esc(langText("quantity"))}
-        </label>
-
-        <div class="ef-quantity-row">
-
-          <button
-            type="button"
-            class="ef-qty-btn"
-            id="qtyMinus">
-            −
-          </button>
-
-          <input
-            type="number"
-            inputmode="numeric"
-            min="0"
-            step="1"
-            class="ef-input"
-            id="itemQuantity"
-            value="${esc(quantity)}">
-
-          <button
-            type="button"
-            class="ef-qty-btn"
-            id="qtyPlus">
-            +
-          </button>
-
-          <button
-            type="button"
-            class="ef-clear-field"
-            id="qtyClear">
-            ×
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-
-  /* =========================================================
-     UNIT
-     ========================================================= */
-
-  function renderUnit(
-    item,
-    existing
-  ) {
-    const units =
-      item.units.length
-        ? item.units
-        : [
-            "pcs"
-          ];
-
-    let current =
-      existing?.unit ||
-      storageGet(
-        STORAGE.lastUnit,
-        ""
-      );
-
-    if (
-      current &&
-      !units.includes(current)
-    ) {
-      current = "";
-    }
-
-    return `
-      <div class="ef-field">
-
-        <label class="ef-field-label">
-          ${esc(langText("unit"))}
-        </label>
-
-        <div class="ef-field-row">
+          <label
+            for="efField_${index}"
+          >
+            ${escapeHTML(
+              t(fieldName)
+            )}
+          </label>
 
           <select
-            class="ef-select"
-            id="itemUnit">
+            id="efField_${index}"
+            data-field-index="${index}"
+            class="ef-dynamic-field"
+          >
 
             <option value="">
-              ${
-                currentLang() === "hi"
+              ${escapeHTML(
+                EF.language === "hi"
                   ? "चुनें"
                   : "Select"
-              }
+              )}
             </option>
 
-            ${units
-              .map(
-                (unit) => `
-                  <option
-                    value="${esc(unit)}"
-                    ${
-                      current === unit
-                        ? "selected"
-                        : ""
-                    }>
-                    ${esc(tr(unit))}
-                  </option>
-                `
-              )
-              .join("")}
-
-          </select>
-
-          <button
-            type="button"
-            class="ef-clear-field"
-            id="unitClear">
-            ×
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-
-  /* =========================================================
-     BRAND
-     ========================================================= */
-
-  function renderBrand(
-    item,
-    existing
-  ) {
-    if (!item.brands.length) {
-      return "";
-    }
-
-    const current =
-      existing?.brand || "";
-
-    return `
-      <div class="ef-field">
-
-        <label class="ef-field-label">
-          ${esc(langText("brand"))}
-        </label>
-
-        <div class="ef-field-row">
-
-          <select
-            class="ef-select"
-            id="itemBrand">
-
-            <option value="">
-              ${
-                currentLang() === "hi"
-                  ? "वैकल्पिक"
-                  : "Optional"
-              }
-            </option>
-
-            ${item.brands
-              .map(
-                (brand) => `
-                  <option
-                    value="${esc(brand)}"
-                    ${
-                      current === brand
-                        ? "selected"
-                        : ""
-                    }>
-                    ${esc(tr(brand))}
-                  </option>
-                `
-              )
-              .join("")}
-
-          </select>
-
-          <button
-            type="button"
-            class="ef-clear-field"
-            id="brandClear">
-            ×
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-
-  /* =========================================================
-     ITEM EDITOR
-     ========================================================= */
-
-  function collectItemValues() {
-    const values = {};
-
-    $$(".ef-item-field").forEach(
-      (field) => {
-        values[
-          field.dataset.fieldName
-        ] = field.value;
-      }
-    );
-
-    return values;
-  }
-
-  function bindItemEditor() {
-    const backBtn =
-      $("#routeBackBtn");
-
-    if (backBtn) {
-      backBtn.onclick =
-        goBackRoute;
-    }
-
-    const itemBackBtn =
-      $("#itemBackBtn");
-
-    if (itemBackBtn) {
-      itemBackBtn.onclick =
-        goBackRoute;
-    }
-
-    $$("[data-clear-field]").forEach(
-      (btn) => {
-        btn.onclick = () => {
-          const index =
-            btn.dataset.clearField;
-
-          const field = $(
-            `.ef-item-field[data-field-index="${CSS.escape(
-              index
-            )}"]`
-          );
-
-          if (field) {
-            field.value = "";
-          }
-        };
-      }
-    );
-
-    const quantity =
-      $("#itemQuantity");
-
-    const minus =
-      $("#qtyMinus");
-
-    const plus =
-      $("#qtyPlus");
-
-    const clear =
-      $("#qtyClear");
-
-    function setQuantity(value) {
-      if (!quantity) return;
-
-      let num =
-        Number(value);
-
-      if (!Number.isFinite(num)) {
-        num = 0;
-      }
-
-      num = Math.max(
-        0,
-        Math.floor(num)
-      );
-
-      quantity.value = String(num);
-    }
-
-    if (minus) {
-      minus.onclick = () => {
-        setQuantity(
-          Number(quantity?.value || 0) - 1
-        );
-      };
-    }
-
-    if (plus) {
-      plus.onclick = () => {
-        setQuantity(
-          Number(quantity?.value || 0) + 1
-        );
-      };
-    }
-
-    if (clear) {
-      clear.onclick = () => {
-        setQuantity(0);
-      };
-    }
-
-    const unitClear =
-      $("#unitClear");
-
-    if (unitClear) {
-      unitClear.onclick = () => {
-        const unit =
-          $("#itemUnit");
-
-        if (unit) {
-          unit.value = "";
-        }
-      };
-    }
-
-    const brandClear =
-      $("#brandClear");
-
-    if (brandClear) {
-      brandClear.onclick = () => {
-        const brand =
-          $("#itemBrand");
-
-        if (brand) {
-          brand.value = "";
-        }
-      };
-    }
-
-    const saveBtn =
-      $("#saveItemBtn");
-
-    if (saveBtn) {
-      saveBtn.onclick =
-        saveCurrentItem;
-    }
-
-    const nextBtn =
-      $("#nextItemBtn");
-
-    if (nextBtn) {
-      nextBtn.onclick =
-        openNextItem;
-    }
-  }
-
-
-  /* =========================================================
-     SAVE ITEM
-     ========================================================= */
-
-  function saveCurrentItem() {
-    const quantityInput =
-      $("#itemQuantity");
-
-    const quantity =
-      Number(
-        quantityInput?.value || 0
-      );
-
-    if (
-      !Number.isFinite(quantity) ||
-      quantity <= 0
-    ) {
-      showToast(
-        langText("quantityRequired")
-      );
-
-      quantityInput?.focus();
-
-      return;
-    }
-
-    const values =
-      collectItemValues();
-
-    const unit =
-      $("#itemUnit")?.value || "";
-
-    const brand =
-      $("#itemBrand")?.value || "";
-
-    const item =
-      getCurrentItem();
-
-    if (!item) return;
-
-    const estimates =
-      getEstimateItems();
-
-    let existingIndex = -1;
-
-    if (state.editingEstimateId) {
-      existingIndex =
-        estimates.findIndex(
-          (entry) =>
-            entry.id ===
-            state.editingEstimateId
-        );
-    }
-
-    if (existingIndex < 0) {
-      existingIndex =
-        estimates.findIndex(
-          (entry) =>
-            entry.stageIndex ===
-              state.stageIndex &&
-            entry.sectionIndex ===
-              state.sectionIndex &&
-            entry.itemIndex ===
-              state.itemIndex
-        );
-    }
-
-    const entry = {
-      id:
-        existingIndex >= 0
-          ? estimates[existingIndex].id
-          : makeId(),
-
-      stageIndex:
-        state.stageIndex,
-
-      sectionIndex:
-        state.sectionIndex,
-
-      itemIndex:
-        state.itemIndex,
-
-      stage:
-        DATA[state.stageIndex].name,
-
-      section:
-        DATA[state.stageIndex]
-          .sections[state.sectionIndex]
-          .name,
-
-      name:
-        item.name,
-
-      values,
-
-      quantity,
-
-      unit,
-
-      brand,
-
-      price: ""
-    };
-
-    if (existingIndex >= 0) {
-      estimates[existingIndex] =
-        entry;
-    } else {
-      estimates.push(entry);
-    }
-
-    saveEstimateItems(
-      estimates
-    );
-
-    if (unit) {
-      storageSet(
-        STORAGE.lastUnit,
-        unit
-      );
-    }
-
-    showToast(
-      existingIndex >= 0
-        ? langText("updated")
-        : langText("added")
-    );
-
-    state.editingEstimateId = null;
-
-    setTimeout(
-      openNextItem,
-      220
-    );
-  }
-
-
-  /* =========================================================
-     NEXT ITEM
-     ========================================================= */
-
-  function getNextPosition() {
-    let s =
-      state.stageIndex;
-
-    let sec =
-      state.sectionIndex;
-
-    let item =
-      state.itemIndex + 1;
-
-    if (
-      DATA[s]?.sections[sec] &&
-      item <
-        DATA[s].sections[sec].items.length
-    ) {
-      return {
-        stageIndex: s,
-        sectionIndex: sec,
-        itemIndex: item
-      };
-    }
-
-    sec++;
-
-    while (
-      DATA[s] &&
-      sec < DATA[s].sections.length
-    ) {
-      if (
-        DATA[s].sections[sec].items.length
-      ) {
-        return {
-          stageIndex: s,
-          sectionIndex: sec,
-          itemIndex: 0
-        };
-      }
-
-      sec++;
-    }
-
-    s++;
-
-    while (s < DATA.length) {
-      for (
-        let sectionIndex = 0;
-        sectionIndex <
-        DATA[s].sections.length;
-        sectionIndex++
-      ) {
-        const section =
-          DATA[s].sections[
-            sectionIndex
-          ];
-
-        if (section.items.length) {
-          return {
-            stageIndex: s,
-            sectionIndex,
-            itemIndex: 0
-          };
-        }
-      }
-
-      s++;
-    }
-
-    return null;
-  }
-
-  function openNextItem() {
-    const next =
-      getNextPosition();
-
-    if (!next) {
-      navigate("estimate");
-      return;
-    }
-
-    state.editingEstimateId =
-      null;
-
-    state.draft = {};
-
-    navigate(
-      "item",
-      next.stageIndex,
-      next.sectionIndex,
-      next.itemIndex
-    );
-  }
-
-
-  /* =========================================================
-     ESTIMATE PAGE
-     ========================================================= */
-
-  function renderEstimatePage() {
-    const estimates =
-      getEstimateItems();
-
-    return `
-      <div class="ef-page">
-
-        <div class="ef-page-head">
-
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn">
-            ←
-          </button>
-
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
-
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(
-                  langText("estimate")
-                )}
-              </h2>
-
-              <p class="ef-page-subtitle">
-                ${esc(BRAND.name)}
-              </p>
-            </div>
-          </div>
-
-          <div></div>
-
-        </div>
-
-        <div class="ef-estimate-list">
-
-          ${
-            estimates.length
-              ? estimates
-                  .map(
-                    renderEstimateCard
-                  )
-                  .join("")
-              : `
-                <div class="ef-setting-card">
-                  ${esc(
-                    langText(
-                      "emptyEstimate"
-                    )
+            ${values.map(
+              value => `
+
+                <option value="${escapeAttr(value)}">
+                  ${escapeHTML(
+                    t(value)
                   )}
-                </div>
-              `
-          }
+                </option>
 
-        </div>
-
-      </div>
-    `;
-  }
-
-  function renderEstimateCard(
-    entry,
-    index
-  ) {
-    const values =
-      Object.entries(
-        entry.values || {}
-      )
-        .filter(
-          ([, value]) =>
-            safeText(value).trim()
-        )
-        .map(
-          ([key, value]) =>
-            `${tr(key)}: ${tr(value)}`
-        )
-        .join(" • ");
-
-    return `
-      <div
-        class="ef-estimate-card"
-        data-estimate-id="${esc(
-          entry.id
-        )}">
-
-        <h3 class="ef-estimate-title">
-          ${esc(tr(entry.name))}
-        </h3>
-
-        <div class="ef-estimate-meta">
-          ${esc(
-            tr(entry.stage)
-          )}
-          /
-          ${esc(
-            tr(entry.section)
-          )}
-          <br>
-
-          ${esc(
-            langText("quantity")
-          )}:
-          ${esc(entry.quantity)}
-
-          ${
-            entry.unit
-              ? ` • ${esc(
-                  langText("unit")
-                )}: ${esc(
-                  tr(entry.unit)
-                )}`
-              : ""
-          }
-
-          ${
-            entry.brand
-              ? ` • ${esc(
-                  langText("brand")
-                )}: ${esc(
-                  tr(entry.brand)
-                )}`
-              : ""
-          }
-
-          ${
-            values
-              ? `<br>${esc(values)}`
-              : ""
-          }
-        </div>
-
-        <div class="ef-estimate-actions">
-
-          <button
-            type="button"
-            class="ef-secondary-btn"
-            data-edit-estimate="${esc(
-              entry.id
-            )}">
-            ${esc(
-              langText("edit")
-            )}
-          </button>
-
-          <button
-            type="button"
-            class="ef-danger-btn"
-            data-delete-estimate="${esc(
-              entry.id
-            )}">
-            ${esc(
-              langText("delete")
-            )}
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  function bindEstimatePage() {
-    const back =
-      $("#routeBackBtn");
-
-    if (back) {
-      back.onclick =
-        goBackRoute;
-    }
-
-    $$("[data-edit-estimate]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          const id =
-            btn.dataset.editEstimate;
-
-          const entry =
-            getEstimateItems().find(
-              (item) =>
-                item.id === id
-            );
-
-          if (!entry) return;
-
-          state.editingEstimateId =
-            id;
-
-          openItem(
-            entry.stageIndex,
-            entry.sectionIndex,
-            entry.itemIndex,
-            id
-          );
-        };
-      });
-
-    $$("[data-delete-estimate]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          const id =
-            btn.dataset.deleteEstimate;
-
-          const items =
-            getEstimateItems();
-
-          const filtered =
-            items.filter(
-              (item) =>
-                item.id !== id
-            );
-
-          saveEstimateItems(
-            filtered
-          );
-
-          renderCurrentPage(false);
-        };
-      });
-  }
-
-
-  /* =========================================================
-     CALCULATOR
-     ========================================================= */
-
-  function renderCalculatorPage() {
-    return `
-      <div class="ef-page">
-
-        <div class="ef-page-head">
-
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn">
-            ←
-          </button>
-
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
-
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(
-                  langText(
-                    "calculatorTitle"
-                  )
-                )}
-              </h2>
-
-              <p class="ef-page-subtitle">
-                ${esc(BRAND.name)}
-              </p>
-            </div>
-          </div>
-
-          <div></div>
-
-        </div>
-
-        <div class="ef-calc-card">
-
-          <div class="ef-setting-title">
-            P = V × I
-          </div>
-
-          <div class="ef-calc-grid">
-
-            <input
-              class="ef-input"
-              id="calcV"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("voltage")
-              )}">
-
-            <input
-              class="ef-input"
-              id="calcI"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("current")
-              )}">
-
-          </div>
-
-          <button
-            type="button"
-            class="ef-primary-btn"
-            id="calcPowerBtn"
-            style="width:100%;margin-top:8px;">
-            P = V × I
-          </button>
-
-          <div
-            class="ef-calc-result"
-            id="calcPowerResult">
-            —
-          </div>
-
-        </div>
-
-        <div class="ef-calc-card">
-
-          <div class="ef-setting-title">
-            V = I × R
-          </div>
-
-          <div class="ef-calc-grid">
-
-            <input
-              class="ef-input"
-              id="calcVCurrent"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("current")
-              )}">
-
-            <input
-              class="ef-input"
-              id="calcRVoltage"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("resistance")
-              )}">
-
-          </div>
-
-          <button
-            type="button"
-            class="ef-primary-btn"
-            id="calcVoltageBtn"
-            style="width:100%;margin-top:8px;">
-            V = I × R
-          </button>
-
-          <div
-            class="ef-calc-result"
-            id="calcVoltageResult">
-            —
-          </div>
-
-        </div>
-
-        <div class="ef-calc-card">
-
-          <div class="ef-setting-title">
-            I = V ÷ R
-          </div>
-
-          <div class="ef-calc-grid">
-
-            <input
-              class="ef-input"
-              id="calcICVoltage"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("voltage")
-              )}">
-
-            <input
-              class="ef-input"
-              id="calcICResistance"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("resistance")
-              )}">
-
-          </div>
-
-          <button
-            type="button"
-            class="ef-primary-btn"
-            id="calcCurrentBtn"
-            style="width:100%;margin-top:8px;">
-            I = V ÷ R
-          </button>
-
-          <div
-            class="ef-calc-result"
-            id="calcCurrentResult">
-            —
-          </div>
-
-        </div>
-
-        <div class="ef-calc-card">
-
-          <div class="ef-setting-title">
-            R = V ÷ I
-          </div>
-
-          <div class="ef-calc-grid">
-
-            <input
-              class="ef-input"
-              id="calcRVVoltage"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("voltage")
-              )}">
-
-            <input
-              class="ef-input"
-              id="calcRVCurrent"
-              type="number"
-              inputmode="decimal"
-              placeholder="${esc(
-                langText("current")
-              )}">
-
-          </div>
-
-          <button
-            type="button"
-            class="ef-primary-btn"
-            id="calcResistanceBtn"
-            style="width:100%;margin-top:8px;">
-            R = V ÷ I
-          </button>
-
-          <div
-            class="ef-calc-result"
-            id="calcResistanceResult">
-            —
-          </div>
-
-        </div>
-
-        <div class="ef-calc-card">
-
-          <div class="ef-setting-title">
-            ${esc(
-              langText("inverter")
-            )}
-          </div>
-
-          <div class="ef-setting-buttons">
-
-            <button
-              type="button"
-              class="ef-setting-btn"
-              data-inverter="12">
-              12V → 230V
-            </button>
-
-            <button
-              type="button"
-              class="ef-setting-btn"
-              data-inverter="24">
-              24V → 230V
-            </button>
-
-          </div>
-
-          <div
-            class="ef-calc-result"
-            id="inverterResult">
-            —
-          </div>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  function safeDivide(
-    a,
-    b
-  ) {
-    if (
-      !Number.isFinite(a) ||
-      !Number.isFinite(b) ||
-      b === 0
-    ) {
-      return null;
-    }
-
-    return a / b;
-  }
-
-  function bindCalculatorPage() {
-    const back =
-      $("#routeBackBtn");
-
-    if (back) {
-      back.onclick =
-        goBackRoute;
-    }
-
-    const powerBtn =
-      $("#calcPowerBtn");
-
-    if (powerBtn) {
-      powerBtn.onclick = () => {
-        const v =
-          Number($("#calcV")?.value);
-
-        const i =
-          Number($("#calcI")?.value);
-
-        const result =
-          Number.isFinite(v) &&
-          Number.isFinite(i)
-            ? v * i
-            : null;
-
-        $("#calcPowerResult").textContent =
-          result == null
-            ? "—"
-            : `${result} W`;
-      };
-    }
-
-    const voltageBtn =
-      $("#calcVoltageBtn");
-
-    if (voltageBtn) {
-      voltageBtn.onclick = () => {
-        const i =
-          Number(
-            $("#calcVCurrent")?.value
-          );
-
-        const r =
-          Number(
-            $("#calcRVoltage")?.value
-          );
-
-        const result =
-          Number.isFinite(i) &&
-          Number.isFinite(r)
-            ? i * r
-            : null;
-
-        $("#calcVoltageResult").textContent =
-          result == null
-            ? "—"
-            : `${result} V`;
-      };
-    }
-
-    const currentBtn =
-      $("#calcCurrentBtn");
-
-    if (currentBtn) {
-      currentBtn.onclick = () => {
-        const v =
-          Number(
-            $("#calcICVoltage")?.value
-          );
-
-        const r =
-          Number(
-            $("#calcICResistance")?.value
-          );
-
-        const result =
-          safeDivide(v, r);
-
-        $("#calcCurrentResult").textContent =
-          result == null
-            ? "—"
-            : `${result} A`;
-      };
-    }
-
-    const resistanceBtn =
-      $("#calcResistanceBtn");
-
-    if (resistanceBtn) {
-      resistanceBtn.onclick = () => {
-        const v =
-          Number(
-            $("#calcRVVoltage")?.value
-          );
-
-        const i =
-          Number(
-            $("#calcRVCurrent")?.value
-          );
-
-        const result =
-          safeDivide(v, i);
-
-        $("#calcResistanceResult").textContent =
-          result == null
-            ? "—"
-            : `${result} Ω`;
-      };
-    }
-
-    $$("[data-inverter]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          const value =
-            btn.dataset.inverter;
-
-          const result =
-            $("#inverterResult");
-
-          if (result) {
-            result.textContent =
-              `${value}V → 230V`;
-          }
-        };
-      });
-  }
-
-
-  /* =========================================================
-     SETTINGS
-     ========================================================= */
-
-  function renderSettingsPage() {
-    return `
-      <div class="ef-page">
-
-        <div class="ef-page-head">
-
-          <button
-            type="button"
-            class="ef-back-btn"
-            id="routeBackBtn">
-            ←
-          </button>
-
-          <div class="ef-page-brand">
-            ${brandLogoHTML()}
-
-            <div>
-              <h2 class="ef-page-title">
-                ${esc(
-                  langText("settings")
-                )}
-              </h2>
-
-              <p class="ef-page-subtitle">
-                ${esc(BRAND.name)}
-              </p>
-            </div>
-          </div>
-
-          <div></div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3 class="ef-setting-title">
-            ${esc(
-              langText("language")
-            )}
-          </h3>
-
-          <div class="ef-setting-buttons">
-
-            <button
-              type="button"
-              class="ef-setting-btn ${
-                state.lang === "hi"
-                  ? "active"
-                  : ""
-              }"
-              data-settings-lang="hi">
-              हिन्दी
-            </button>
-
-            <button
-              type="button"
-              class="ef-setting-btn ${
-                state.lang === "en"
-                  ? "active"
-                  : ""
-              }"
-              data-settings-lang="en">
-              English
-            </button>
-
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3 class="ef-setting-title">
-            ${esc(
-              langText("theme")
-            )}
-          </h3>
-
-          <div class="ef-setting-buttons">
-
-            <button
-              type="button"
-              class="ef-setting-btn ${
-                state.theme === "dark"
-                  ? "active"
-                  : ""
-              }"
-              data-settings-theme="dark">
-              ${esc(
-                langText("dark")
-              )}
-            </button>
-
-            <button
-              type="button"
-              class="ef-setting-btn ${
-                state.theme === "light"
-                  ? "active"
-                  : ""
-              }"
-              data-settings-theme="light">
-              ${esc(
-                langText("light")
-              )}
-            </button>
-
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <h3 class="ef-setting-title">
-            ${esc(
-              langText("stageView")
-            )}
-          </h3>
-
-          <div class="ef-setting-buttons">
-
-            ${VIEW_MODES.map(
-              (mode) => `
-                <button
-                  type="button"
-                  class="ef-setting-btn ${
-                    state.stageView === mode
-                      ? "active"
-                      : ""
-                  }"
-                  data-stage-view="${mode}">
-                  ${esc(
-                    tr(
-                      VIEW_LABELS[mode]
-                    )
-                  )}
-                </button>
               `
             ).join("")}
 
-          </div>
+          </select>
 
         </div>
 
-        <div class="ef-setting-card">
+      `;
 
-          <h3 class="ef-setting-title">
-            ${esc(
-              langText("materialView")
-            )}
-          </h3>
-
-          <div class="ef-setting-buttons">
-
-            ${VIEW_MODES.map(
-              (mode) => `
-                <button
-                  type="button"
-                  class="ef-setting-btn ${
-                    state.materialView ===
-                    mode
-                      ? "active"
-                      : ""
-                  }"
-                  data-material-view="${mode}">
-                  ${esc(
-                    tr(
-                      VIEW_LABELS[mode]
-                    )
-                  )}
-                </button>
-              `
-            ).join("")}
-
-          </div>
-
-        </div>
-
-        <div class="ef-setting-card">
-
-          <button
-            type="button"
-            class="ef-danger-btn"
-            id="settingsResetBtn"
-            style="width:100%;">
-            ${esc(
-              langText("reset")
-            )}
-          </button>
-
-        </div>
-
-      </div>
-    `;
-  }
-
-  function bindSettingsPage() {
-    const back =
-      $("#routeBackBtn");
-
-    if (back) {
-      back.onclick =
-        goBackRoute;
-    }
-
-    $$("[data-settings-lang]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          setLanguage(
-            btn.dataset.settingsLang
-          );
-        };
-      });
-
-    $$("[data-settings-theme]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          setTheme(
-            btn.dataset.settingsTheme
-          );
-        };
-      });
-
-    $$("[data-stage-view]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          state.stageView =
-            validView(
-              btn.dataset.stageView
-            );
-
-          storageSet(
-            STORAGE.stageView,
-            state.stageView
-          );
-
-          renderCurrentPage(false);
-        };
-      });
-
-    $$("[data-material-view]")
-      .forEach((btn) => {
-        btn.onclick = () => {
-          state.materialView =
-            validView(
-              btn.dataset.materialView
-            );
-
-          storageSet(
-            STORAGE.materialView,
-            state.materialView
-          );
-
-          renderCurrentPage(false);
-        };
-      });
-
-    const reset =
-      $("#settingsResetBtn");
-
-    if (reset) {
-      reset.onclick =
-        resetApplication;
-    }
-  }
-
-
-  /* =========================================================
-     RESET
-     ========================================================= */
-
-  function resetApplication() {
-    const confirmed =
-      window.confirm(
-        currentLang() === "hi"
-          ? "एस्टिमेट और ऐप का सेव किया हुआ डेटा रीसेट करें?"
-          : "Reset saved estimate and app data?"
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    if (state.drawerOpen) {
-      prepareNavigationFromDrawer();
-    }
-
-    storageRemove(
-      STORAGE.estimate
-    );
-
-    storageRemove(
-      STORAGE.route
-    );
-
-    storageRemove(
-      STORAGE.lastUnit
-    );
-
-    state.stageView = "grid";
-    state.materialView = "grid";
-
-    storageSet(
-      STORAGE.stageView,
-      "grid"
-    );
-
-    storageSet(
-      STORAGE.materialView,
-      "grid"
-    );
-
-    state.page = "home";
-    state.stageIndex = -1;
-    state.sectionIndex = -1;
-    state.itemIndex = -1;
-    state.editingEstimateId = null;
-    state.draft = {};
-
-    saveRoute();
-
-    replaceHistory();
-
-    showHome(false);
-
-    buildDrawer();
-
-    showToast(
-      langText("resetDone")
-    );
-  }
-
-
-  /* =========================================================
-     CURRENT PAGE RENDER
-     ========================================================= */
-
-  function renderCurrentPage(
-    scrollTop = true
-  ) {
-    if (state.page === "home") {
-      showHome(false);
-      return;
-    }
-
-    if (!homeEl) return;
-
-    let html = "";
-
-    switch (state.page) {
-      case "stage":
-        html = renderStagePage();
-        break;
-
-      case "section":
-        html = renderSectionPage();
-        break;
-
-      case "item":
-        html = renderItemPage();
-        break;
-
-      case "estimate":
-        html = renderEstimatePage();
-        break;
-
-      case "calculator":
-        html = renderCalculatorPage();
-        break;
-
-      case "settings":
-        html = renderSettingsPage();
-        break;
-
-      default:
-        state.page = "home";
-        showHome(false);
-        return;
-    }
-
-    homeEl.innerHTML = `
-      <div id="efRoute">
-        ${html}
-      </div>
-    `;
-
-    homeIsStatic = false;
-
-    if (state.page === "stage") {
-      bindStagePage();
-    }
-
-    if (state.page === "section") {
-      bindSectionPage();
-    }
-
-    if (state.page === "item") {
-      bindItemEditor();
-    }
-
-    if (state.page === "estimate") {
-      bindEstimatePage();
-    }
-
-    if (state.page === "calculator") {
-      bindCalculatorPage();
-    }
-
-    if (state.page === "settings") {
-      bindSettingsPage();
-    }
-
-    bindHamburger();
-    bindBottomNav();
-    updateStaticUI();
-    applyBranding();
-
-    if (scrollTop) {
-      window.scrollTo({
-        top: 0,
-        behavior: "auto"
-      });
-    }
-  }
-
-
-  /* =========================================================
-     BACK NAVIGATION
-     ========================================================= */
-
-  function goBackRoute() {
-    if (state.drawerOpen) {
-      closeDrawer();
-      return;
-    }
-
-    if (state.historyReady) {
-      try {
-        history.back();
-        return;
-      } catch {}
-    }
-
-    if (state.page === "item") {
-      navigate(
-        "section",
-        state.stageIndex,
-        state.sectionIndex,
-        -1
-      );
-      return;
-    }
-
-    if (state.page === "section") {
-      navigate(
-        "stage",
-        state.stageIndex,
-        -1,
-        -1
-      );
-      return;
-    }
-
-    showHome(false);
-  }
-
-
-  /* =========================================================
-     BOTTOM NAV
-     ========================================================= */
-
-  function bindBottomNav() {
-    $$(".bottom-item").forEach(
-      (button) => {
-        const nav =
-          button.dataset.nav;
-
-        if (!nav) return;
-
-        button.onclick = () => {
-          navigate(nav);
-        };
-      }
-    );
-  }
-
-
-  /* =========================================================
-     STATIC UI
-     ========================================================= */
-
-  function updateStaticUI() {
-    const mappings = [
-      [
-        "[data-nav='home']",
-        "home"
-      ],
-      [
-        "[data-nav='estimate']",
-        "estimate"
-      ],
-      [
-        "[data-nav='calculator']",
-        "calculator"
-      ],
-      [
-        "[data-nav='settings']",
-        "settings"
-      ]
-    ];
-
-    mappings.forEach(
-      ([selector, key]) => {
-        $$(selector).forEach(
-          (el) => {
-            el.textContent =
-              langText(key);
-          }
-        );
-      }
-    );
-
-    const search =
-      $("#searchInput") ||
-      $("#mainSearch") ||
-      $("#search");
-
-    if (search) {
-      search.placeholder =
-        langText(
-          "searchPlaceholder"
-        );
-    }
-
-    const title =
-      $("#appTitle");
-
-    if (title) {
-      title.textContent =
-        currentLang() === "hi"
-          ? "एस्टिमेट लिस्ट"
-          : "Estimate List";
-    }
-
-    const subtitle =
-      $("#appSubtitle");
-
-    if (subtitle) {
-      subtitle.textContent =
-        BRAND.name;
-    }
-
-    const tagline =
-      $("#appTagline");
-
-    if (tagline) {
-      tagline.textContent =
-        currentLang() === "hi"
-          ? BRAND.taglineHi
-          : BRAND.taglineEn;
-    }
-
-    applyBranding();
-  }
-
-
-  /* =========================================================
-     POPSTATE / ANDROID BACK
-     ========================================================= */
-
-  window.addEventListener(
-    "popstate",
-    (event) => {
-
-      /*
-       * Drawer history entry was popped.
-       * Close drawer first.
-       */
-      if (
-        state.drawerOpen &&
-        state.drawerHistoryPushed
-      ) {
-        state.drawerOpen = false;
-        state.drawerHistoryPushed = false;
-
-        hideDrawerVisual();
-
-        /*
-         * If the state underneath is a
-         * valid app route, restore it.
-         */
-        if (
-          event.state &&
-          event.state.efRoute
-        ) {
-          state.page =
-            event.state.page || "home";
-
-          state.stageIndex =
-            Number.isInteger(
-              event.state.stageIndex
-            )
-              ? event.state.stageIndex
-              : -1;
-
-          state.sectionIndex =
-            Number.isInteger(
-              event.state.sectionIndex
-            )
-              ? event.state.sectionIndex
-              : -1;
-
-          state.itemIndex =
-            Number.isInteger(
-              event.state.itemIndex
-            )
-              ? event.state.itemIndex
-              : -1;
-
-          saveRoute();
-
-          renderCurrentPage(false);
-        }
-
-        return;
-      }
-
-      /*
-       * Forward into drawer state.
-       */
-      if (
-        event.state &&
-        event.state.efDrawer
-      ) {
-        state.drawerOpen = true;
-        state.drawerHistoryPushed = true;
-
-        showDrawerVisual();
-
-        return;
-      }
-
-      /*
-       * Normal application route.
-       */
-      if (
-        event.state &&
-        event.state.efRoute
-      ) {
-        state.page =
-          event.state.page || "home";
-
-        state.stageIndex =
-          Number.isInteger(
-            event.state.stageIndex
-          )
-            ? event.state.stageIndex
-            : -1;
-
-        state.sectionIndex =
-          Number.isInteger(
-            event.state.sectionIndex
-          )
-            ? event.state.sectionIndex
-            : -1;
-
-        state.itemIndex =
-          Number.isInteger(
-            event.state.itemIndex
-          )
-            ? event.state.itemIndex
-            : -1;
-
-        validateSavedRoute();
-        saveRoute();
-
-        renderCurrentPage(false);
-
-        return;
-      }
-
-      /*
-       * No application history state.
-       * This means the user is trying to leave
-       * the application.
-       */
-      if (state.page !== "home") {
-        state.page = "home";
-        state.stageIndex = -1;
-        state.sectionIndex = -1;
-        state.itemIndex = -1;
-
-        saveRoute();
-
-        showHome(false);
-
-        return;
-      }
-
-      const leave =
-        window.confirm(
-          currentLang() === "hi"
-            ? "क्या आप ऐप से बाहर जाना चाहते हैं?"
-            : "Do you want to exit the app?"
-        );
-
-      if (!leave) {
-        replaceHistory();
-      }
     }
   );
 
 
-  /* =========================================================
-     ESC KEY
-     ========================================================= */
+  /* =======================================================
+     QUANTITY
+     ======================================================= */
 
-  document.addEventListener(
-    "keydown",
-    (event) => {
+  html += `
+
+      <div class="ef-field ef-quantity-field">
+
+        <label for="efQuantityInput">
+          ${escapeHTML(t(HI.quantity))}
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="efQuantityInput"
+          type="number"
+          min="0"
+          step="any"
+          inputmode="decimal"
+          placeholder="${
+            EF.language === "hi"
+              ? "मात्रा दर्ज करें"
+              : "Enter quantity"
+          }"
+        >
+
+      </div>
+
+
+      <div class="ef-field">
+
+        <label for="efUnitInput">
+          ${escapeHTML(t(HI.unit))}
+        </label>
+
+        <select id="efUnitInput">
+
+          <option value="">
+            ${escapeHTML(
+              EF.language === "hi"
+                ? "इकाई चुनें"
+                : "Select Unit"
+            )}
+          </option>
+
+          ${units.map(
+            unit => `
+
+              <option value="${escapeAttr(unit)}">
+                ${escapeHTML(
+                  t(unit)
+                )}
+              </option>
+
+            `
+          ).join("")}
+
+        </select>
+
+      </div>
+
+
+      <div class="ef-field">
+
+        <label for="efBrandInput">
+          ${escapeHTML(t(HI.brand))}
+          <span class="optional">
+            (${escapeHTML(t(HI.optional))})
+          </span>
+        </label>
+
+        <select id="efBrandInput">
+
+          <option value="">
+            ${escapeHTML(
+              EF.language === "hi"
+                ? "ब्रांड चुनें"
+                : "Select Brand"
+            )}
+          </option>
+
+          ${brands.map(
+            brand => `
+
+              <option value="${escapeAttr(brand)}">
+                ${escapeHTML(
+                  t(brand)
+                )}
+              </option>
+
+            `
+          ).join("")}
+
+        </select>
+
+      </div>
+
+
+      <div class="ef-editor-actions">
+
+        <button
+          type="button"
+          id="saveItem"
+          class="ef-primary-button"
+        >
+          ${escapeHTML(
+            t(HI.add)
+          )}
+        </button>
+
+        <button
+          type="button"
+          id="nextItem"
+          class="ef-secondary-button"
+        >
+          ${escapeHTML(
+            t(HI.next)
+          )} →
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+  main.innerHTML =
+    html;
+
+  const back =
+    byId("editorBackButton");
+
+  if (back) {
+
+    back.addEventListener(
+      "click",
+      () => {
+
+        renderMaterialPage();
+
+      }
+    );
+
+  }
+
+  const quantity =
+    byId("efQuantityInput");
+
+  const unit =
+    byId("efUnitInput");
+
+  const brand =
+    byId("efBrandInput");
+
+  restoreDraftValues();
+
+  if (unit) {
+
+    unit.addEventListener(
+      "change",
+      () => {
+
+        if (unit.value) {
+
+          EF.unitCarry =
+            unit.value;
+
+          localStorage.setItem(
+            "sandeepLastUnit",
+            unit.value
+          );
+
+        }
+
+      }
+    );
+
+  }
+
+  const save =
+    byId("saveItem");
+
+  if (save) {
+
+    save.addEventListener(
+      "click",
+      saveCurrentItem
+    );
+
+  }
+
+  const next =
+    byId("nextItem");
+
+  if (next) {
+
+    next.addEventListener(
+      "click",
+      goNextMaterial
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   RESTORE DRAFT
+   ========================================================= */
+
+function restoreDraftValues() {
+
+  const draft =
+    EF.currentDraft || {};
+
+  $all(
+    ".ef-dynamic-field"
+  ).forEach(
+    select => {
+
+      const index =
+        Number(
+          select.dataset.fieldIndex
+        );
+
       if (
-        event.key === "Escape"
+        draft.fields &&
+        draft.fields[index] !== undefined
       ) {
-        if (state.drawerOpen) {
-          closeDrawer();
+
+        select.value =
+          draft.fields[index];
+
+      }
+
+    }
+  );
+
+  const quantity =
+    byId("efQuantityInput");
+
+  if (quantity) {
+
+    quantity.value =
+      draft.quantity || "";
+
+  }
+
+  const unit =
+    byId("efUnitInput");
+
+  if (unit) {
+
+    unit.value =
+      draft.unit ||
+      EF.unitCarry ||
+      "";
+
+  }
+
+  const brand =
+    byId("efBrandInput");
+
+  if (brand) {
+
+    brand.value =
+      draft.brand || "";
+
+  }
+
+}
+
+
+/* =========================================================
+   READ EDITOR
+   ========================================================= */
+
+function readEditor() {
+
+  const fields =
+    $all(
+      ".ef-dynamic-field"
+    ).map(
+      select => select.value
+    );
+
+  const quantity =
+    byId("efQuantityInput");
+
+  const unit =
+    byId("efUnitInput");
+
+  const brand =
+    byId("efBrandInput");
+
+  return {
+
+    fields,
+
+    quantity:
+      quantity
+        ? quantity.value.trim()
+        : "",
+
+    unit:
+      unit
+        ? unit.value
+        : "",
+
+    brand:
+      brand
+        ? brand.value
+        : ""
+
+  };
+
+}
+
+
+/* =========================================================
+   VALIDATE
+   ========================================================= */
+
+function validateEditor(data) {
+
+  if (
+    data.quantity === "" ||
+    Number(data.quantity) <= 0
+  ) {
+
+    showToast(
+      t(HI.requiredQuantity)
+    );
+
+    const quantity =
+      byId("efQuantityInput");
+
+    if (quantity) {
+
+      quantity.focus();
+
+    }
+
+    return false;
+
+  }
+
+  return true;
+
+}
+
+
+/* =========================================================
+   SAVE CURRENT ITEM
+   ========================================================= */
+
+function saveCurrentItem() {
+
+  const data =
+    readEditor();
+
+  if (!validateEditor(data)) {
+    return;
+  }
+
+  const material =
+    EF.currentMaterial;
+
+  if (!material) {
+    return;
+  }
+
+  const stage =
+    EF.materials[
+      EF.currentStage
+    ];
+
+  const sectionName =
+    getCurrentSectionName();
+
+  const item = {
+
+    id:
+      Date.now().toString(36) +
+      Math.random()
+        .toString(36)
+        .slice(2, 8),
+
+    stage:
+      stage[0],
+
+    stageTitle:
+      stage[1],
+
+    section:
+      sectionName,
+
+    material:
+      material[0],
+
+    fields:
+      {},
+
+    quantity:
+      data.quantity,
+
+    unit:
+      data.unit,
+
+    brand:
+      data.brand,
+
+    price:
+      "",
+
+    createdAt:
+      Date.now()
+
+  };
+
+
+  /* =======================================================
+     FIELD OBJECT
+     ======================================================= */
+
+  const fields =
+    Array.isArray(material[1])
+      ? material[1]
+      : [];
+
+  fields.forEach(
+    (field, index) => {
+
+      const name =
+        field[0];
+
+      const value =
+        data.fields[index] || "";
+
+      item.fields[name] =
+        value;
+
+    }
+  );
+
+
+  EF.estimate.push(
+    item
+  );
+
+  saveEstimate();
+
+  if (data.unit) {
+
+    EF.unitCarry =
+      data.unit;
+
+    localStorage.setItem(
+      "sandeepLastUnit",
+      data.unit
+    );
+
+  }
+
+  EF.currentDraft =
+    {};
+
+  showToast(
+    t(HI.itemAdded)
+  );
+
+  updateEstimateCount();
+
+  /* IMPORTANT:
+     ADD automatically goes to next material.
+  */
+
+  setTimeout(
+    () => {
+
+      goNextMaterial();
+
+    },
+    220
+  );
+
+}
+
+
+/* =========================================================
+   NEXT MATERIAL
+   ========================================================= */
+
+function goNextMaterial() {
+
+  const list =
+    EF.currentSectionItems;
+
+  if (!Array.isArray(list) ||
+      !list.length) {
+
+    return;
+
+  }
+
+  const nextIndex =
+    EF.currentMaterialIndex + 1;
+
+  if (
+    nextIndex >= list.length
+  ) {
+
+    showToast(
+      EF.language === "hi"
+        ? "यह सेक्शन पूरा हो गया"
+        : "Section completed"
+    );
+
+    renderMaterialPage();
+
+    return;
+
+  }
+
+  EF.currentDraft =
+    {};
+
+  EF.currentMaterialIndex =
+    nextIndex;
+
+  EF.currentMaterial =
+    list[nextIndex];
+
+  renderEditor();
+
+}
+
+
+/* =========================================================
+   CURRENT SECTION NAME
+   ========================================================= */
+
+function getCurrentSectionName() {
+
+  const stage =
+    EF.materials[
+      EF.currentStage
+    ];
+
+  if (
+    EF.currentSection === null
+  ) {
+
+    return stage[2];
+
+  }
+
+  if (
+    EF.currentSection === -1
+  ) {
+
+    return stage[2];
+
+  }
+
+  const section =
+    getStageSections(stage)[
+      EF.currentSection
+    ];
+
+  return section
+    ? section[0]
+    : stage[2];
+
+}
+
+
+/* =========================================================
+   ESTIMATE PAGE
+   ========================================================= */
+
+function renderEstimatePage() {
+
+  saveRoute(
+    "estimate"
+  );
+
+  showOnlyPage(
+    "main"
+  );
+
+  const main =
+    EF.ids.main;
+
+  if (!main) {
+    return;
+  }
+
+  updateTopTitle(
+    t(HI.estimateTitle)
+  );
+
+  if (!EF.estimate.length) {
+
+    main.innerHTML = `
+
+      <div class="ef-empty-state">
+
+        <div class="ef-empty-icon">
+          ⚡
+        </div>
+
+        <div>
+          ${escapeHTML(
+            t(HI.noEstimate)
+          )}
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  main.innerHTML = `
+
+    <div class="ef-estimate-page">
+
+      <div class="ef-estimate-header">
+
+        <div class="ef-page-title">
+          ${escapeHTML(
+            t(HI.estimateTitle)
+          )}
+        </div>
+
+        <div
+          class="ef-estimate-total-count"
+          id="estimateCount"
+        >
+          ${EF.estimate.length}
+        </div>
+
+      </div>
+
+      <div
+        class="ef-estimate-list"
+        id="efEstimateList"
+      ></div>
+
+    </div>
+
+  `;
+
+  renderEstimateItems();
+
+}
+
+
+function renderEstimateItems() {
+
+  const list =
+    byId("efEstimateList");
+
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = "";
+
+  EF.estimate.forEach(
+    (item, index) => {
+
+      const card =
+        document.createElement("div");
+
+      card.className =
+        "ef-estimate-item";
+
+      const fieldHTML =
+        Object.entries(
+          item.fields || {}
+        )
+        .filter(
+          ([, value]) =>
+            value !== ""
+        )
+        .map(
+          ([name, value]) => `
+
+            <div class="ef-estimate-field">
+              <span>
+                ${escapeHTML(
+                  t(name)
+                )}
+              </span>
+
+              <b>
+                ${escapeHTML(
+                  t(value)
+                )}
+              </b>
+            </div>
+
+          `
+        )
+        .join("");
+
+      card.innerHTML = `
+
+        <div class="ef-estimate-item-head">
+
+          <div>
+            <strong>
+              ${escapeHTML(
+                t(item.material)
+              )}
+            </strong>
+
+            <small>
+              ${escapeHTML(
+                t(item.stage)
+              )}
+              •
+              ${escapeHTML(
+                t(item.section)
+              )}
+            </small>
+          </div>
+
+          <div class="ef-estimate-actions">
+
+            <button
+              type="button"
+              data-edit="${index}"
+            >
+              ✎
+            </button>
+
+            <button
+              type="button"
+              data-delete="${index}"
+            >
+              ×
+            </button>
+
+          </div>
+
+        </div>
+
+        <div class="ef-estimate-fields">
+
+          ${fieldHTML}
+
+          <div class="ef-estimate-field">
+            <span>${escapeHTML(t(HI.quantity))}</span>
+            <b>${escapeHTML(
+              String(item.quantity)
+            )}</b>
+          </div>
+
+          <div class="ef-estimate-field">
+            <span>${escapeHTML(t(HI.unit))}</span>
+            <b>${escapeHTML(
+              t(item.unit || "")
+            )}</b>
+          </div>
+
+          ${
+            item.brand
+              ? `
+                <div class="ef-estimate-field">
+                  <span>${escapeHTML(t(HI.brand))}</span>
+                  <b>${escapeHTML(
+                    t(item.brand)
+                  )}</b>
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+      `;
+
+      list.appendChild(
+        card
+      );
+
+    }
+  );
+
+
+  $all(
+    "[data-delete]",
+    list
+  ).forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          deleteEstimateItem(
+            Number(
+              button.dataset.delete
+            )
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+  $all(
+    "[data-edit]",
+    list
+  ).forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          editEstimateItem(
+            Number(
+              button.dataset.edit
+            )
+          );
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   DELETE ESTIMATE ITEM
+   ========================================================= */
+
+function deleteEstimateItem(index) {
+
+  if (
+    index < 0 ||
+    index >= EF.estimate.length
+  ) {
+    return;
+  }
+
+  EF.estimate.splice(
+    index,
+    1
+  );
+
+  saveEstimate();
+
+  renderEstimatePage();
+
+  showToast(
+    t(HI.deleted)
+  );
+
+}
+
+
+/* =========================================================
+   EDIT ESTIMATE ITEM
+   ========================================================= */
+
+function editEstimateItem(index) {
+
+  const item =
+    EF.estimate[index];
+
+  if (!item) {
+    return;
+  }
+
+  const stageIndex =
+    EF.materials.findIndex(
+      stage =>
+        stage[0] === item.stage
+    );
+
+  if (stageIndex < 0) {
+    return;
+  }
+
+  EF.currentStage =
+    stageIndex;
+
+  const stage =
+    EF.materials[
+      stageIndex
+    ];
+
+  let found =
+    false;
+
+  /* -------------------------------------------------------
+     DIRECT MATERIALS
+     ------------------------------------------------------- */
+
+  const direct =
+    getStageMaterials(stage);
+
+  const directIndex =
+    direct.findIndex(
+      material =>
+        material[0] === item.material
+    );
+
+  if (directIndex >= 0) {
+
+    EF.currentSection =
+      -1;
+
+    EF.currentSectionItems =
+      direct;
+
+    EF.currentMaterialIndex =
+      directIndex;
+
+    EF.currentMaterial =
+      direct[directIndex];
+
+    found = true;
+
+  }
+
+
+  /* -------------------------------------------------------
+     SECTION MATERIALS
+     ------------------------------------------------------- */
+
+  if (!found) {
+
+    const sections =
+      getStageSections(stage);
+
+    sections.forEach(
+      (section, sectionIndex) => {
+
+        if (found) {
           return;
         }
 
-        $$(".ef-view-options")
-          .forEach((el) =>
-            el.setAttribute(
-              "hidden",
-              ""
-            )
+        const items =
+          getSectionMaterials(
+            section
           );
+
+        const materialIndex =
+          items.findIndex(
+            material =>
+              material[0] === item.material
+          );
+
+        if (
+          materialIndex >= 0
+        ) {
+
+          EF.currentSection =
+            sectionIndex;
+
+          EF.currentSectionItems =
+            items;
+
+          EF.currentMaterialIndex =
+            materialIndex;
+
+          EF.currentMaterial =
+            items[materialIndex];
+
+          found = true;
+
+        }
+
       }
+    );
+
+  }
+
+  if (!found) {
+    return;
+  }
+
+  EF.currentDraft = {
+
+    fields:
+      Object.values(
+        item.fields || {}
+      ),
+
+    quantity:
+      item.quantity || "",
+
+    unit:
+      item.unit || "",
+
+    brand:
+      item.brand || ""
+
+  };
+
+  saveRoute(
+    "editor"
+  );
+
+  renderEditor();
+
+  /* Replace Save with Update */
+
+  const save =
+    byId("saveItem");
+
+  if (save) {
+
+    save.textContent =
+      t(HI.update);
+
+    save.onclick =
+      () => {
+
+        updateEstimateItem(
+          index
+        );
+
+      };
+
+  }
+
+}
+
+
+/* =========================================================
+   UPDATE ESTIMATE ITEM
+   ========================================================= */
+
+function updateEstimateItem(
+  estimateIndex
+) {
+
+  const data =
+    readEditor();
+
+  if (!validateEditor(data)) {
+    return;
+  }
+
+  const item =
+    EF.estimate[
+      estimateIndex
+    ];
+
+  if (!item) {
+    return;
+  }
+
+  const material =
+    EF.currentMaterial;
+
+  const fields =
+    Array.isArray(material[1])
+      ? material[1]
+      : [];
+
+  const newFields =
+    {};
+
+  fields.forEach(
+    (field, index) => {
+
+      newFields[
+        field[0]
+      ] =
+        data.fields[index] || "";
+
     }
   );
 
+  item.fields =
+    newFields;
 
-  /* =========================================================
-     CLICK OUTSIDE VIEW OPTIONS
-     ========================================================= */
+  item.quantity =
+    data.quantity;
 
-  document.addEventListener(
+  item.unit =
+    data.unit;
+
+  item.brand =
+    data.brand;
+
+  saveEstimate();
+
+  EF.currentDraft =
+    {};
+
+  showToast(
+    t(HI.updated)
+  );
+
+  setTimeout(
+    () => {
+
+      renderEstimatePage();
+
+    },
+    250
+  );
+
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+function handleSearch(value) {
+
+  EF.searchText =
+    String(value || "");
+
+  if (
+    EF.route === "materials"
+  ) {
+
+    renderMaterials(
+      EF.currentSectionItems
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   FILTER PANEL
+   ========================================================= */
+
+function toggleFilter() {
+
+  const panel =
+    EF.ids.filterPanel;
+
+  if (!panel) {
+    return;
+  }
+
+  EF.filterOpen =
+    !EF.filterOpen;
+
+  panel.classList.toggle(
+    "open",
+    EF.filterOpen
+  );
+
+  panel.classList.toggle(
+    "active",
+    EF.filterOpen
+  );
+
+}
+
+
+function clearFilters() {
+
+  EF.selectedFilters = {
+
+    stage: "",
+    section: "",
+    type: "",
+    size: "",
+    brand: ""
+
+  };
+
+  EF.searchText =
+    "";
+
+  if (EF.ids.search) {
+
+    EF.ids.search.value =
+      "";
+
+  }
+
+  [
+    EF.ids.stageFilter,
+    EF.ids.typeFilter,
+    EF.ids.sizeFilter,
+    EF.ids.brandFilter
+  ]
+  .forEach(
+    select => {
+
+      if (select) {
+        select.value =
+          "";
+      }
+
+    }
+  );
+
+  renderMaterials(
+    EF.currentSectionItems
+  );
+
+}
+
+
+/* =========================================================
+   VIEW SELECTOR
+   ========================================================= */
+
+function setupGlobalViewSelector() {
+
+  const trigger =
+    EF.ids.viewTrigger;
+
+  const options =
+    EF.ids.viewOptions;
+
+  if (!trigger || !options) {
+    return;
+  }
+
+  trigger.addEventListener(
     "click",
     (event) => {
-      const target =
-        event.target;
 
-      if (
-        target.closest &&
-        target.closest(
-          ".ef-view-picker"
-        )
-      ) {
+      event.stopPropagation();
+
+      options.classList.toggle(
+        "open"
+      );
+
+      options.classList.toggle(
+        "active"
+      );
+
+    }
+  );
+
+  $all(
+    "[data-view]",
+    options
+  ).forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          EF.view =
+            button.dataset.view;
+
+          localStorage.setItem(
+            "sandeepMaterialView",
+            EF.view
+          );
+
+          options.classList.remove(
+            "open"
+          );
+
+          options.classList.remove(
+            "active"
+          );
+
+          renderMaterials(
+            EF.currentSectionItems
+          );
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function showOnlyPage(page) {
+
+  const pages = [
+    byId("home"),
+    byId("main"),
+    byId("calculator"),
+    byId("settings")
+  ];
+
+  pages.forEach(
+    element => {
+
+      if (!element) {
         return;
       }
 
-      $$(".ef-view-options")
-        .forEach((options) => {
-          options.setAttribute(
-            "hidden",
-            ""
-          );
-        });
+      const match =
+        element.id === page;
 
-      $$(".ef-view-trigger")
-        .forEach((trigger) => {
-          trigger.setAttribute(
-            "aria-expanded",
-            "false"
-          );
-        });
+      element.classList.toggle(
+        "active",
+        match
+      );
+
+      element.hidden =
+        !match;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   BOTTOM NAV
+   ========================================================= */
+
+function handleNavigation(
+  page
+) {
+
+  closeDrawer();
+
+  switch (page) {
+
+    case "home":
+
+      renderHome();
+
+      break;
+
+    case "estimate":
+
+      renderEstimatePage();
+
+      break;
+
+    case "calculator":
+
+      saveRoute("calculator");
+
+      showOnlyPage(
+        "calculator"
+      );
+
+      updateTopTitle(
+        t(HI.calculatorTitle)
+      );
+
+      break;
+
+    case "settings":
+
+      saveRoute("settings");
+
+      showOnlyPage(
+        "settings"
+      );
+
+      updateTopTitle(
+        t(HI.settingsTitle)
+      );
+
+      break;
+
+    default:
+
+      renderHome();
+
+  }
+
+}
+
+
+/* =========================================================
+   TOP TITLE
+   ========================================================= */
+
+function updateTopTitle(
+  title
+) {
+
+  const element =
+    EF.ids.topBarTitle;
+
+  if (element) {
+
+    element.textContent =
+      title;
+
+  }
+
+}
+
+
+/* =========================================================
+   EVENT BINDING
+   ========================================================= */
+
+function bindEvents() {
+
+  /* -------------------------------------------------------
+     HAMBURGER
+     ------------------------------------------------------- */
+
+  if (EF.ids.menuBtn) {
+
+    EF.ids.menuBtn.addEventListener(
+      "click",
+      (event) => {
+
+        event.stopPropagation();
+
+        if (
+          EF.drawerOpen
+        ) {
+
+          closeDrawer();
+
+        } else {
+
+          openDrawer();
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     DRAWER CLOSE
+     ------------------------------------------------------- */
+
+  if (EF.ids.closeMenu) {
+
+    EF.ids.closeMenu.addEventListener(
+      "click",
+      closeDrawer
+    );
+
+  }
+
+  if (EF.ids.drawerOverlay) {
+
+    EF.ids.drawerOverlay.addEventListener(
+      "click",
+      closeDrawer
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     THEME
+     ------------------------------------------------------- */
+
+  if (EF.ids.themeBtn) {
+
+    EF.ids.themeBtn.addEventListener(
+      "click",
+      toggleTheme
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     LANGUAGE BUTTON
+     ------------------------------------------------------- */
+
+  if (EF.ids.langBtn) {
+
+    EF.ids.langBtn.addEventListener(
+      "click",
+      () => {
+
+        if (
+          EF.language === "hi"
+        ) {
+
+          setLanguage("en");
+
+        } else {
+
+          setLanguage("hi");
+
+        }
+
+      }
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     LANGUAGE DIRECT BUTTONS
+     ------------------------------------------------------- */
+
+  if (EF.ids.langHi) {
+
+    EF.ids.langHi.addEventListener(
+      "click",
+      () => {
+
+        setLanguage("hi");
+
+      }
+    );
+
+  }
+
+  if (EF.ids.langEn) {
+
+    EF.ids.langEn.addEventListener(
+      "click",
+      () => {
+
+        setLanguage("en");
+
+      }
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     RESET BUTTONS
+     ------------------------------------------------------- */
+
+  $all(
+    "[data-action='reset'], #resetApp, #resetButton, #menuReset"
+  )
+  .forEach(
+    button => {
+
+      button.addEventListener(
+        "click",
+        resetApplication
+      );
+
     }
   );
 
 
-  /* =========================================================
-     INIT
-     ========================================================= */
+  /* -------------------------------------------------------
+     BOTTOM NAV
+     ------------------------------------------------------- */
 
-  function init() {
-    injectDynamicCSS();
+  $all(
+    ".bottom-item, [data-nav]"
+  )
+  .forEach(
+    item => {
 
-    applyTheme();
+      item.addEventListener(
+        "click",
+        () => {
 
-    ensureDrawer();
+          const page =
+            item.dataset.nav ||
+            item.dataset.page;
 
-    bindHamburger();
+          if (page) {
 
-    loadRoute();
+            handleNavigation(
+              page
+            );
 
-    validateSavedRoute();
+          }
 
-    /*
-     * Build an internal history chain:
-     *
-     * Home
-     *  ↓
-     * Stage
-     *  ↓
-     * Section
-     *  ↓
-     * Item
-     *
-     * So Android/browser Back behaves correctly
-     * even after refresh.
-     */
-    seedHistoryForSavedRoute();
+        }
+      );
 
-    if (state.page === "home") {
-      showHome(false);
-    } else {
-      renderCurrentPage(true);
     }
+  );
 
-    buildDrawer();
 
-    updateStaticUI();
+  /* -------------------------------------------------------
+     DRAWER NAV
+     ------------------------------------------------------- */
 
-    applyBranding();
+  $all(
+    "[data-page]"
+  )
+  .forEach(
+    item => {
 
-    /*
-     * If an existing HTML hamburger exists,
-     * bind it again after all rendering.
-     */
-    bindHamburger();
+      item.addEventListener(
+        "click",
+        () => {
+
+          const page =
+            item.dataset.page;
+
+          if (
+            page === "home" ||
+            page === "estimate" ||
+            page === "calculator" ||
+            page === "settings"
+          ) {
+
+            handleNavigation(
+              page
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+
+  /* -------------------------------------------------------
+     SEARCH
+     ------------------------------------------------------- */
+
+  if (EF.ids.search) {
+
+    EF.ids.search.addEventListener(
+      "input",
+      event => {
+
+        handleSearch(
+          event.target.value
+        );
+
+      }
+    );
+
   }
 
 
-  /* =========================================================
-     START
-     ========================================================= */
+  /* -------------------------------------------------------
+     FILTER ICON
+     ------------------------------------------------------- */
+
+  if (EF.ids.filterIcon) {
+
+    EF.ids.filterIcon.addEventListener(
+      "click",
+      toggleFilter
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     CLEAR FILTER
+     ------------------------------------------------------- */
+
+  if (EF.ids.clearFilter) {
+
+    EF.ids.clearFilter.addEventListener(
+      "click",
+      clearFilters
+    );
+
+  }
+
+
+  /* -------------------------------------------------------
+     FILTER SELECTS
+     ------------------------------------------------------- */
+
+  [
+    EF.ids.stageFilter,
+    EF.ids.typeFilter,
+    EF.ids.sizeFilter,
+    EF.ids.brandFilter
+  ]
+  .forEach(
+    select => {
+
+      if (!select) {
+        return;
+      }
+
+      select.addEventListener(
+        "change",
+        () => {
+
+          EF.selectedFilters[
+            select.id
+          ] =
+            select.value;
+
+          renderMaterials(
+            EF.currentSectionItems
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+  /* -------------------------------------------------------
+     GLOBAL VIEW
+     ------------------------------------------------------- */
+
+  setupGlobalViewSelector();
+
+
+  /* -------------------------------------------------------
+     ESCAPE
+     ------------------------------------------------------- */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Escape"
+      ) {
+
+        if (
+          EF.drawerOpen
+        ) {
+
+          closeDrawer();
+
+          return;
+
+        }
+
+        if (
+          EF.filterOpen
+        ) {
+
+          toggleFilter();
+
+          return;
+
+        }
+
+      }
+
+    }
+  );
+
+
+  /* -------------------------------------------------------
+     BACK BUTTON
+     ------------------------------------------------------- */
+
+  window.addEventListener(
+    "popstate",
+    handleBrowserBack
+  );
+
+
+  /* -------------------------------------------------------
+     ANDROID / BROWSER BACK
+     ------------------------------------------------------- */
+
+  window.addEventListener(
+    "beforeunload",
+    () => {
+
+      saveCurrentRouteState();
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   BROWSER BACK
+   ========================================================= */
+
+function handleBrowserBack() {
 
   if (
-    document.readyState === "loading"
+    EF.drawerOpen
   ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      init,
-      { once: true }
+
+    closeDrawer();
+
+    history.pushState(
+      {
+        ef: true
+      },
+      "",
+      location.href
     );
-  } else {
-    init();
+
+    return;
+
   }
 
-})();
+  switch (EF.route) {
+
+    case "editor":
+
+      renderMaterialPage();
+
+      break;
+
+    case "materials":
+
+      renderStagePage();
+
+      break;
+
+    case "stage":
+
+      renderHome();
+
+      break;
+
+    case "estimate":
+    case "calculator":
+    case "settings":
+
+      renderHome();
+
+      break;
+
+    default:
+
+      renderHome();
+
+  }
+
+}
+
+
+/* =========================================================
+   SAVE ROUTE STATE
+   ========================================================= */
+
+function saveCurrentRouteState() {
+
+  const state = {
+
+    route:
+      EF.route,
+
+    stage:
+      EF.currentStage,
+
+    section:
+      EF.currentSection,
+
+    material:
+      EF.currentMaterialIndex
+
+  };
+
+  localStorage.setItem(
+    "sandeepEstimateRouteState",
+    JSON.stringify(state)
+  );
+
+}
+
+
+/* =========================================================
+   RESTORE ROUTE
+   ========================================================= */
+
+function restoreRoute() {
+
+  let state = null;
+
+  try {
+
+    state =
+      JSON.parse(
+        localStorage.getItem(
+          "sandeepEstimateRouteState"
+        ) || "null"
+      );
+
+  } catch (e) {
+
+    state = null;
+
+  }
+
+  if (!state) {
+
+    renderHome();
+
+    return;
+
+  }
+
+  if (
+    Number.isInteger(state.stage) &&
+    EF.materials[state.stage]
+  ) {
+
+    EF.currentStage =
+      state.stage;
+
+  } else {
+
+    renderHome();
+
+    return;
+
+  }
+
+  if (
+    state.route === "stage"
+  ) {
+
+    renderStagePage();
+
+    return;
+
+  }
+
+  if (
+    state.route === "materials"
+  ) {
+
+    const stage =
+      EF.materials[
+        EF.currentStage
+      ];
+
+    if (
+      state.section === -1
+    ) {
+
+      EF.currentSection =
+        -1;
+
+      EF.currentSectionItems =
+        getStageMaterials(
+          stage
+        );
+
+    } else {
+
+      EF.currentSection =
+        Number(
+          state.section
+        );
+
+      const section =
+        getStageSections(stage)[
+          EF.currentSection
+        ];
+
+      if (!section) {
+
+        renderStagePage();
+
+        return;
+
+      }
+
+      EF.currentSectionItems =
+        getSectionMaterials(
+          section
+        );
+
+    }
+
+    renderMaterialPage();
+
+    return;
+
+  }
+
+  if (
+    state.route === "editor"
+  ) {
+
+    const stage =
+      EF.materials[
+        EF.currentStage
+      ];
+
+    if (
+      state.section === -1
+    ) {
+
+      EF.currentSection =
+        -1;
+
+      EF.currentSectionItems =
+        getStageMaterials(
+          stage
+        );
+
+    } else {
+
+      EF.currentSection =
+        Number(
+          state.section
+        );
+
+      const section =
+        getStageSections(stage)[
+          EF.currentSection
+        ];
+
+      if (!section) {
+
+        renderStagePage();
+
+        return;
+
+      }
+
+      EF.currentSectionItems =
+        getSectionMaterials(
+          section
+        );
+
+    }
+
+    const index =
+      Number(
+        state.material
+      );
+
+    if (
+      !EF.currentSectionItems[index]
+    ) {
+
+      renderMaterialPage();
+
+      return;
+
+    }
+
+    EF.currentMaterialIndex =
+      index;
+
+    EF.currentMaterial =
+      EF.currentSectionItems[
+        index
+      ];
+
+    renderEditor();
+
+    return;
+
+  }
+
+  if (
+    state.route === "estimate"
+  ) {
+
+    renderEstimatePage();
+
+    return;
+
+  }
+
+  renderHome();
+
+}
+
+
+/* =========================================================
+   ESTIMATE COUNT
+   ========================================================= */
+
+function updateEstimateCount() {
+
+  const count =
+    EF.ids.estimateCount ||
+    byId("estimateCount");
+
+  if (count) {
+
+    count.textContent =
+      EF.estimate.length;
+
+  }
+
+}
+
+
+/* =========================================================
+   CURRENT PAGE RENDER
+   ========================================================= */
+
+function renderCurrentPage() {
+
+  switch (EF.route) {
+
+    case "home":
+      renderHome();
+      break;
+
+    case "stage":
+      renderStagePage();
+      break;
+
+    case "materials":
+      renderMaterialPage();
+      break;
+
+    case "editor":
+      renderEditor();
+      break;
+
+    case "estimate":
+      renderEstimatePage();
+      break;
+
+    case "calculator":
+
+      showOnlyPage(
+        "calculator"
+      );
+
+      updateTopTitle(
+        t(HI.calculatorTitle)
+      );
+
+      break;
+
+    case "settings":
+
+      showOnlyPage(
+        "settings"
+      );
+
+      updateTopTitle(
+        t(HI.settingsTitle)
+      );
+
+      break;
+
+    default:
+      renderHome();
+
+  }
+
+}
+
+
+/* =========================================================
+   LOADING SCREEN
+   ========================================================= */
+
+function hideLoader() {
+
+  const loader =
+    EF.ids.loadingScreen;
+
+  if (!loader) {
+    return;
+  }
+
+  loader.classList.add(
+    "hidden"
+  );
+
+  loader.classList.remove(
+    "active"
+  );
+
+  loader.style.display =
+    "none";
+
+}
+
+
+/* =========================================================
+   HTML ESCAPE
+   ========================================================= */
+
+function escapeHTML(value) {
+
+  return String(
+    value ?? ""
+  )
+  .replace(
+    /&/g,
+    "&amp;"
+  )
+  .replace(
+    /</g,
+    "&lt;"
+  )
+  .replace(
+    />/g,
+    "&gt;"
+  )
+  .replace(
+    /"/g,
+    "&quot;"
+  )
+  .replace(
+    /'/g,
+    "&#039;"
+  );
+
+}
+
+
+function escapeAttr(value) {
+
+  return escapeHTML(
+    value
+  );
+
+}
+
+
+/* =========================================================
+   PAGE CLICK SAFETY
+   ========================================================= */
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const target =
+      event.target;
+
+    if (
+      target.closest(
+        "#efLocalViewOptions"
+      )
+    ) {
+      return;
+    }
+
+    const globalOptions =
+      EF.ids.viewOptions;
+
+    if (
+      globalOptions &&
+      !target.closest(
+        "#viewTrigger"
+      )
+    ) {
+
+      globalOptions.classList.remove(
+        "open"
+      );
+
+      globalOptions.classList.remove(
+        "active"
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+function initEstimateApp() {
+
+  if (EF.initialized) {
+    return;
+  }
+
+  EF.initialized =
+    true;
+
+  cacheDOM();
+
+  loadEstimate();
+
+  applyTheme();
+
+  renderLanguageButtons();
+
+  bindEvents();
+
+  updateEstimateCount();
+
+  hideLoader();
+
+  /*
+   * Small delay ensures material.js is completely ready
+   * before route restoration.
+   */
+
+  setTimeout(
+    () => {
+
+      restoreRoute();
+
+    },
+    30
+  );
+
+}
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+if (
+  document.readyState === "loading"
+) {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initEstimateApp,
+    {
+      once: true
+    }
+  );
+
+} else {
+
+  initEstimateApp();
+
+}
+
+
+/* =========================================================
+   PUBLIC API
+   ========================================================= */
+
+window.ElectroFixApp = {
+
+  state:
+    EF,
+
+  openStage,
+  openSection,
+  openMaterial,
+
+  renderHome,
+  renderEstimatePage,
+  renderMaterialPage,
+  renderEditor,
+
+  setLanguage,
+  toggleTheme,
+
+  openDrawer,
+  closeDrawer,
+
+  resetApplication,
+
+  showToast
+
+};
+
+
+/* =========================================================
+   END OF app.js
+   ========================================================= */

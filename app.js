@@ -2,8 +2,6 @@
    SANDEEP ELECTROFIX - ESTIMATE LIST
    app.js
    ---------------------------------------------------------
-   FINAL APP CONTROLLER
-
    Works with:
    index.html
    style.css
@@ -11,6839 +9,5508 @@
    material.js
 
    MASTER DATA:
-   material.js ONLY
-   Do NOT duplicate / modify material data here.
+   window.MATERIALS
 
    FLOW:
    HOME
-    -> STAGE
-      -> SECTION
-        -> MATERIAL
-          -> EDITOR
-            -> ADD -> NEXT MATERIAL
+      ↓
+   STAGE
+      ↓
+   SECTION LIST
+      ↓
+   MATERIAL LIST
+      ↓
+   EDITOR
 
-   RULES:
-   - Quantity required
-   - Other fields optional
-   - Brand optional
-   - Price optional
-   - Add saves item and moves to next material
-   - Next NEVER saves automatically
-   - Unit carries forward
-   - Estimate items editable
-   - Hindi / English are separate
-   - Drawer + Back handling
-   - Route + draft persistence
+   IMPORTANT:
+   material.js is NEVER modified.
    ========================================================= */
 
 "use strict";
 
-
-/* =========================================================
-   CONFIG
-   ========================================================= */
-
-const APP_CONFIG =
-  window.EF_CONFIG ||
-  window.CONFIG ||
-  window.APP_CONFIG ||
-  {};
-
-const STORAGE = {
-  language:
-    APP_CONFIG.storageLanguage ||
-    "sandeepMaterialLang",
-
-  estimate:
-    APP_CONFIG.storageEstimate ||
-    "sandeepEstimateItems",
-
-  theme:
-    APP_CONFIG.storageTheme ||
-    "sandeepTheme",
-
-  view:
-    APP_CONFIG.storageView ||
-    "sandeepMaterialView",
-
-  route:
-    APP_CONFIG.storageRoute ||
-    "sandeepEstimateRoute",
-
-  lastUnit:
-    APP_CONFIG.storageLastUnit ||
-    "sandeepLastUnit",
-
-  draft:
-    APP_CONFIG.storageDraft ||
-    "sandeepEstimateDraft"
-};
-
-
-/* =========================================================
-   GLOBAL STATE
-   ========================================================= */
-
-const EF = {
-
-  materials:
-    Array.isArray(window.MATERIALS)
-      ? window.MATERIALS
-      : [],
-
-  estimate: [],
-
-  language:
-    localStorage.getItem(STORAGE.language) || "hi",
-
-  theme:
-    localStorage.getItem(STORAGE.theme) || "dark",
-
-  view:
-    localStorage.getItem(STORAGE.view) || "grid",
-
-  route:
-    localStorage.getItem(STORAGE.route) || "home",
-
-  currentStage: null,
-
-  currentSection: null,
-
-  currentMaterial: null,
-
-  currentMaterialIndex: 0,
-
-  currentSectionItems: [],
-
-  currentDraft: {},
-
-  selectedFilters: {
-    stage: "",
-    section: "",
-    type: "",
-    size: "",
-    brand: ""
-  },
-
-  searchText: "",
-
-  drawerOpen: false,
-
-  filterOpen: false,
-
-  initialized: false,
-
-  ignorePopState: false,
-
-  navigatingHistory: false,
-
-  drawerHistoryActive: false,
-
-  ids: {},
-
-  unitCarry:
-    localStorage.getItem(STORAGE.lastUnit) || ""
-};
-
-
-/* =========================================================
-   DOM
-   ========================================================= */
-
-function cacheDOM() {
-
-  const $ = (selector) =>
-    document.querySelector(selector);
-
-  const $$ = (selector) =>
-    Array.from(document.querySelectorAll(selector));
-
-  EF.ids = {
-
-    app:
-      $("#app"),
-
-    main:
-      $("#main") ||
-      $("#app"),
-
-    home:
-      $("#home"),
-
-    topBar:
-      $("#topBar"),
-
-    topBarTitle:
-      $("#topBarTitle"),
-
-    menuBtn:
-      $("#menuBtn") ||
-      $("#hamburgerButton"),
-
-    drawer:
-      $("#drawer") ||
-      $("#sideMenu"),
-
-    drawerOverlay:
-      $("#drawerOverlay") ||
-      $("#menuOverlay"),
-
-    closeMenu:
-      $("#closeMenu") ||
-      $("#sideMenuClose"),
-
-    langBtn:
-      $("#langBtn") ||
-      $("#languageButton"),
-
-    themeBtn:
-      $("#themeBtn") ||
-      $("#themeButton") ||
-      $("#themeToggleButton"),
-
-    resetBtn:
-      $("#resetApp") ||
-      $("#resetButton") ||
-      $("#menuReset"),
-
-    stageGrid:
-      $("#stageGrid"),
-
-    materialGrid:
-      $("#materialGrid"),
-
-    bottomNav:
-      $("#bottomNav") ||
-      $("#bottomNavigation"),
-
-    toast:
-      $("#toast"),
-
-    searchInput:
-      $("#searchInput") ||
-      $("#materialSearch") ||
-      $("#search"),
-
-    searchClear:
-      $("#searchClear"),
-
-    filterBtn:
-      $("#filterBtn") ||
-      $("#filterButton"),
-
-    filterPanel:
-      $("#filterPanel") ||
-      $("#filterDrawer"),
-
-    filterClear:
-      $("#filterClear"),
-
-    globalViewTrigger:
-      $("#viewModeBtn") ||
-      $("#viewSelector") ||
-      $("#materialViewSelector") ||
-      $("#viewTrigger"),
-
-    globalViewOptions:
-      $("#viewOptions") ||
-      $("#materialViewOptions"),
-
-    editor:
-      $("#editor"),
-
-    editorTitle:
-      $("#editorTitle"),
-
-    editorFields:
-      $("#editorFields"),
-
-    addBtn:
-      $("#addItem") ||
-      $("#addBtn") ||
-      $("#saveItem"),
-
-    nextBtn:
-      $("#nextItem") ||
-      $("#nextBtn"),
-
-    backBtn:
-      $("#backItem") ||
-      $("#previousItem"),
-
-    estimateList:
-      $("#estimateList"),
-
-    estimateCount:
-      $("#estimateCount"),
-
-    languageButtons:
-      $$("[data-language]"),
-
-    loading:
-      $("#loadingScreen") ||
-      $("#loader") ||
-      $("#loading")
+(function () {
+
+  /* =======================================================
+     CONFIG
+     ======================================================= */
+
+  const STORAGE = {
+    lang: "sandeepMaterialLang",
+    theme: "sandeepTheme",
+    items: "sandeepEstimateItems",
+    view: "sandeepMaterialView",
+    route: "sandeepEstimateRoute",
+    draft: "sandeepEstimateDraft",
+    lastUnit: "sandeepLastUnit"
   };
 
-  return { $, $$ };
-}
+  const EF = {
 
+    lang: localStorage.getItem(STORAGE.lang) || "hi",
 
-/* =========================================================
-   LANGUAGE DATA
-   ========================================================= */
+    theme: localStorage.getItem(STORAGE.theme) || "dark",
 
-const HI = {
+    view: localStorage.getItem(STORAGE.view) || "grid",
 
-  home: "होम",
+    route: "home",
 
-  estimate: "एस्टिमेट",
+    stageIndex: null,
 
-  calculator: "कैलकुलेटर",
+    sectionIndex: null,
 
-  settings: "सेटिंग्स",
+    materialIndex: null,
 
-  stage: "स्टेज",
+    editIndex: null,
 
-  section: "सेक्शन",
+    searchText: "",
 
-  material: "मटेरियल",
+    filters: {
+      stage: "",
+      type: "",
+      size: "",
+      brand: ""
+    },
 
-  search: "मटेरियल खोजें",
+    estimateItems: [],
 
-  filter: "फ़िल्टर",
+    draft: {},
 
-  clear: "साफ़ करें",
+    drawerOpen: false,
 
-  add: "जोड़ें",
+    filterOpen: false,
 
-  save: "सेव करें",
+    viewOpen: false,
 
-  update: "अपडेट करें",
+    calculator: "ohm",
 
-  next: "अगला",
+    historyReady: false
 
-  back: "वापस",
+  };
 
-  previous: "पिछला",
 
-  quantity: "मात्रा",
+  /* =======================================================
+     DOM HELPERS
+     ======================================================= */
 
-  unit: "यूनिट",
+  const $ = (id) => document.getElementById(id);
 
-  brand: "ब्रांड",
+  const qs = (selector, root = document) =>
+    root.querySelector(selector);
 
-  price: "कीमत",
+  const qsa = (selector, root = document) =>
+    Array.from(root.querySelectorAll(selector));
 
-  select: "चुनें",
 
-  optional: "वैकल्पिक",
+  /* =======================================================
+     SAFE STORAGE
+     ======================================================= */
 
-  edit: "एडिट",
+  function loadStorage() {
 
-  delete: "डिलीट",
+    try {
 
-  noMaterials: "कोई मटेरियल नहीं मिला",
+      const savedItems =
+        JSON.parse(
+          localStorage.getItem(STORAGE.items) || "[]"
+        );
 
-  noEstimate: "एस्टिमेट खाली है",
+      EF.estimateItems =
+        Array.isArray(savedItems)
+          ? savedItems
+          : [];
 
-  requiredQuantity: "मात्रा दर्ज करना जरूरी है",
+    } catch (e) {
 
-  saved: "सेव हो गया",
+      EF.estimateItems = [];
 
-  updated: "अपडेट हो गया",
+    }
 
-  deleted: "डिलीट हो गया",
+    try {
 
-  reset: "रीसेट",
+      const savedDraft =
+        JSON.parse(
+          localStorage.getItem(STORAGE.draft) || "{}"
+        );
 
-  resetConfirm:
-    "क्या आप पूरा एस्टिमेट रीसेट करना चाहते हैं?",
+      EF.draft =
+        savedDraft &&
+        typeof savedDraft === "object"
+          ? savedDraft
+          : {};
 
-  language: "भाषा",
+    } catch (e) {
 
-  theme: "थीम",
+      EF.draft = {};
 
-  dark: "डार्क",
+    }
 
-  light: "लाइट",
-
-  hindi: "हिंदी",
-
-  english: "English",
-
-  all: "सभी",
-
-  stageView: "स्टेज व्यू",
-
-  materialView: "मटेरियल व्यू",
-
-  grid: "ग्रिड",
-
-  list: "लिस्ट",
-
-  compact: "कॉम्पैक्ट",
-
-  large: "बड़ा",
-
-  mini: "मिनी",
-
-  twoColumn: "2 कॉलम",
-
-  horizontal: "हॉरिज़ॉन्टल",
-
-  iconList: "आइकन लिस्ट",
-
-  timeline: "टाइमलाइन",
-
-  dense: "डेंस",
-
-  close: "बंद करें",
-
-  yes: "हाँ",
-
-  no: "नहीं",
-
-  chooseStage: "स्टेज चुनें",
-
-  chooseSection: "सेक्शन चुनें",
-
-  chooseMaterial: "मटेरियल चुनें",
-
-  calculatorTitle: "इलेक्ट्रिकल कैलकुलेटर",
-
-  settingsTitle: "सेटिंग्स",
-
-  estimateTitle: "एस्टिमेट लिस्ट",
-
-  itemAdded: "मटेरियल एस्टिमेट में जोड़ दिया गया",
-
-  previousItem: "पिछला मटेरियल",
-
-  nextMaterial: "अगला मटेरियल",
-
-  emptySearch: "सर्च के अनुसार कुछ नहीं मिला",
-
-  filterApplied: "फ़िल्टर लागू हो गया",
-
-  selectValue: "वैल्यू चुनें",
-
-  type: "टाइप",
-
-  size: "साइज़",
-
-  subtype: "सब-टाइप",
-
-  option: "ऑप्शन",
-
-  name: "नाम",
-
-  total: "कुल",
-
-  items: "आइटम",
-
-  remove: "हटाएँ",
-
-  cancel: "रद्द करें",
-
-  confirm: "पुष्टि करें"
-};
-
-
-/* =========================================================
-   FIELD TRANSLATIONS
-   ========================================================= */
-
-const FIELD_HI = {
-
-  Size: "साइज़",
-
-  Type: "टाइप",
-
-  "Sub Type": "सब-टाइप",
-
-  SubType: "सब-टाइप",
-
-  Quantity: "मात्रा",
-
-  Unit: "यूनिट",
-
-  Brand: "ब्रांड",
-
-  Price: "कीमत",
-
-  Length: "लंबाई",
-
-  Width: "चौड़ाई",
-
-  Height: "ऊँचाई",
-
-  Color: "रंग",
-
-  Colour: "रंग",
-
-  Material: "मटेरियल",
-
-  Model: "मॉडल",
-
-  Rating: "रेटिंग",
-
-  Pole: "पोल",
-
-  Poles: "पोल",
-
-  Ampere: "एम्पियर",
-
-  Current: "करंट",
-
-  Voltage: "वोल्टेज",
-
-  Watt: "वॉट",
-
-  Wattage: "वॉटेज",
-
-  BrandName: "ब्रांड",
-
-  Finish: "फिनिश",
-
-  Thickness: "मोटाई",
-
-  LengthUnit: "लंबाई यूनिट",
-
-  Application: "उपयोग",
-
-  Shape: "आकार",
-
-  ColourCode: "कलर कोड",
-
-  "No. of Ways": "वे की संख्या",
-
-  "No. of Module": "मॉड्यूल संख्या",
-
-  Modules: "मॉड्यूल",
-
-  Module: "मॉड्यूल",
-
-  Capacity: "क्षमता",
-
-  SizeType: "साइज़ टाइप"
-};
-
-
-/* =========================================================
-   MATERIAL TRANSLATIONS
-   ========================================================= */
-
-const MATERIAL_HI = {
-
-  "Pipe": "पाइप",
-
-  "Bend": "बेंड",
-
-  "Junction Box": "जंक्शन बॉक्स",
-
-  "Fan Box": "फैन बॉक्स",
-
-  "Round Box": "राउंड बॉक्स",
-
-  "Switch Box": "स्विच बॉक्स",
-
-  "Conduit Pipe": "कंड्यूट पाइप",
-
-  "Flexible Pipe": "फ्लेक्सिबल पाइप",
-
-  "PVC Wall Plug / Gulli / Gitti":
-    "पीवीसी वॉल प्लग / गुल्ली / गिट्टी",
-
-  "Wall Plug": "वॉल प्लग",
-
-  "Saddle": "सैडल",
-
-  "Coupler": "कपलर",
-
-  "Tee": "टी",
-
-  "Junction": "जंक्शन",
-
-  "Connector": "कनेक्टर",
-
-  "Switch": "स्विच",
-
-  "Socket": "सॉकेट",
-
-  "Fan": "पंखा",
-
-  "Regulator": "रेगुलेटर",
-
-  "Holder": "होल्डर",
-
-  "Ceiling Rose": "सीलिंग रोज़",
-
-  "MCB": "एमसीबी",
-
-  "RCCB": "आरसीसीबी",
-
-  "DB": "डीबी",
-
-  "Distribution Board": "डिस्ट्रीब्यूशन बोर्ड",
-
-  "Wire": "वायर",
-
-  "Cable": "केबल",
-
-  "Cable Tie": "केबल टाई",
-
-  "Lug": "लग",
-
-  "Terminal": "टर्मिनल",
-
-  "Tape": "टेप",
-
-  "Insulation Tape": "इंसुलेशन टेप",
-
-  "Screw": "स्क्रू",
-
-  "PVC Screw": "पीवीसी स्क्रू",
-
-  "Rawl Plug": "रॉवल प्लग",
-
-  "Ceiling Fan": "सीलिंग फैन",
-
-  "Exhaust Fan": "एग्जॉस्ट फैन",
-
-  "Light": "लाइट",
-
-  "LED": "एलईडी",
-
-  "LED Bulb": "एलईडी बल्ब",
-
-  "Panel Light": "पैनल लाइट",
-
-  "Down Light": "डाउन लाइट",
-
-  "Spot Light": "स्पॉट लाइट",
-
-  "Flood Light": "फ्लड लाइट",
-
-  "Tube Light": "ट्यूब लाइट",
-
-  "MCB Box": "एमसीबी बॉक्स",
-
-  "Modular Plate": "मॉड्यूलर प्लेट",
-
-  "Switch Plate": "स्विच प्लेट",
-
-  "Face Plate": "फेस प्लेट",
-
-  "Back Box": "बैक बॉक्स",
-
-  "PVC Box": "पीवीसी बॉक्स",
-
-  "Metal Box": "मेटल बॉक्स",
-
-  "False Ceiling": "फॉल्स सीलिंग",
-
-  "False Ceiling Wiring":
-    "फॉल्स सीलिंग वायरिंग",
-
-  "Concealed Wiring":
-    "कन्सील्ड वायरिंग",
-
-  "Surface Wiring":
-    "सरफेस वायरिंग"
-};
-
-
-/* =========================================================
-   SECTION TRANSLATIONS
-   ========================================================= */
-
-const SECTION_HI = {
-
-  "Conduit & Box":
-    "कंड्यूट और बॉक्स",
-
-  "Conduit":
-    "कंड्यूट",
-
-  "Boxes":
-    "बॉक्स",
-
-  "Wiring":
-    "वायरिंग",
-
-  "Switch & Socket":
-    "स्विच और सॉकेट",
-
-  "Switches & Sockets":
-    "स्विच और सॉकेट",
-
-  "Protection":
-    "प्रोटेक्शन",
-
-  "Distribution":
-    "डिस्ट्रीब्यूशन",
-
-  "Accessories":
-    "एक्सेसरीज़",
-
-  "Electrical Accessories":
-    "इलेक्ट्रिकल एक्सेसरीज़",
-
-  "Lighting":
-    "लाइटिंग",
-
-  "Fan":
-    "फैन",
-
-  "Fans":
-    "फैन",
-
-  "False Ceiling Wiring Material":
-    "फॉल्स सीलिंग वायरिंग मटेरियल"
-};
-
-
-/* =========================================================
-   STAGE TRANSLATIONS
-   ========================================================= */
-
-const STAGE_HI = {
-
-  "STAGE 1": "स्टेज 1",
-
-  "STAGE 2": "स्टेज 2",
-
-  "STAGE 3": "स्टेज 3",
-
-  "STAGE 4": "स्टेज 4",
-
-  "STAGE 5": "स्टेज 5"
-};
-
-
-/* =========================================================
-   OPTION TRANSLATIONS
-   ========================================================= */
-
-const OPTION_HI = {
-
-  "20mm": "20 मिमी",
-
-  "25mm": "25 मिमी",
-
-  "32mm": "32 मिमी",
-
-  "16mm": "16 मिमी",
-
-  "40mm": "40 मिमी",
-
-  "50mm": "50 मिमी",
-
-  "1.5 Sqmm": "1.5 वर्ग मिमी",
-
-  "2.5 Sqmm": "2.5 वर्ग मिमी",
-
-  "4 Sqmm": "4 वर्ग मिमी",
-
-  "6 Sqmm": "6 वर्ग मिमी",
-
-  "10 Sqmm": "10 वर्ग मिमी",
-
-  "16 Sqmm": "16 वर्ग मिमी",
-
-  "20 Sqmm": "20 वर्ग मिमी",
-
-  "25 Sqmm": "25 वर्ग मिमी",
-
-  "32 Sqmm": "32 वर्ग मिमी",
-
-  "PVC": "पीवीसी",
-
-  "GI": "जीआई",
-
-  "MS": "एमएस",
-
-  "Metal": "मेटल",
-
-  "Plastic": "प्लास्टिक",
-
-  "Round": "गोल",
-
-  "Square": "चौकोर",
-
-  "Heavy": "हेवी",
-
-  "Medium": "मीडियम",
-
-  "Light": "लाइट",
-
-  "White": "सफेद",
-
-  "Black": "काला",
-
-  "Grey": "ग्रे",
-
-  "Gray": "ग्रे",
-
-  "Red": "लाल",
-
-  "Blue": "नीला",
-
-  "Green": "हरा",
-
-  "Yellow": "पीला",
-
-  "Orange": "नारंगी",
-
-  "Brown": "भूरा",
-
-  "Brass": "पीतल",
-
-  "Copper": "कॉपर",
-
-  "Single": "सिंगल",
-
-  "Double": "डबल",
-
-  "Triple": "ट्रिपल",
-
-  "Single Pole": "सिंगल पोल",
-
-  "Double Pole": "डबल पोल",
-
-  "Triple Pole": "ट्रिपल पोल",
-
-  "Four Pole": "फोर पोल",
-
-  "1 Way": "1 वे",
-
-  "2 Way": "2 वे",
-
-  "3 Way": "3 वे",
-
-  "6A": "6 एम्पियर",
-
-  "10A": "10 एम्पियर",
-
-  "16A": "16 एम्पियर",
-
-  "20A": "20 एम्पियर",
-
-  "25A": "25 एम्पियर",
-
-  "32A": "32 एम्पियर",
-
-  "40A": "40 एम्पियर",
-
-  "63A": "63 एम्पियर",
-
-  "1 Module": "1 मॉड्यूल",
-
-  "2 Module": "2 मॉड्यूल",
-
-  "3 Module": "3 मॉड्यूल",
-
-  "4 Module": "4 मॉड्यूल",
-
-  "6 Module": "6 मॉड्यूल",
-
-  "8 Module": "8 मॉड्यूल",
-
-  "12 Module": "12 मॉड्यूल",
-
-  "16 Module": "16 मॉड्यूल",
-
-  "18 Module": "18 मॉड्यूल",
-
-  "24 Module": "24 मॉड्यूल",
-
-  "Meter": "मीटर",
-
-  "Mtr": "मीटर",
-
-  "Piece": "पीस",
-
-  "Pc": "पीस",
-
-  "Nos": "नग",
-
-  "No": "नग",
-
-  "Set": "सेट",
-
-  "Box": "बॉक्स",
-
-  "Packet": "पैकेट",
-
-  "Roll": "रोल",
-
-  "Feet": "फीट",
-
-  "Ft": "फीट",
-
-  "Point": "पॉइंट",
-
-  "Point(s)": "पॉइंट",
-
-  "Watt": "वॉट",
-
-  "Volt": "वोल्ट",
-
-  "Amp": "एम्पियर",
-
-  "Normal": "नॉर्मल",
-
-  "Modular": "मॉड्यूलर",
-
-  "Standard": "स्टैंडर्ड",
-
-  "Anchor": "एंकर",
-
-  "Finolex": "फिनोलेक्स",
-
-  "Polycab": "पॉलीकैब",
-
-  "Havells": "हैवेल्स",
-
-  "Anchor Roma": "एंकर रोमा",
-
-  "Legrand": "लेग्रैंड",
-
-  "Schneider": "श्नाइडर",
-
-  "GM": "जीएम",
-
-  "GreatWhite": "ग्रेटव्हाइट"
-};
-
-
-/* =========================================================
-   TRANSLATION FUNCTION
-   ========================================================= */
-
-function t(value) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
   }
 
-  const text = String(value);
 
-  if (EF.language === "en") {
-    return text;
-  }
-
-  if (HI[text]) {
-    return HI[text];
-  }
-
-  if (FIELD_HI[text]) {
-    return FIELD_HI[text];
-  }
-
-  if (MATERIAL_HI[text]) {
-    return MATERIAL_HI[text];
-  }
-
-  if (SECTION_HI[text]) {
-    return SECTION_HI[text];
-  }
-
-  if (STAGE_HI[text]) {
-    return STAGE_HI[text];
-  }
-
-  if (OPTION_HI[text]) {
-    return OPTION_HI[text];
-  }
-
-  return text;
-}
-
-
-/* =========================================================
-   NORMALIZE
-   ========================================================= */
-
-function normalize(value) {
-
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-
-function slug(value) {
-
-  return normalize(value)
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
-
-function esc(value) {
-
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-/* =========================================================
-   SAFE LOCAL STORAGE
-   ========================================================= */
-
-function storageGet(key, fallback = "") {
-
-  try {
-
-    const value =
-      localStorage.getItem(key);
-
-    return value === null
-      ? fallback
-      : value;
-
-  } catch (error) {
-
-    return fallback;
-  }
-}
-
-
-function storageSet(key, value) {
-
-  try {
+  function saveItems() {
 
     localStorage.setItem(
-      key,
-      value
+      STORAGE.items,
+      JSON.stringify(EF.estimateItems)
     );
 
-  } catch (error) {}
-}
-
-
-function storageRemove(key) {
-
-  try {
-
-    localStorage.removeItem(key);
-
-  } catch (error) {}
-}
-
-
-/* =========================================================
-   CONFIG VALUE
-   ========================================================= */
-
-function configValue(key, fallback) {
-
-  if (
-    APP_CONFIG &&
-    Object.prototype.hasOwnProperty.call(
-      APP_CONFIG,
-      key
-    )
-  ) {
-
-    return APP_CONFIG[key];
   }
 
-  return fallback;
-}
 
+  function saveDraft() {
 
-/* =========================================================
-   MATERIAL STRUCTURE HELPERS
-   ========================================================= */
-
-function getStageName(stage) {
-
-  return Array.isArray(stage)
-    ? stage[0]
-    : "";
-}
-
-
-function getStageTitle(stage) {
-
-  return Array.isArray(stage)
-    ? stage[1]
-    : "";
-}
-
-
-function getStageCategory(stage) {
-
-  return Array.isArray(stage)
-    ? stage[2]
-    : "";
-}
-
-
-function getDirectMaterials(stage) {
-
-  if (!Array.isArray(stage)) {
-    return [];
-  }
-
-  return Array.isArray(stage[3])
-    ? stage[3]
-    : [];
-}
-
-
-function getSections(stage) {
-
-  if (!Array.isArray(stage)) {
-    return [];
-  }
-
-  return Array.isArray(stage[4])
-    ? stage[4]
-    : [];
-}
-
-
-function getSectionName(section) {
-
-  return Array.isArray(section)
-    ? section[0]
-    : "";
-}
-
-
-function getSectionMaterials(section) {
-
-  return Array.isArray(section)
-    ? section[1]
-    : [];
-}
-
-
-function materialName(material) {
-
-  if (Array.isArray(material)) {
-    return material[0];
-  }
-
-  if (
-    material &&
-    typeof material === "object"
-  ) {
-    return (
-      material.name ||
-      material.material ||
-      ""
+    localStorage.setItem(
+      STORAGE.draft,
+      JSON.stringify(EF.draft || {})
     );
+
   }
 
-  return "";
-}
 
+  /* =======================================================
+     MASTER DATA
+     ======================================================= */
 
-function materialFields(material) {
+  function getMaster() {
 
-  if (Array.isArray(material)) {
-
-    return Array.isArray(material[1])
-      ? material[1]
+    return Array.isArray(window.MATERIALS)
+      ? window.MATERIALS
       : [];
+
   }
 
-  if (
-    material &&
-    typeof material === "object"
-  ) {
 
-    return (
-      Array.isArray(material.fields)
-        ? material.fields
-        : []
-    );
+  /*
+   MASTER STRUCTURE:
+
+   [
+     stageName,
+     defaultSectionName,
+     defaultCategoryName,
+     defaultMaterials,
+     extraSection1,
+     extraSection2,
+     ...
+   ]
+
+   Extra section:
+
+   [
+     sectionName,
+     [
+       material,
+       material,
+       ...
+     ]
+   ]
+  */
+
+
+  function getStages() {
+
+    return getMaster();
+
   }
 
-  return [];
-}
 
+  function getStage(stageIndex) {
 
-function fieldName(field) {
+    return getStages()[stageIndex] || null;
 
-  if (Array.isArray(field)) {
-    return field[0];
   }
 
-  if (
-    field &&
-    typeof field === "object"
-  ) {
 
-    return (
-      field.name ||
-      field.label ||
-      field.key ||
-      ""
-    );
+  function getStageName(stageIndex) {
+
+    const stage = getStage(stageIndex);
+
+    return stage ? stage[0] : "";
+
   }
 
-  return "";
-}
 
+  function getSections(stageIndex) {
 
-function fieldOptions(field) {
+    const stage = getStage(stageIndex);
 
-  if (Array.isArray(field)) {
+    if (!stage) return [];
 
-    return Array.isArray(field[1])
-      ? field[1]
-      : [];
-  }
+    const sections = [];
 
-  if (
-    field &&
-    typeof field === "object"
-  ) {
+    /* -----------------------------------------------
+       DEFAULT SECTION
+       ----------------------------------------------- */
 
-    return (
-      Array.isArray(field.options)
-        ? field.options
-        : []
-    );
-  }
+    if (
+      stage[1] &&
+      Array.isArray(stage[3])
+    ) {
 
-  return [];
-}
+      sections.push({
 
+        name: stage[1],
 
-/* =========================================================
-   MATERIAL ENTRY FLATTENING
-   ========================================================= */
+        category: stage[2] || "",
 
-function getAllMaterialEntries() {
+        materials: stage[3],
 
-  const result = [];
+        originalIndex: 0
 
-  EF.materials.forEach(
-    (stage) => {
+      });
 
-      const stageName =
-        getStageName(stage);
-
-      const stageTitle =
-        getStageTitle(stage);
-
-      const direct =
-        getDirectMaterials(stage);
-
-      direct.forEach(
-        (material, index) => {
-
-          result.push({
-
-            stage,
-            stageName,
-            stageTitle,
-
-            section: "",
-
-            sectionData: null,
-
-            material,
-
-            materialIndex: index
-          });
-        }
-      );
-
-      const sections =
-        getSections(stage);
-
-      sections.forEach(
-        (section) => {
-
-          const sectionName =
-            getSectionName(section);
-
-          const materials =
-            getSectionMaterials(section);
-
-          materials.forEach(
-            (material, index) => {
-
-              result.push({
-
-                stage,
-                stageName,
-                stageTitle,
-
-                section: sectionName,
-
-                sectionData: section,
-
-                material,
-
-                materialIndex: index
-              });
-            }
-          );
-        }
-      );
     }
-  );
-
-  return result;
-}
 
 
-/* =========================================================
-   FIND MATERIAL ENTRY
-   ========================================================= */
+    /* -----------------------------------------------
+       ADDITIONAL SECTIONS
+       ----------------------------------------------- */
 
-function findMaterialEntry(
-  stageName,
-  sectionName,
-  materialNameValue
-) {
+    for (let i = 4; i < stage.length; i++) {
 
-  const stage =
-    EF.materials.find(
-      (item) =>
-        getStageName(item) ===
-        stageName
-    );
+      const section = stage[i];
 
-  if (!stage) {
-    return null;
+      if (
+        !Array.isArray(section) ||
+        typeof section[0] !== "string" ||
+        !Array.isArray(section[1])
+      ) {
+        continue;
+      }
+
+      sections.push({
+
+        name: section[0],
+
+        category: "",
+
+        materials: section[1],
+
+        originalIndex: i
+
+      });
+
+    }
+
+    return sections;
+
   }
 
-  if (!sectionName) {
 
-    const direct =
-      getDirectMaterials(stage);
+  function getSection(stageIndex, sectionIndex) {
 
-    const material =
-      direct.find(
-        (item) =>
-          materialName(item) ===
-          materialNameValue
-      );
+    return getSections(stageIndex)[sectionIndex] || null;
 
-    if (!material) {
-      return null;
+  }
+
+
+  function getMaterials(stageIndex, sectionIndex) {
+
+    const section =
+      getSection(stageIndex, sectionIndex);
+
+    if (!section) return [];
+
+    return section.materials || [];
+
+  }
+
+
+  function getMaterial(
+    stageIndex,
+    sectionIndex,
+    materialIndex
+  ) {
+
+    const materials =
+      getMaterials(stageIndex, sectionIndex);
+
+    return materials[materialIndex] || null;
+
+  }
+
+
+  /* =======================================================
+     MATERIAL OBJECT NORMALIZER
+     ======================================================= */
+
+  function normalizeMaterial(raw) {
+
+    if (!Array.isArray(raw)) {
+
+      return {
+
+        name: String(raw || ""),
+
+        fields: [],
+
+        units: [],
+
+        brands: []
+
+      };
+
     }
 
     return {
 
-      stage,
+      name: raw[0] || "",
 
-      stageName:
-        getStageName(stage),
+      fields: Array.isArray(raw[1])
+        ? raw[1]
+        : [],
 
-      stageTitle:
-        getStageTitle(stage),
+      units: Array.isArray(raw[2])
+        ? raw[2]
+        : [],
 
-      section: "",
+      brands: Array.isArray(raw[3])
+        ? raw[3]
+        : []
 
-      sectionData: null,
-
-      material,
-
-      materialIndex:
-        direct.indexOf(material)
     };
+
   }
 
-  const section =
-    getSections(stage).find(
-      (item) =>
-        getSectionName(item) ===
-        sectionName
-    );
 
-  if (!section) {
-    return null;
+  /* =======================================================
+     FLATTEN MATERIALS
+     ======================================================= */
+
+  function flattenMaterials() {
+
+    const result = [];
+
+    getStages().forEach((stage, stageIndex) => {
+
+      const stageName = stage[0] || "";
+
+      getSections(stageIndex)
+        .forEach((section, sectionIndex) => {
+
+          section.materials.forEach(
+            (rawMaterial, materialIndex) => {
+
+              const material =
+                normalizeMaterial(rawMaterial);
+
+              result.push({
+
+                stageIndex,
+
+                stageName,
+
+                sectionIndex,
+
+                sectionName: section.name,
+
+                category: section.category,
+
+                materialIndex,
+
+                ...material
+
+              });
+
+            }
+          );
+
+        });
+
+    });
+
+    return result;
+
   }
 
-  const materials =
-    getSectionMaterials(section);
 
-  const material =
-    materials.find(
-      (item) =>
-        materialName(item) ===
-        materialNameValue
-    );
+  /* =======================================================
+     LANGUAGE
+     ======================================================= */
 
-  if (!material) {
-    return null;
-  }
+  const STAGE_HI = {
 
-  return {
+    "STAGE 1": "स्टेज 1",
 
-    stage,
+    "STAGE 2": "स्टेज 2",
 
-    stageName:
-      getStageName(stage),
+    "STAGE 3": "स्टेज 3",
 
-    stageTitle:
-      getStageTitle(stage),
+    "STAGE 4": "स्टेज 4",
 
-    section: sectionName,
+    "STAGE 5": "स्टेज 5"
 
-    sectionData: section,
-
-    material,
-
-    materialIndex:
-      materials.indexOf(material)
-  };
-}
-
-
-/* =========================================================
-   CURRENT MATERIAL LIST
-   ========================================================= */
-
-function getCurrentMaterialList() {
-
-  if (
-    Array.isArray(
-      EF.currentSectionItems
-    ) &&
-    EF.currentSectionItems.length
-  ) {
-
-    return EF.currentSectionItems;
-  }
-
-  if (!EF.currentStage) {
-    return [];
-  }
-
-  if (EF.currentSection) {
-
-    const section =
-      getSections(
-        EF.currentStage
-      ).find(
-        (item) =>
-          getSectionName(item) ===
-          EF.currentSection
-      );
-
-    return section
-      ? getSectionMaterials(section)
-      : [];
-  }
-
-  return getDirectMaterials(
-    EF.currentStage
-  );
-}
-
-
-/* =========================================================
-   ESTIMATE STORAGE
-   ========================================================= */
-
-function loadEstimate() {
-
-  try {
-
-    const raw =
-      storageGet(
-        STORAGE.estimate,
-        "[]"
-      );
-
-    const parsed =
-      JSON.parse(raw);
-
-    EF.estimate =
-      Array.isArray(parsed)
-        ? parsed
-        : [];
-
-  } catch (error) {
-
-    EF.estimate = [];
-  }
-}
-
-
-function saveEstimate() {
-
-  storageSet(
-    STORAGE.estimate,
-    JSON.stringify(
-      EF.estimate
-    )
-  );
-
-  updateEstimateCount();
-}
-
-
-function updateEstimateCount() {
-
-  const el =
-    EF.ids.estimateCount;
-
-  if (!el) {
-    return;
-  }
-
-  el.textContent =
-    String(
-      EF.estimate.length
-    );
-}
-
-
-/* =========================================================
-   DRAFT STORAGE
-   ========================================================= */
-
-function draftKey() {
-
-  return JSON.stringify({
-
-    stage:
-      EF.currentStage
-        ? getStageName(EF.currentStage)
-        : "",
-
-    section:
-      EF.currentSection || "",
-
-    material:
-      EF.currentMaterial
-        ? materialName(
-            EF.currentMaterial
-          )
-        : "",
-
-    index:
-      EF.currentMaterialIndex
-  });
-}
-
-
-function saveDraft() {
-
-  if (
-    EF.route !== "editor" ||
-    !EF.currentMaterial
-  ) {
-    return;
-  }
-
-  const payload = {
-
-    key: draftKey(),
-
-    stage:
-      EF.currentStage
-        ? getStageName(EF.currentStage)
-        : "",
-
-    section:
-      EF.currentSection || "",
-
-    material:
-      materialName(
-        EF.currentMaterial
-      ),
-
-    index:
-      EF.currentMaterialIndex,
-
-    draft:
-      EF.currentDraft || {},
-
-    unitCarry:
-      EF.unitCarry || ""
   };
 
-  storageSet(
-    STORAGE.draft,
-    JSON.stringify(payload)
-  );
-}
 
+  const STAGE_NAME_HI = {
 
-function loadDraft() {
+    "Slab Conduit Installation":
+      "स्लैब कंड्यूट इंस्टॉलेशन",
 
-  try {
+    "Wall Conduit Installation":
+      "दीवार कंड्यूट इंस्टॉलेशन",
 
-    const raw =
-      storageGet(
-        STORAGE.draft,
-        ""
-      );
+    "Wiring Installation":
+      "वायरिंग इंस्टॉलेशन",
 
-    if (!raw) {
-      return null;
-    }
+    "Final Electrical Fittings":
+      "फाइनल इलेक्ट्रिकल फिटिंग्स",
 
-    const data =
-      JSON.parse(raw);
+    "False Ceiling Wiring Material":
+      "फॉल्स सीलिंग वायरिंग मटेरियल"
 
-    if (!data || !data.key) {
-      return null;
-    }
-
-    if (
-      data.key !== draftKey()
-    ) {
-      return null;
-    }
-
-    return data;
-
-  } catch (error) {
-
-    return null;
-  }
-}
-
-
-function clearDraft() {
-
-  storageRemove(
-    STORAGE.draft
-  );
-
-  EF.currentDraft = {};
-}
-
-
-/* =========================================================
-   ROUTE STORAGE
-   ========================================================= */
-
-function saveRoute() {
-
-  const data = {
-
-    route:
-      EF.route,
-
-    stage:
-      EF.currentStage
-        ? getStageName(EF.currentStage)
-        : "",
-
-    section:
-      EF.currentSection || "",
-
-    materialIndex:
-      Number(
-        EF.currentMaterialIndex || 0
-      ),
-
-    material:
-      EF.currentMaterial
-        ? materialName(
-            EF.currentMaterial
-          )
-        : ""
   };
 
-  storageSet(
-    STORAGE.route,
-    JSON.stringify(data)
-  );
 
-  saveDraft();
-}
+  const SECTION_HI = {
+
+    "Conduit & Box":
+      "कंड्यूट और बॉक्स",
+
+    "Installation Material":
+      "इंस्टॉलेशन सामग्री",
+
+    "Wiring Material":
+      "वायरिंग सामग्री",
+
+    "Pulling Material":
+      "पुलिंग सामग्री",
+
+    "Switch & Socket":
+      "स्विच और सॉकेट",
+
+    "MCB & Protection":
+      "एमसीबी और प्रोटेक्शन",
+
+    "Fan & Ceiling":
+      "फैन और सीलिंग",
+
+    "Lighting":
+      "लाइटिंग",
+
+    "Installation & Finishing":
+      "इंस्टॉलेशन और फिनिशिंग",
+
+    "Installation & Fastening":
+      "इंस्टॉलेशन और फास्टनिंग",
+
+    "Wiring & Conduit":
+      "वायरिंग और कंड्यूट"
+
+  };
 
 
-function loadRouteData() {
+  const MATERIAL_HI = {
 
-  try {
+    "Pipe": "पाइप",
 
-    const raw =
-      storageGet(
-        STORAGE.route,
-        ""
-      );
+    "Bend": "बेंड",
 
-    if (!raw) {
-      return null;
+    "Junction Box": "जंक्शन बॉक्स",
+
+    "Fan Box": "फैन बॉक्स",
+
+    "Concealed Light Box":
+      "कंसील्ड लाइट बॉक्स",
+
+    "Tape (Shuttering & Joint Sealing)":
+      "टेप (शटरिंग और जॉइंट सीलिंग)",
+
+    "Solvent Cement":
+      "सॉल्वेंट सीमेंट",
+
+    "Neel Powder (Marking Powder)":
+      "नील पाउडर (मार्किंग पाउडर)",
+
+    "Binding Wire":
+      "बाइंडिंग वायर",
+
+    "Cable Tie / Zip Tie":
+      "केबल टाई / जिप टाई",
+
+    "Modular Board (Concealed Metal/PVC Box)":
+      "मॉड्यूलर बोर्ड (कंसील्ड मेटल/PVC बॉक्स)",
+
+    "MCB Box (Distribution Board)":
+      "एमसीबी बॉक्स (डिस्ट्रीब्यूशन बोर्ड)",
+
+    "Tape (Masking & Plaster Protection)":
+      "टेप (मास्किंग और प्लास्टर प्रोटेक्शन)",
+
+    "Cable Clip":
+      "केबल क्लिप",
+
+    "Wire":
+      "वायर",
+
+    "Flexible Pipe":
+      "फ्लेक्सिबल पाइप",
+
+    "Electrical Tape":
+      "इलेक्ट्रिकल टेप",
+
+    "Fastener":
+      "फास्टनर",
+
+    "Steel Wire / Spring Wire (Fish Tape)":
+      "स्टील वायर / स्प्रिंग वायर (फिश टेप)",
+
+    "Switch Plate":
+      "स्विच प्लेट",
+
+    "Switch Board (Surface Gang Box)":
+      "स्विच बोर्ड (सरफेस गैंग बॉक्स)",
+
+    "Switch":
+      "स्विच",
+
+    "Socket":
+      "सॉकेट",
+
+    "Fan Regulator":
+      "फैन रेगुलेटर",
+
+    "2 Way Switch":
+      "2 वे स्विच",
+
+    "Bell Push":
+      "बेल पुश",
+
+    "Neon Indicator":
+      "नियॉन इंडिकेटर",
+
+    "Blank Plate / Dummy Switch":
+      "ब्लैंक प्लेट / डमी स्विच",
+
+    "DP Switch (Double Pole Switch)":
+      "डीपी स्विच (डबल पोल)",
+
+    "Mini MCB":
+      "मिनी एमसीबी",
+
+    "SP MCB (Single Pole)":
+      "एसपी एमसीबी (सिंगल पोल)",
+
+    "DP MCB (Double Pole)":
+      "डीपी एमसीबी (डबल पोल)",
+
+    "TPN MCB (Three Pole with Neutral)":
+      "टीपीएन एमसीबी (थ्री पोल विद न्यूट्रल)",
+
+    "MCB Changeover":
+      "एमसीबी चेंजओवर",
+
+    "DP Isolator":
+      "डीपी आइसोलेटर",
+
+    "TPN Isolator (3P / 4P)":
+      "टीपीएन आइसोलेटर (3P / 4P)",
+
+    "RCCB / RCD":
+      "आरसीसीबी / आरसीडी",
+
+    "MCB Box":
+      "एमसीबी बॉक्स",
+
+    "Kit Kat Fuse":
+      "किट-कैट फ्यूज",
+
+    "Fan Sheet":
+      "फैन शीट",
+
+    "Round Sheet":
+      "राउंड शीट",
+
+    "Fan Rod":
+      "फैन रॉड",
+
+    "Fan Clamp":
+      "फैन क्लैंप",
+
+    "Holder":
+      "होल्डर",
+
+    "Ceiling Rose":
+      "सीलिंग रोज",
+
+    "Chain":
+      "चेन",
+
+    "LED Bulb":
+      "एलईडी बल्ब",
+
+    "LED Tube Light":
+      "एलईडी ट्यूब लाइट",
+
+    "Foot Light":
+      "फुट लाइट",
+
+    "Up Down Light":
+      "अप डाउन लाइट",
+
+    "Panel Light":
+      "पैनल लाइट",
+
+    "Surface Light":
+      "सरफेस लाइट",
+
+    "COB Light":
+      "COB लाइट",
+
+    "COB Spot Light":
+      "COB स्पॉट लाइट",
+
+    "Down Light":
+      "डाउन लाइट",
+
+    "Strip Light":
+      "स्ट्रिप लाइट",
+
+    "Rope Light":
+      "रोप लाइट",
+
+    "LED Profile Channel":
+      "एलईडी प्रोफाइल चैनल",
+
+    "LED Strip Driver (SMPS)":
+      "एलईडी स्ट्रिप ड्राइवर (SMPS)",
+
+    "Door Bell":
+      "डोर बेल",
+
+    "Tape (Mounting / Double Sided)":
+      "टेप (माउंटिंग / डबल साइडेड)",
+
+    "Instant Glue":
+      "इंस्टेंट ग्लू",
+
+    "Araldite Glue (Epoxy)":
+      "अराल्डाइट ग्लू (एपॉक्सी)",
+
+    "POP (Plaster of Paris)":
+      "POP (प्लास्टर ऑफ पेरिस)",
+
+    "Putty Blade / Patta":
+      "पुट्टी ब्लेड / पट्टा",
+
+    "Screw":
+      "स्क्रू",
+
+    "Lug (Cable Terminal Lug)":
+      "लग (केबल टर्मिनल लग)",
+
+    "Washer":
+      "वॉशर",
+
+    "PVC Wall Plug / Gulli / Gitti":
+      "PVC वॉल प्लग / गुल्ली / गिट्टी",
+
+    "Saddle (Pipe Clamp)":
+      "सैडल (पाइप क्लैंप)"
+
+  };
+
+
+  const FIELD_HI = {
+
+    "Size": "साइज़",
+
+    "Type": "टाइप",
+
+    "Sub Type": "सब टाइप",
+
+    "Conduit Size": "कंड्यूट साइज़",
+
+    "Shape / Ways": "शेप / वेज़",
+
+    "Material": "मटेरियल",
+
+    "Depth": "डेप्थ",
+
+    "Hook Rod": "हुक रॉड",
+
+    "Diameter": "डायमीटर",
+
+    "Material Type": "मटेरियल टाइप",
+
+    "Size (Width)": "साइज़ (चौड़ाई)",
+
+    "Pack Size": "पैक साइज़",
+
+    "Gauge / Size": "गेज / साइज़",
+
+    "Size (Length)": "साइज़ (लंबाई)",
+
+    "Colour": "रंग",
+
+    "Module": "मॉड्यूल",
+
+    "Phase Selection": "फेज़ चयन",
+
+    "Door Type": "डोर टाइप",
+
+    "Size (Width × Length)": "साइज़ (चौड़ाई × लंबाई)",
+
+    "Size / Diameter": "साइज़ / डायमीटर",
+
+    "Length": "लंबाई",
+
+    "Amp": "एम्पियर",
+
+    "Curve": "कर्व",
+
+    "Sensitivity": "सेंसिटिविटी",
+
+    "Door": "डोर",
+
+    "Voltage": "वोल्टेज",
+
+    "Wattage": "वॉटेज",
+
+    "Base": "बेस",
+
+    "Colour Temp": "कलर टेम्परेचर",
+
+    "Mounting": "माउंटिंग",
+
+    "Shape": "शेप",
+
+    "Density": "डेंसिटी",
+
+    "Supply Voltage": "सप्लाई वोल्टेज",
+
+    "Dimensions (W × D)": "डायमेंशन (W × D)",
+
+    "Diffuser": "डिफ्यूज़र",
+
+    "Output Voltage": "आउटपुट वोल्टेज",
+
+    "Body Finish": "बॉडी फिनिश",
+
+    "Movement": "मूवमेंट",
+
+    "Beam Angle": "बीम एंगल",
+
+    "Size (Weight)": "साइज़ (वजन)",
+
+    "Pack Size (Weight)": "पैक साइज़ (वजन)",
+
+    "Size (Diameter × Length)": "साइज़ (डायमीटर × लंबाई)",
+
+    "Size (Cable Size × Stud Size)":
+      "साइज़ (केबल साइज़ × स्टड साइज़)"
+
+  };
+
+
+  function textFor(value) {
+
+    if (EF.lang === "en") {
+
+      return String(value ?? "");
+
     }
 
-    return JSON.parse(raw);
+    const key = String(value ?? "");
 
-  } catch (error) {
-
-    return null;
-  }
-}
-
-
-/* =========================================================
-   THEME
-   ========================================================= */
-
-function applyTheme() {
-
-  const theme =
-    EF.theme === "light"
-      ? "light"
-      : "dark";
-
-  EF.theme = theme;
-
-  document.documentElement
-    .setAttribute(
-      "data-theme",
-      theme
+    return (
+      STAGE_HI[key] ||
+      STAGE_NAME_HI[key] ||
+      SECTION_HI[key] ||
+      MATERIAL_HI[key] ||
+      FIELD_HI[key] ||
+      key
     );
 
-  document.body
-    .setAttribute(
-      "data-theme",
-      theme
-    );
-
-  document.body.classList.toggle(
-    "light-mode",
-    theme === "light"
-  );
-
-  document.body.classList.toggle(
-    "dark-mode",
-    theme === "dark"
-  );
-
-  storageSet(
-    STORAGE.theme,
-    theme
-  );
-
-  updateThemeControls();
-}
-
-
-function updateThemeControls() {
-
-  const btn =
-    EF.ids.themeBtn;
-
-  if (!btn) {
-    return;
   }
 
-  btn.setAttribute(
-    "aria-label",
-    EF.theme === "dark"
-      ? t("light")
-      : t("dark")
-  );
 
-  btn.setAttribute(
-    "data-theme",
-    EF.theme
-  );
+  /* =======================================================
+     TRANSLATE DOM
+     ======================================================= */
 
-  btn.classList.toggle(
-    "active",
-    EF.theme === "light"
-  );
-}
+  function applyLanguage() {
+
+    document.documentElement.lang =
+      EF.lang === "hi"
+        ? "hi"
+        : "en";
 
 
-function toggleTheme() {
+    qsa("[data-hi][data-en]")
+      .forEach(el => {
 
-  EF.theme =
-    EF.theme === "dark"
-      ? "light"
-      : "dark";
+        el.textContent =
+          EF.lang === "hi"
+            ? el.dataset.hi
+            : el.dataset.en;
 
-  applyTheme();
-}
-
-
-/* =========================================================
-   LANGUAGE
-   ========================================================= */
-
-function setLanguage(language) {
-
-  language =
-    language === "en"
-      ? "en"
-      : "hi";
-
-  EF.language =
-    language;
-
-  storageSet(
-    STORAGE.language,
-    language
-  );
-
-  renderLanguageButtons();
-
-  renderCurrentPage();
-
-  updateThemeControls();
-
-  updateTopBar();
-
-  showToast(
-    language === "hi"
-      ? "भाषा बदल दी गई"
-      : "Language changed"
-  );
-}
+      });
 
 
-function renderLanguageButtons() {
+    qsa("[data-placeholder-hi][data-placeholder-en]")
+      .forEach(el => {
 
-  EF.ids.languageButtons
-    ?.forEach(
-      (button) => {
+        el.placeholder =
+          EF.lang === "hi"
+            ? el.dataset.placeholderHi
+            : el.dataset.placeholderEn;
 
-        const lang =
-          button.dataset.language;
+      });
+
+
+    const currentLanguageText =
+      $("currentLanguageText");
+
+    if (currentLanguageText) {
+
+      currentLanguageText.textContent =
+        EF.lang === "hi"
+          ? "हिंदी"
+          : "English";
+
+    }
+
+
+    updateLanguageButtons();
+
+    updateThemeText();
+
+    renderCurrentPage();
+
+  }
+
+
+  function updateLanguageButtons() {
+
+    qsa(".language-option")
+      .forEach(btn => {
+
+        btn.classList.toggle(
+          "active",
+          btn.dataset.lang === EF.lang
+        );
+
+      });
+
+  }
+
+
+  /* =======================================================
+     THEME
+     ======================================================= */
+
+  function applyTheme() {
+
+    document.documentElement.dataset.theme =
+      EF.theme;
+
+    document.body.dataset.theme =
+      EF.theme;
+
+    document.body.classList.toggle(
+      "light-mode",
+      EF.theme === "light"
+    );
+
+    document.body.classList.toggle(
+      "dark-mode",
+      EF.theme !== "light"
+    );
+
+    localStorage.setItem(
+      STORAGE.theme,
+      EF.theme
+    );
+
+    updateThemeText();
+
+  }
+
+
+  function toggleTheme() {
+
+    EF.theme =
+      EF.theme === "dark"
+        ? "light"
+        : "dark";
+
+    applyTheme();
+
+  }
+
+
+  function updateThemeText() {
+
+    const text =
+      $("themeButtonText");
+
+    if (text) {
+
+      text.textContent =
+        EF.lang === "hi"
+          ? (
+              EF.theme === "dark"
+                ? "डार्क मोड"
+                : "लाइट मोड"
+            )
+          : (
+              EF.theme === "dark"
+                ? "Dark Mode"
+                : "Light Mode"
+            );
+
+    }
+
+
+    const current =
+      $("currentThemeText");
+
+    if (current) {
+
+      current.textContent =
+        EF.lang === "hi"
+          ? (
+              EF.theme === "dark"
+                ? "डार्क"
+                : "लाइट"
+            )
+          : (
+              EF.theme === "dark"
+                ? "Dark"
+                : "Light"
+            );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     PAGE VISIBILITY
+     ======================================================= */
+
+  function showPage(pageId) {
+
+    qsa(".page")
+      .forEach(page => {
 
         const active =
-          lang === EF.language;
+          page.id === pageId;
 
-        button.classList.toggle(
+        page.classList.toggle(
           "active",
           active
         );
 
-        button.setAttribute(
-          "aria-selected",
-          String(active)
+        page.hidden = !active;
+
+      });
+
+
+    qsa(".bottom-item")
+      .forEach(btn => {
+
+        const route =
+          btn.dataset.route;
+
+        let active = false;
+
+        if (route === "home") {
+
+          active =
+            pageId === "home" ||
+            pageId === "materialPage" ||
+            pageId === "editorPage";
+
+        } else {
+
+          active =
+            pageId === route;
+
+        }
+
+        btn.classList.toggle(
+          "active",
+          active
         );
-      }
+
+      });
+
+  }
+
+
+  /* =======================================================
+     ROUTE
+     ======================================================= */
+
+  function routeObject() {
+
+    return {
+
+      route: EF.route,
+
+      stageIndex: EF.stageIndex,
+
+      sectionIndex: EF.sectionIndex,
+
+      materialIndex: EF.materialIndex,
+
+      editIndex: EF.editIndex
+
+    };
+
+  }
+
+
+  function saveRoute() {
+
+    localStorage.setItem(
+      STORAGE.route,
+      JSON.stringify(routeObject())
     );
-}
 
-
-/* =========================================================
-   TOP BAR
-   ========================================================= */
-
-function updateTopBar() {
-
-  const title =
-    EF.ids.topBarTitle;
-
-  if (!title) {
-    return;
   }
 
-  const brand =
-    "Sandeep ElectroFix";
 
-  let pageTitle =
-    brand;
-
-  if (EF.route === "estimate") {
-    pageTitle =
-      `${t("estimateTitle")} • ${brand}`;
-  }
-
-  if (EF.route === "calculator") {
-    pageTitle =
-      `${t("calculatorTitle")} • ${brand}`;
-  }
-
-  if (EF.route === "settings") {
-    pageTitle =
-      `${t("settingsTitle")} • ${brand}`;
-  }
-
-  if (EF.route === "stage") {
-    pageTitle =
-      `${t("stage")} • ${brand}`;
-  }
-
-  if (EF.route === "section") {
-    pageTitle =
-      `${t("section")} • ${brand}`;
-  }
-
-  if (EF.route === "materials") {
-    pageTitle =
-      `${t("material")} • ${brand}`;
-  }
-
-  if (EF.route === "editor") {
-
-    pageTitle =
-      EF.currentMaterial
-        ? `${t(materialName(EF.currentMaterial))} • ${brand}`
-        : `${t("material")} • ${brand}`;
-  }
-
-  title.textContent =
-    pageTitle;
-}
-
-
-/* =========================================================
-   DRAWER
-   ========================================================= */
-
-function openDrawer() {
-
-  const drawer =
-    EF.ids.drawer;
-
-  const overlay =
-    EF.ids.drawerOverlay;
-
-  if (!drawer) {
-    return;
-  }
-
-  EF.drawerOpen = true;
-
-  drawer.classList.add("open");
-  drawer.classList.add("active");
-
-  overlay?.classList.add(
-    "open",
-    "active"
-  );
-
-  document.body.classList.add(
-    "drawer-open"
-  );
-
-  EF.drawerHistoryActive = true;
-
-  history.pushState(
-    {
-      ...history.state,
-      drawer: true
-    },
-    "",
-    location.href
-  );
-}
-
-
-function closeDrawer(
-  fromPopState = false
-) {
-
-  const drawer =
-    EF.ids.drawer;
-
-  const overlay =
-    EF.ids.drawerOverlay;
-
-  EF.drawerOpen = false;
-
-  drawer?.classList.remove(
-    "open",
-    "active"
-  );
-
-  overlay?.classList.remove(
-    "open",
-    "active"
-  );
-
-  document.body.classList.remove(
-    "drawer-open"
-  );
-
-  if (
-    EF.drawerHistoryActive &&
-    !fromPopState
-  ) {
-
-    EF.drawerHistoryActive = false;
+  function restoreRoute() {
 
     try {
-      history.back();
-    } catch (error) {}
-  } else {
 
-    EF.drawerHistoryActive = false;
-  }
-}
-
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-let toastTimer = null;
-
-function showToast(message) {
-
-  const toast =
-    EF.ids.toast;
-
-  if (!toast) {
-    return;
-  }
-
-  toast.textContent =
-    message;
-
-  toast.classList.add(
-    "show",
-    "active"
-  );
-
-  clearTimeout(
-    toastTimer
-  );
-
-  toastTimer =
-    setTimeout(
-      () => {
-
-        toast.classList.remove(
-          "show",
-          "active"
+      const saved =
+        JSON.parse(
+          localStorage.getItem(STORAGE.route)
         );
 
-      },
-      1800
-    );
-}
+      if (!saved) return false;
 
+      EF.route =
+        saved.route || "home";
 
-/* =========================================================
-   LOADER
-   ========================================================= */
+      EF.stageIndex =
+        Number.isInteger(saved.stageIndex)
+          ? saved.stageIndex
+          : null;
 
-function hideLoader() {
+      EF.sectionIndex =
+        Number.isInteger(saved.sectionIndex)
+          ? saved.sectionIndex
+          : null;
 
-  const loader =
-    EF.ids.loading;
+      EF.materialIndex =
+        Number.isInteger(saved.materialIndex)
+          ? saved.materialIndex
+          : null;
 
-  if (!loader) {
-    return;
-  }
+      EF.editIndex =
+        Number.isInteger(saved.editIndex)
+          ? saved.editIndex
+          : null;
 
-  loader.classList.add(
-    "hidden"
-  );
+      return true;
 
-  loader.style.display =
-    "none";
-}
+    } catch (e) {
 
+      return false;
 
-/* =========================================================
-   SCROLL TOP
-   ========================================================= */
-
-function scrollTop() {
-
-  window.scrollTo({
-    top: 0,
-    behavior: "instant"
-  });
-
-  const main =
-    EF.ids.main;
-
-  if (main) {
-    main.scrollTop = 0;
-  }
-
-  document.documentElement
-    .scrollTop = 0;
-
-  document.body.scrollTop = 0;
-}
-
-
-/* =========================================================
-   PAGE VISIBILITY
-   ========================================================= */
-
-function hideAllPages() {
-
-  document
-    .querySelectorAll(
-      "[data-page]"
-    )
-    .forEach(
-      (page) => {
-
-        page.classList.remove(
-          "active"
-        );
-
-        page.hidden = true;
-      }
-    );
-
-  [
-    "home",
-    "estimate",
-    "calculator",
-    "settings",
-    "stage",
-    "section",
-    "materials",
-    "editor"
-  ].forEach(
-    (id) => {
-
-      const el =
-        document.getElementById(id);
-
-      if (el) {
-
-        el.classList.remove(
-          "active"
-        );
-
-        el.hidden = true;
-      }
     }
-  );
-}
 
-
-function showPage(id) {
-
-  const el =
-    document.getElementById(id);
-
-  if (!el) {
-    return;
   }
 
-  el.hidden = false;
 
-  el.classList.add(
-    "active"
-  );
-}
+  function setRoute(route, push = true) {
 
+    EF.route = route;
 
-/* =========================================================
-   ROUTE NAVIGATION
-   ========================================================= */
+    saveRoute();
 
-function navigate(
-  route,
-  options = {}
-) {
+    if (push) {
 
-  const {
-    push = true,
-    render = true
-  } = options;
+      try {
 
-  if (
-    EF.route === "editor" &&
-    route !== "editor"
-  ) {
-    saveDraft();
-  }
-
-  EF.route =
-    route;
-
-  saveRoute();
-
-  if (push) {
-
-    history.pushState(
-      {
-        route:
-          EF.route,
-
-        stage:
-          EF.currentStage
-            ? getStageName(
-                EF.currentStage
-              )
-            : "",
-
-        section:
-          EF.currentSection || "",
-
-        materialIndex:
-          EF.currentMaterialIndex || 0
-      },
-      "",
-      location.href
-    );
-  }
-
-  if (render) {
-    renderCurrentPage();
-  }
-}
-
-
-/* =========================================================
-   HOME
-   ========================================================= */
-
-function renderHome() {
-
-  hideAllPages();
-
-  showPage("home");
-
-  updateTopBar();
-
-  const grid =
-    EF.ids.stageGrid;
-
-  if (!grid) {
-    return;
-  }
-
-  grid.innerHTML = "";
-
-  if (!EF.materials.length) {
-
-    grid.innerHTML =
-      `<div class="empty-state">
-        ${esc(t("noMaterials"))}
-      </div>`;
-
-    return;
-  }
-
-  EF.materials.forEach(
-    (stage, index) => {
-
-      const stageName =
-        getStageName(stage);
-
-      const stageTitle =
-        getStageTitle(stage);
-
-      const category =
-        getStageCategory(stage);
-
-      const count =
-        getStageMaterialCount(stage);
-
-      const card =
-        document.createElement(
-          "button"
+        history.pushState(
+          routeObject(),
+          "",
+          window.location.pathname +
+          window.location.search +
+          "#" +
+          route
         );
 
-      card.type =
-        "button";
+      } catch (e) {}
 
-      card.className =
-        "stage-card";
+    }
 
-      card.dataset.stageIndex =
-        String(index);
+  }
 
-      card.innerHTML = `
 
-        <span class="stage-card-icon">
-          ⚡
-        </span>
+  /* =======================================================
+     HOME
+     ======================================================= */
 
-        <span class="stage-card-content">
+  function goHome(push = true) {
 
-          <strong>
-            ${esc(
-              t(stageName)
-            )}
-          </strong>
+    EF.stageIndex = null;
 
-          <small>
-            ${esc(
-              t(stageTitle)
-            )}
-          </small>
+    EF.sectionIndex = null;
 
-          ${
-            category
-              ? `<em>${esc(
-                  t(category)
-                )}</em>`
-              : ""
-          }
+    EF.materialIndex = null;
 
-          <span class="stage-card-count">
-            ${count} ${esc(
-              t("items")
-            )}
-          </span>
+    EF.editIndex = null;
 
-        </span>
+    setRoute("home", push);
+
+    showPage("home");
+
+    renderStages();
+
+  }
+
+
+  /* =======================================================
+     STAGE RENDER
+     ======================================================= */
+
+  function renderStages() {
+
+    const grid =
+      $("stageGrid");
+
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    const stages =
+      getStages();
+
+    const count =
+      $("stageCount");
+
+    if (count) {
+
+      count.textContent =
+        stages.length;
+
+    }
+
+
+    if (!stages.length) {
+
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚡</div>
+          <h3>
+            ${
+              EF.lang === "hi"
+                ? "कोई स्टेज नहीं मिला"
+                : "No stages found"
+            }
+          </h3>
+        </div>
       `;
 
-      card.addEventListener(
-        "click",
-        () => openStage(stage)
-      );
+      return;
 
-      grid.appendChild(
-        card
-      );
     }
-  );
-}
 
 
-function getStageMaterialCount(stage) {
+    stages.forEach(
+      (stage, stageIndex) => {
 
-  let count =
-    getDirectMaterials(stage)
-      .length;
+        const sections =
+          getSections(stageIndex);
 
-  getSections(stage)
-    .forEach(
-      (section) => {
+        const totalMaterials =
+          sections.reduce(
+            (sum, section) =>
+              sum + section.materials.length,
+            0
+          );
 
-        count +=
-          getSectionMaterials(
-            section
-          ).length;
+
+        const card =
+          document.createElement("button");
+
+        card.type = "button";
+
+        card.className =
+          "stage-card";
+
+
+        card.innerHTML = `
+
+          <div class="stage-card-number">
+            ${stageIndex + 1}
+          </div>
+
+          <div class="stage-card-content">
+
+            <div class="stage-card-title">
+              ${escapeHTML(textFor(stage[0]))}
+            </div>
+
+            <div class="stage-card-name">
+              ${escapeHTML(textFor(stage[1] || ""))}
+            </div>
+
+            <div class="stage-card-meta">
+
+              <span>
+                ${sections.length}
+                ${
+                  EF.lang === "hi"
+                    ? " सेक्शन"
+                    : " Sections"
+                }
+              </span>
+
+              <span>
+                ${totalMaterials}
+                ${
+                  EF.lang === "hi"
+                    ? " आइटम"
+                    : " Items"
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="stage-card-arrow">
+            →
+          </div>
+
+        `;
+
+
+        card.addEventListener(
+          "click",
+          () => openStage(stageIndex)
+        );
+
+
+        grid.appendChild(card);
+
       }
     );
 
-  return count;
-}
-
-
-/* =========================================================
-   STAGE
-   ========================================================= */
-
-function openStage(
-  stage,
-  options = {}
-) {
-
-  EF.currentStage =
-    stage;
-
-  EF.currentSection =
-    null;
-
-  EF.currentMaterial =
-    null;
-
-  EF.currentMaterialIndex =
-    0;
-
-  EF.currentSectionItems =
-    [];
-
-  EF.currentDraft =
-    {};
-
-  EF.route =
-    "stage";
-
-  saveRoute();
-
-  if (options.push !== false) {
-
-    history.pushState(
-      {
-        route: "stage",
-        stage:
-          getStageName(stage)
-      },
-      "",
-      location.href
-    );
   }
 
-  renderStage();
 
-  scrollTop();
-}
+  /* =======================================================
+     OPEN STAGE
+     ======================================================= */
 
+  function openStage(stageIndex, push = true) {
 
-function renderStage() {
+    const stage =
+      getStage(stageIndex);
 
-  hideAllPages();
+    if (!stage) return;
 
-  showPage("stage");
+    EF.stageIndex =
+      stageIndex;
 
-  updateTopBar();
+    EF.sectionIndex = null;
 
-  const grid =
-    document.getElementById(
-      "sectionGrid"
-    ) ||
-    EF.ids.materialGrid;
+    EF.materialIndex = null;
 
-  if (!grid) {
-    return;
+    EF.editIndex = null;
+
+    setRoute("material", push);
+
+    showPage("materialPage");
+
+    renderSections(stageIndex);
+
   }
 
-  grid.innerHTML = "";
 
-  if (!EF.currentStage) {
-    renderHome();
-    return;
-  }
+  /* =======================================================
+     SECTION RENDER
+     ======================================================= */
 
-  const sections =
-    getSections(
-      EF.currentStage
-    );
+  function renderSections(stageIndex) {
 
-  const direct =
-    getDirectMaterials(
-      EF.currentStage
-    );
+    const grid =
+      $("materialGrid");
 
-  if (direct.length) {
+    if (!grid) return;
 
-    const card =
-      createSectionCard(
-        "",
-        direct.length,
-        true
-      );
+    grid.innerHTML = "";
 
-    grid.appendChild(card);
-  }
+    grid.className =
+      "material-grid view-grid";
 
-  sections.forEach(
-    (section) => {
 
-      const materials =
-        getSectionMaterials(
-          section
-        );
+    const stage =
+      getStage(stageIndex);
 
-      const card =
-        createSectionCard(
-          getSectionName(section),
-          materials.length,
-          false
-        );
+    if (!stage) return;
 
-      grid.appendChild(card);
+
+    const sections =
+      getSections(stageIndex);
+
+
+    const title =
+      $("materialPageTitle");
+
+    if (title) {
+
+      title.textContent =
+        textFor(stage[1] || stage[0]);
+
     }
-  );
 
-  if (
-    !direct.length &&
-    !sections.length
+
+    const subtitle =
+      $("materialPageSubtitle");
+
+    if (subtitle) {
+
+      subtitle.textContent =
+        EF.lang === "hi"
+          ? "सेक्शन चुनें"
+          : "Select Section";
+
+    }
+
+
+    const resultInfo =
+      $("materialResultInfo");
+
+    if (resultInfo) {
+
+      resultInfo.textContent =
+        sections.length +
+        (
+          EF.lang === "hi"
+            ? " सेक्शन"
+            : " Sections"
+        );
+
+    }
+
+
+    /* -----------------------------------------------
+       FILTER / SEARCH DOES NOT REPLACE SECTION VIEW
+       ----------------------------------------------- */
+
+    sections.forEach(
+      (section, sectionIndex) => {
+
+        const card =
+          document.createElement("button");
+
+        card.type = "button";
+
+        card.className =
+          "material-card section-card";
+
+
+        card.innerHTML = `
+
+          <div class="material-card-icon">
+            ⚡
+          </div>
+
+          <div class="material-card-content">
+
+            <div class="material-card-title">
+              ${escapeHTML(
+                textFor(section.name)
+              )}
+            </div>
+
+            ${
+              section.category
+                ? `
+                  <div class="material-card-subtitle">
+                    ${escapeHTML(
+                      textFor(section.category)
+                    )}
+                  </div>
+                `
+                : ""
+            }
+
+            <div class="material-card-meta">
+
+              <span>
+                ${section.materials.length}
+                ${
+                  EF.lang === "hi"
+                    ? " आइटम"
+                    : " Items"
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+          <div class="material-card-arrow">
+            →
+          </div>
+
+        `;
+
+
+        card.addEventListener(
+          "click",
+          () =>
+            openSection(
+              stageIndex,
+              sectionIndex
+            )
+        );
+
+
+        grid.appendChild(card);
+
+      }
+    );
+
+
+    updateViewButton();
+
+  }
+
+
+  /* =======================================================
+     OPEN SECTION
+     ======================================================= */
+
+  function openSection(
+    stageIndex,
+    sectionIndex,
+    push = true
   ) {
 
-    grid.innerHTML =
-      `<div class="empty-state">
-        ${esc(t("noMaterials"))}
-      </div>`;
-  }
-}
+    const section =
+      getSection(
+        stageIndex,
+        sectionIndex
+      );
 
+    if (!section) return;
 
-function createSectionCard(
-  sectionName,
-  count,
-  isDirect
-) {
+    EF.stageIndex =
+      stageIndex;
 
-  const card =
-    document.createElement(
-      "button"
+    EF.sectionIndex =
+      sectionIndex;
+
+    EF.materialIndex = null;
+
+    EF.editIndex = null;
+
+    setRoute("material", push);
+
+    showPage("materialPage");
+
+    renderMaterials(
+      stageIndex,
+      sectionIndex
     );
 
-  card.type =
-    "button";
+  }
 
-  card.className =
-    "section-card";
 
-  card.innerHTML = `
+  /* =======================================================
+     MATERIAL SEARCH
+     ======================================================= */
 
-    <span class="section-card-icon">
-      ⚡
-    </span>
+  function getCurrentMaterials() {
 
-    <span class="section-card-content">
+    if (
+      EF.stageIndex === null ||
+      EF.sectionIndex === null
+    ) {
 
-      <strong>
-        ${esc(
-          isDirect
-            ? t("material")
-            : t(sectionName)
-        )}
-      </strong>
+      return [];
 
-      <small>
-        ${count} ${esc(
-          t("items")
-        )}
-      </small>
-
-    </span>
-  `;
-
-  card.addEventListener(
-    "click",
-    () => {
-
-      if (isDirect) {
-
-        openMaterials(
-          EF.currentStage,
-          "",
-          getDirectMaterials(
-            EF.currentStage
-          )
-        );
-
-      } else {
-
-        const section =
-          getSections(
-            EF.currentStage
-          ).find(
-            (item) =>
-              getSectionName(item) ===
-              sectionName
-          );
-
-        if (section) {
-
-          openSection(
-            section
-          );
-        }
-      }
     }
-  );
 
-  return card;
-}
-
-
-/* =========================================================
-   SECTION
-   ========================================================= */
-
-function openSection(
-  section,
-  options = {}
-) {
-
-  EF.currentSection =
-    getSectionName(section);
-
-  EF.currentSectionItems =
-    getSectionMaterials(section);
-
-  EF.currentMaterial =
-    null;
-
-  EF.currentMaterialIndex =
-    0;
-
-  EF.currentDraft =
-    {};
-
-  EF.route =
-    "section";
-
-  saveRoute();
-
-  if (options.push !== false) {
-
-    history.pushState(
-      {
-        route: "section",
-
-        stage:
-          EF.currentStage
-            ? getStageName(
-                EF.currentStage
-              )
-            : "",
-
-        section:
-          EF.currentSection
-      },
-      "",
-      location.href
-    );
-  }
-
-  renderSection();
-
-  scrollTop();
-}
-
-
-function renderSection() {
-
-  hideAllPages();
-
-  showPage("section");
-
-  updateTopBar();
-
-  const grid =
-    document.getElementById(
-      "sectionMaterialGrid"
-    ) ||
-    EF.ids.materialGrid;
-
-  if (!grid) {
-    return;
-  }
-
-  grid.innerHTML = "";
-
-  const materials =
-    getCurrentMaterialList();
-
-  renderMaterialCards(
-    materials,
-    grid
-  );
-}
-
-
-/* =========================================================
-   MATERIALS
-   ========================================================= */
-
-function openMaterials(
-  stage,
-  sectionName,
-  materials,
-  options = {}
-) {
-
-  EF.currentStage =
-    stage;
-
-  EF.currentSection =
-    sectionName || "";
-
-  EF.currentSectionItems =
-    Array.isArray(materials)
-      ? materials
-      : [];
-
-  EF.currentMaterial =
-    null;
-
-  EF.currentMaterialIndex =
-    0;
-
-  EF.currentDraft =
-    {};
-
-  EF.route =
-    "materials";
-
-  saveRoute();
-
-  if (options.push !== false) {
-
-    history.pushState(
-      {
-        route: "materials",
-
-        stage:
-          getStageName(stage),
-
-        section:
-          sectionName || ""
-      },
-      "",
-      location.href
-    );
-  }
-
-  renderMaterials();
-
-  scrollTop();
-}
-
-
-function renderMaterials() {
-
-  hideAllPages();
-
-  showPage("materials");
-
-  updateTopBar();
-
-  const grid =
-    EF.ids.materialGrid;
-
-  if (!grid) {
-    return;
-  }
-
-  ensureSingleViewSelector();
-
-  const materials =
-    getCurrentMaterialList();
-
-  const filtered =
-    getFilteredMaterials(
-      materials
-    );
-
-  renderMaterialCards(
-    filtered,
-    grid
-  );
-
-  updateViewClasses();
-
-  syncViewSelector();
-}
-
-
-/* =========================================================
-   MATERIAL TOOLBAR
-   ========================================================= */
-
-function ensureSingleViewSelector() {
-
-  const existing =
-    document.querySelectorAll(
-      "[data-view-option]"
-    );
-
-  if (existing.length) {
-
-    bindViewOptionListeners();
-
-    return;
-  }
-
-  const toolbar =
-    document.querySelector(
-      "#materialToolbar"
-    ) ||
-    document.querySelector(
-      ".material-toolbar"
-    );
-
-  if (!toolbar) {
-    return;
-  }
-
-  const wrapper =
-    document.createElement(
-      "div"
-    );
-
-  wrapper.className =
-    "material-view-selector";
-
-  wrapper.innerHTML = `
-
-    <button
-      type="button"
-      class="view-trigger"
-      data-view-trigger
-      aria-expanded="false"
-    >
-      ⚡
-    </button>
-
-    <div
-      class="view-options"
-      data-view-options
-      hidden
-    >
-
-      ${getViewOptionsHTML()}
-
-    </div>
-  `;
-
-  toolbar.appendChild(
-    wrapper
-  );
-
-  bindViewOptionListeners();
-}
-
-
-function getViewOptionsHTML() {
-
-  const options = [
-
-    ["grid", "▦", "grid"],
-
-    ["list", "☷", "list"],
-
-    ["compact", "▤", "compact"],
-
-    ["large", "▦", "large"],
-
-    ["mini", "▪", "mini"],
-
-    ["2column", "▥", "twoColumn"],
-
-    ["horizontal", "↔", "horizontal"],
-
-    ["icon", "⚡", "iconList"],
-
-    ["timeline", "◉", "timeline"],
-
-    ["dense", "≡", "dense"]
-  ];
-
-  return options
-    .map(
-      ([value, icon, label]) =>
-        `
-        <button
-          type="button"
-          class="view-option"
-          data-view-option="${esc(value)}"
-        >
-          <span>${icon}</span>
-          <em>${esc(
-            t(label)
-          )}</em>
-        </button>
-        `
+    return getMaterials(
+      EF.stageIndex,
+      EF.sectionIndex
     )
-    .join("");
-}
+      .map(
+        (raw, index) => {
 
+          const m =
+            normalizeMaterial(raw);
 
-function bindViewOptionListeners() {
+          return {
 
-  document
-    .querySelectorAll(
-      "[data-view-option]"
-    )
-    .forEach(
-      (button) => {
+            ...m,
 
-        if (
-          button.dataset.bound === "1"
-        ) {
-          return;
+            stageIndex:
+              EF.stageIndex,
+
+            sectionIndex:
+              EF.sectionIndex,
+
+            materialIndex:
+              index
+
+          };
+
         }
+      );
 
-        button.dataset.bound =
-          "1";
+  }
 
-        button.addEventListener(
-          "click",
-          (event) => {
 
-            event.stopPropagation();
+  function materialMatches(material) {
 
-            const view =
-              button.dataset.viewOption;
+    const search =
+      EF.searchText
+        .trim()
+        .toLowerCase();
 
-            setView(
-              view
-            );
 
-            closeAllViewOptions();
+    if (search) {
+
+      const haystack = [
+
+        material.name,
+
+        ...material.fields.flatMap(
+          field => {
+
+            if (!Array.isArray(field)) {
+              return [];
+            }
+
+            return [
+              field[0],
+              ...(Array.isArray(field[1])
+                ? field[1]
+                : [])
+            ];
+
           }
-        );
+        ),
+
+        ...material.units,
+
+        ...material.brands
+
+      ]
+        .join(" ")
+        .toLowerCase();
+
+
+      const translated =
+        [
+          textFor(material.name),
+          textFor(material.name)
+        ]
+          .join(" ")
+          .toLowerCase();
+
+
+      if (
+        !haystack.includes(search) &&
+        !translated.includes(search)
+      ) {
+
+        return false;
+
       }
-    );
 
-  document
-    .querySelectorAll(
-      "[data-view-trigger]"
-    )
-    .forEach(
-      (trigger) => {
-
-        if (
-          trigger.dataset.bound === "1"
-        ) {
-          return;
-        }
-
-        trigger.dataset.bound =
-          "1";
-
-        trigger.addEventListener(
-          "click",
-          (event) => {
-
-            event.stopPropagation();
-
-            toggleViewOptions(
-              trigger
-            );
-          }
-        );
-      }
-    );
-}
+    }
 
 
-function toggleViewOptions(trigger) {
+    const filters =
+      EF.filters;
 
-  const wrapper =
-    trigger.closest(
-      ".material-view-selector"
-    );
 
-  if (!wrapper) {
-    return;
+    if (
+      filters.type &&
+      !material.fields.some(
+        field =>
+          Array.isArray(field) &&
+          String(field[0]).toLowerCase()
+            .includes("type") &&
+          Array.isArray(field[1]) &&
+          field[1].includes(filters.type)
+      )
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      filters.size &&
+      !material.fields.some(
+        field =>
+          Array.isArray(field) &&
+          Array.isArray(field[1]) &&
+          field[1].includes(filters.size)
+      )
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      filters.brand &&
+      !material.brands.includes(filters.brand)
+    ) {
+
+      return false;
+
+    }
+
+
+    return true;
+
   }
 
-  const options =
-    wrapper.querySelector(
-      "[data-view-options]"
-    );
 
-  if (!options) {
-    return;
-  }
+  /* =======================================================
+     MATERIAL RENDER
+     ======================================================= */
 
-  const open =
-    !options.hidden;
-
-  closeAllViewOptions();
-
-  if (!open) {
-
-    options.hidden =
-      false;
-
-    trigger.setAttribute(
-      "aria-expanded",
-      "true"
-    );
-
-    wrapper.classList.add(
-      "open"
-    );
-  }
-}
-
-
-function closeAllViewOptions() {
-
-  document
-    .querySelectorAll(
-      "[data-view-options]"
-    )
-    .forEach(
-      (options) => {
-
-        options.hidden =
-          true;
-
-        const wrapper =
-          options.closest(
-            ".material-view-selector"
-          );
-
-        wrapper?.classList.remove(
-          "open"
-        );
-
-        wrapper
-          ?.querySelector(
-            "[data-view-trigger]"
-          )
-          ?.setAttribute(
-            "aria-expanded",
-            "false"
-          );
-      }
-    );
-
-  if (
-    EF.ids.globalViewOptions
-  ) {
-
-    EF.ids.globalViewOptions.hidden =
-      true;
-  }
-}
-
-
-function setView(view) {
-
-  const valid = [
-
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "2column",
-    "horizontal",
-    "icon",
-    "timeline",
-    "dense"
-  ];
-
-  if (!valid.includes(view)) {
-    view = "grid";
-  }
-
-  EF.view =
-    view;
-
-  storageSet(
-    STORAGE.view,
-    view
-  );
-
-  updateViewClasses();
-
-  syncViewSelector();
-
-  if (
-    EF.route === "materials" ||
-    EF.route === "section"
+  function renderMaterials(
+    stageIndex,
+    sectionIndex
   ) {
 
     const grid =
-      EF.ids.materialGrid;
+      $("materialGrid");
 
-    if (grid) {
+    if (!grid) return;
 
-      const filtered =
-        getFilteredMaterials(
-          getCurrentMaterialList()
+    const section =
+      getSection(
+        stageIndex,
+        sectionIndex
+      );
+
+    if (!section) return;
+
+
+    let materials =
+      getMaterials(
+        stageIndex,
+        sectionIndex
+      )
+        .map(
+          (raw, index) => {
+
+            return {
+
+              ...normalizeMaterial(raw),
+
+              stageIndex,
+
+              sectionIndex,
+
+              materialIndex: index
+
+            };
+
+          }
         );
 
-      renderMaterialCards(
-        filtered,
-        grid
+
+    materials =
+      materials.filter(
+        materialMatches
       );
+
+
+    const title =
+      $("materialPageTitle");
+
+    if (title) {
+
+      title.textContent =
+        textFor(section.name);
+
     }
-  }
-}
 
 
-function updateViewClasses() {
+    const subtitle =
+      $("materialPageSubtitle");
 
-  const targets =
-    document.querySelectorAll(
-      "#materialGrid, .material-grid"
-    );
+    if (subtitle) {
 
-  targets.forEach(
-    (grid) => {
-
-      [
-        "view-grid",
-        "view-list",
-        "view-compact",
-        "view-large",
-        "view-mini",
-        "view-2column",
-        "view-horizontal",
-        "view-icon",
-        "view-timeline",
-        "view-dense"
-      ].forEach(
-        (className) =>
-          grid.classList.remove(
-            className
+      subtitle.textContent =
+        textFor(
+          section.category ||
+          (
+            EF.lang === "hi"
+              ? "मटेरियल चुनें"
+              : "Select Material"
           )
-      );
-
-      grid.classList.add(
-        `view-${EF.view}`
-      );
-
-      grid.dataset.view =
-        EF.view;
-    }
-  );
-}
-
-
-function syncViewSelector() {
-
-  document
-    .querySelectorAll(
-      "[data-view-option]"
-    )
-    .forEach(
-      (button) => {
-
-        button.classList.toggle(
-          "active",
-          button.dataset.viewOption ===
-            EF.view
-        );
-      }
-    );
-}
-
-
-/* =========================================================
-   MATERIAL FILTERING
-   ========================================================= */
-
-function materialMatchesSearch(
-  material,
-  search
-) {
-
-  if (!search) {
-    return true;
-  }
-
-  const haystack = [];
-
-  haystack.push(
-    materialName(material)
-  );
-
-  materialFields(
-    material
-  ).forEach(
-    (field) => {
-
-      haystack.push(
-        fieldName(field)
-      );
-
-      fieldOptions(field)
-        .forEach(
-          (option) =>
-            haystack.push(
-              option
-            )
-        );
-    }
-  );
-
-  return normalize(
-    haystack.join(" ")
-  ).includes(
-    normalize(search)
-  );
-}
-
-
-function getFieldValueSet(
-  material,
-  wantedNames
-) {
-
-  const values = [];
-
-  materialFields(
-    material
-  ).forEach(
-    (field) => {
-
-      const name =
-        normalize(
-          fieldName(field)
         );
 
-      if (
-        wantedNames.some(
-          (wanted) =>
-            name === normalize(wanted)
-        )
-      ) {
-
-        fieldOptions(field)
-          .forEach(
-            (value) =>
-              values.push(
-                String(value)
-              )
-          );
-      }
     }
-  );
-
-  return values;
-}
 
 
-function materialMatchesFilter(
-  material
-) {
+    const resultInfo =
+      $("materialResultInfo");
 
-  const filters =
-    EF.selectedFilters;
+    if (resultInfo) {
 
-  if (
-    filters.type
-  ) {
-
-    const values =
-      getFieldValueSet(
-        material,
-        ["Type"]
-      );
-
-    if (
-      !values.some(
-        (value) =>
-          normalize(value) ===
-          normalize(filters.type)
-      )
-    ) {
-      return false;
-    }
-  }
-
-  if (
-    filters.size
-  ) {
-
-    const values =
-      getFieldValueSet(
-        material,
-        ["Size"]
-      );
-
-    if (
-      !values.some(
-        (value) =>
-          normalize(value) ===
-          normalize(filters.size)
-      )
-    ) {
-      return false;
-    }
-  }
-
-  if (
-    filters.brand
-  ) {
-
-    const values =
-      getFieldValueSet(
-        material,
-        ["Brand"]
-      );
-
-    if (
-      values.length &&
-      !values.some(
-        (value) =>
-          normalize(value) ===
-          normalize(filters.brand)
-      )
-    ) {
-
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-function getFilteredMaterials(
-  materials
-) {
-
-  if (!Array.isArray(materials)) {
-    return [];
-  }
-
-  let result =
-    materials.slice();
-
-  const stageFilter =
-    EF.selectedFilters.stage;
-
-  const sectionFilter =
-    EF.selectedFilters.section;
-
-  if (stageFilter) {
-
-    if (
-      EF.currentStage &&
-      getStageName(
-        EF.currentStage
-      ) !== stageFilter
-    ) {
-
-      result = [];
-    }
-  }
-
-  if (
-    sectionFilter &&
-    EF.currentSection !==
-      sectionFilter
-  ) {
-
-    result = [];
-  }
-
-  result =
-    result.filter(
-      (material) =>
-        materialMatchesSearch(
-          material,
-          EF.searchText
-        )
-    );
-
-  result =
-    result.filter(
-      (material) =>
-        materialMatchesFilter(
-          material
-        )
-    );
-
-  return result;
-}
-
-
-/* =========================================================
-   MATERIAL CARDS
-   ========================================================= */
-
-function renderMaterialCards(
-  materials,
-  grid
-) {
-
-  if (!grid) {
-    return;
-  }
-
-  grid.innerHTML = "";
-
-  if (!materials.length) {
-
-    grid.innerHTML =
-      `<div class="empty-state">
-        ${esc(
-          EF.searchText
-            ? t("emptySearch")
-            : t("noMaterials")
-        )}
-      </div>`;
-
-    updateViewClasses();
-
-    return;
-  }
-
-  materials.forEach(
-    (material, index) => {
-
-      const card =
-        createMaterialCard(
-          material,
-          index
+      resultInfo.textContent =
+        materials.length +
+        (
+          EF.lang === "hi"
+            ? " आइटम"
+            : " Items"
         );
 
-      grid.appendChild(
-        card
-      );
     }
-  );
-
-  updateViewClasses();
-}
 
 
-function createMaterialCard(
-  material,
-  index
-) {
+    grid.innerHTML = "";
 
-  const card =
-    document.createElement(
-      "button"
-    );
 
-  card.type =
-    "button";
+    if (!materials.length) {
 
-  card.className =
-    "material-card";
+      grid.innerHTML = `
 
-  const fields =
-    materialFields(material);
+        <div class="empty-state">
 
-  const preview =
-    fields
-      .slice(0, 3)
-      .map(
-        (field) => {
+          <div class="empty-icon">
+            🔍
+          </div>
 
-          const name =
-            fieldName(field);
+          <h3>
+            ${
+              EF.lang === "hi"
+                ? "कोई मटेरियल नहीं मिला"
+                : "No materials found"
+            }
+          </h3>
 
-          const options =
-            fieldOptions(field);
+          <p>
+            ${
+              EF.lang === "hi"
+                ? "सर्च या फ़िल्टर बदलें"
+                : "Change search or filter"
+            }
+          </p>
 
-          const value =
-            options.length
-              ? options
-                  .slice(0, 2)
-                  .join(" / ")
-              : "";
+        </div>
 
-          return `
-            <span class="material-meta">
-              <b>${esc(
-                t(name)
-              )}</b>
+      `;
+
+      return;
+
+    }
+
+
+    grid.className =
+      "material-grid view-" +
+      EF.view;
+
+
+    materials.forEach(
+      material => {
+
+        const card =
+          document.createElement("button");
+
+        card.type = "button";
+
+        card.className =
+          "material-card";
+
+
+        const fieldSummary =
+          material.fields
+            .slice(0, 3)
+            .map(field => {
+
+              if (
+                !Array.isArray(field)
+              ) return "";
+
+              const name =
+                field[0] || "";
+
+              const options =
+                Array.isArray(field[1])
+                  ? field[1]
+                  : [];
+
+              return `
+                <span>
+                  ${escapeHTML(
+                    textFor(name)
+                  )}
+                </span>
+              `;
+
+            })
+            .join("");
+
+
+        card.innerHTML = `
+
+          <div class="material-card-icon">
+            ⚡
+          </div>
+
+          <div class="material-card-content">
+
+            <div class="material-card-title">
+              ${escapeHTML(
+                textFor(material.name)
+              )}
+            </div>
+
+            ${
+              fieldSummary
+                ? `
+                  <div class="material-card-fields">
+                    ${fieldSummary}
+                  </div>
+                `
+                : ""
+            }
+
+            <div class="material-card-meta">
+
+              <span>
+                ${material.units.length}
+                ${
+                  EF.lang === "hi"
+                    ? " यूनिट"
+                    : " Units"
+                }
+              </span>
+
               ${
-                value
-                  ? `<i>${esc(
-                      t(value)
-                    )}</i>`
+                material.brands.length
+                  ? `
+                    <span>
+                      ${
+                        EF.lang === "hi"
+                          ? "ब्रांड उपलब्ध"
+                          : "Brands available"
+                      }
+                    </span>
+                  `
                   : ""
               }
-            </span>
-          `;
-        }
-      )
-      .join("");
 
-  card.innerHTML = `
+            </div>
 
-    <span class="material-icon">
-      ⚡
-    </span>
+          </div>
 
-    <span class="material-card-body">
+          <div class="material-card-arrow">
+            →
+          </div>
 
-      <strong class="material-name">
-        ${esc(
-          t(materialName(material))
-        )}
-      </strong>
+        `;
 
-      ${
-        preview
-          ? `<span class="material-preview">
-              ${preview}
-            </span>`
-          : ""
-      }
 
-    </span>
+        card.addEventListener(
+          "click",
+          () => {
 
-    <span class="material-arrow">
-      ›
-    </span>
-  `;
+            openEditor(
 
-  card.addEventListener(
-    "click",
-    () => {
+              material.stageIndex,
 
-      const source =
-        getCurrentMaterialList();
+              material.sectionIndex,
 
-      const actualIndex =
-        source.indexOf(
-          material
+              material.materialIndex
+
+            );
+
+          }
         );
 
-      openEditor(
-        material,
-        actualIndex >= 0
-          ? actualIndex
-          : index
-      );
-    }
-  );
 
-  return card;
-}
+        grid.appendChild(card);
 
-
-/* =========================================================
-   EDITOR
-   ========================================================= */
-
-function openEditor(
-  material,
-  index,
-  options = {}
-) {
-
-  EF.currentMaterial =
-    material;
-
-  EF.currentMaterialIndex =
-    Number.isInteger(index)
-      ? index
-      : 0;
-
-  EF.currentDraft =
-    EF.currentDraft || {};
-
-  EF.route =
-    "editor";
-
-  const savedDraft =
-    loadDraft();
-
-  if (savedDraft) {
-
-    EF.currentDraft =
-      savedDraft.draft || {};
-
-    if (
-      savedDraft.unitCarry
-    ) {
-
-      EF.unitCarry =
-        savedDraft.unitCarry;
-    }
-  }
-
-  saveRoute();
-
-  if (options.push !== false) {
-
-    history.pushState(
-      {
-        route: "editor",
-
-        stage:
-          EF.currentStage
-            ? getStageName(
-                EF.currentStage
-              )
-            : "",
-
-        section:
-          EF.currentSection || "",
-
-        materialIndex:
-          EF.currentMaterialIndex
-      },
-      "",
-      location.href
+      }
     );
+
+
+    updateViewButton();
+
   }
 
-  renderEditor();
 
-  scrollTop();
-}
+  /* =======================================================
+     EDITOR
+     ======================================================= */
+
+  function openEditor(
+    stageIndex,
+    sectionIndex,
+    materialIndex,
+    push = true
+  ) {
+
+    const raw =
+      getMaterial(
+        stageIndex,
+        sectionIndex,
+        materialIndex
+      );
+
+    if (!raw) return;
 
 
-function renderEditor() {
+    const material =
+      normalizeMaterial(raw);
 
-  hideAllPages();
 
-  showPage("editor");
+    EF.stageIndex =
+      stageIndex;
 
-  updateTopBar();
+    EF.sectionIndex =
+      sectionIndex;
 
-  const material =
-    EF.currentMaterial;
+    EF.materialIndex =
+      materialIndex;
 
-  if (!material) {
+    EF.editIndex = null;
+
+
+    setRoute("editor", push);
+
+    showPage("editorPage");
+
+
+    renderEditor(
+      material,
+      stageIndex,
+      sectionIndex
+    );
+
+  }
+
+
+  function renderEditor(
+    material,
+    stageIndex,
+    sectionIndex
+  ) {
+
+    const name =
+      $("editorMaterialName");
+
+    if (name) {
+
+      name.textContent =
+        textFor(material.name);
+
+    }
+
+
+    const route =
+      $("efRoute");
+
+    if (route) {
+
+      const stage =
+        getStage(stageIndex);
+
+      const section =
+        getSection(
+          stageIndex,
+          sectionIndex
+        );
+
+
+      route.textContent =
+        [
+          textFor(stage ? stage[0] : ""),
+          textFor(section ? section.name : ""),
+          textFor(material.name)
+        ]
+          .filter(Boolean)
+          .join(" → ");
+
+    }
+
+
+    renderMaterialFields(
+      material
+    );
+
+    populateUnits(
+      material.units
+    );
+
+    populateBrands(
+      material.brands
+    );
+
+
+    const draft =
+      EF.draft || {};
+
 
     if (
-      EF.currentSection
+      draft.stageIndex === stageIndex &&
+      draft.sectionIndex === sectionIndex &&
+      draft.materialIndex === EF.materialIndex
     ) {
 
-      navigate(
-        "materials"
+      restoreEditorDraft();
+
+    } else {
+
+      clearEditor(false);
+
+    }
+
+  }
+
+
+  /* =======================================================
+     MATERIAL FIELDS
+     ======================================================= */
+
+  function renderMaterialFields(
+    material
+  ) {
+
+    const container =
+      $("materialFields");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+
+    material.fields.forEach(
+      (field, index) => {
+
+        if (!Array.isArray(field)) return;
+
+
+        const fieldName =
+          field[0] || "";
+
+
+        const options =
+          Array.isArray(field[1])
+            ? field[1]
+            : [];
+
+
+        const group =
+          document.createElement("div");
+
+        group.className =
+          "form-group material-option-group";
+
+
+        const label =
+          document.createElement("label");
+
+        label.htmlFor =
+          "materialField_" + index;
+
+
+        label.textContent =
+          textFor(fieldName);
+
+
+        const select =
+          document.createElement("select");
+
+        select.id =
+          "materialField_" + index;
+
+        select.dataset.fieldName =
+          fieldName;
+
+
+        const empty =
+          document.createElement("option");
+
+        empty.value = "";
+
+        empty.textContent =
+          EF.lang === "hi"
+            ? "चुनें"
+            : "Select";
+
+        select.appendChild(empty);
+
+
+        options.forEach(
+          option => {
+
+            const opt =
+              document.createElement("option");
+
+            opt.value =
+              option;
+
+            opt.textContent =
+              textFor(option);
+
+            select.appendChild(opt);
+
+          }
+        );
+
+
+        select.addEventListener(
+          "change",
+          saveEditorDraft
+        );
+
+
+        group.appendChild(label);
+
+        group.appendChild(select);
+
+        container.appendChild(group);
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     UNITS
+     ======================================================= */
+
+  function populateUnits(
+    units
+  ) {
+
+    const select =
+      $("unitInput");
+
+    if (!select) return;
+
+    select.innerHTML = "";
+
+
+    const empty =
+      document.createElement("option");
+
+    empty.value = "";
+
+    empty.textContent = "—";
+
+    select.appendChild(empty);
+
+
+    const lastUnit =
+      localStorage.getItem(
+        STORAGE.lastUnit
+      ) || "";
+
+
+    units.forEach(
+      unit => {
+
+        const opt =
+          document.createElement("option");
+
+        opt.value =
+          unit;
+
+        opt.textContent =
+          unit;
+
+        select.appendChild(opt);
+
+      }
+    );
+
+
+    if (lastUnit &&
+        units.includes(lastUnit)) {
+
+      select.value =
+        lastUnit;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     BRANDS
+     ======================================================= */
+
+  function populateBrands(
+    brands
+  ) {
+
+    const select =
+      $("brandInput");
+
+    if (!select) return;
+
+    select.innerHTML = "";
+
+
+    const empty =
+      document.createElement("option");
+
+    empty.value = "";
+
+    empty.textContent = "—";
+
+    select.appendChild(empty);
+
+
+    brands.forEach(
+      brand => {
+
+        const opt =
+          document.createElement("option");
+
+        opt.value =
+          brand;
+
+        opt.textContent =
+          brand;
+
+        select.appendChild(opt);
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     SAVE ITEM
+     ======================================================= */
+
+  function saveCurrentItem() {
+
+    if (
+      EF.stageIndex === null ||
+      EF.sectionIndex === null ||
+      EF.materialIndex === null
+    ) {
+
+      return;
+
+    }
+
+
+    const raw =
+      getMaterial(
+        EF.stageIndex,
+        EF.sectionIndex,
+        EF.materialIndex
+      );
+
+    if (!raw) return;
+
+
+    const material =
+      normalizeMaterial(raw);
+
+
+    const quantity =
+      parseFloat(
+        $("quantityInput")?.value || ""
+      );
+
+
+    if (
+      !Number.isFinite(quantity) ||
+      quantity <= 0
+    ) {
+
+      showToast(
+        EF.lang === "hi"
+          ? "मात्रा दर्ज करें"
+          : "Enter quantity"
+      );
+
+      $("quantityInput")?.focus();
+
+      return;
+
+    }
+
+
+    const fields = {};
+
+
+    material.fields.forEach(
+      (field, index) => {
+
+        if (!Array.isArray(field)) return;
+
+
+        const input =
+          $("materialField_" + index);
+
+
+        if (input) {
+
+          fields[field[0]] =
+            input.value || "";
+
+        }
+
+      }
+    );
+
+
+    const unit =
+      $("unitInput")?.value || "";
+
+
+    const brand =
+      $("brandInput")?.value || "";
+
+
+    const price =
+      $("priceInput")?.value || "";
+
+
+    const item = {
+
+      id:
+        Date.now().toString(36) +
+        Math.random()
+          .toString(36)
+          .slice(2),
+
+      stageIndex:
+        EF.stageIndex,
+
+      stage:
+        getStageName(EF.stageIndex),
+
+      sectionIndex:
+        EF.sectionIndex,
+
+      section:
+        getSection(
+          EF.stageIndex,
+          EF.sectionIndex
+        )?.name || "",
+
+      materialIndex:
+        EF.materialIndex,
+
+      material:
+        material.name,
+
+      fields,
+
+      quantity,
+
+      unit,
+
+      brand,
+
+      price,
+
+      createdAt:
+        new Date().toISOString()
+
+    };
+
+
+    if (
+      Number.isInteger(EF.editIndex)
+    ) {
+
+      EF.estimateItems[
+        EF.editIndex
+      ] = {
+
+        ...EF.estimateItems[
+          EF.editIndex
+        ],
+
+        ...item
+
+      };
+
+      showToast(
+        EF.lang === "hi"
+          ? "आइटम अपडेट हो गया"
+          : "Item updated"
       );
 
     } else {
 
-      navigate(
-        "home"
+      EF.estimateItems.push(item);
+
+      showToast(
+        EF.lang === "hi"
+          ? "आइटम एस्टिमेट में जुड़ गया"
+          : "Item added to estimate"
       );
+
     }
 
-    return;
+
+    saveItems();
+
+
+    localStorage.setItem(
+      STORAGE.lastUnit,
+      unit
+    );
+
+
+    EF.editIndex = null;
+
+
+    clearEditor(false);
+
+    goNextMaterial();
+
   }
 
-  const title =
-    EF.ids.editorTitle;
 
-  if (title) {
+  /* =======================================================
+     NEXT
+     -------------------------------------------------------
+     IMPORTANT:
+     Next DOES NOT SAVE.
+     ======================================================= */
 
-    title.textContent =
-      t(
-        materialName(material)
-      );
-  }
+  function goNextMaterial() {
 
-  const fieldsContainer =
-    EF.ids.editorFields;
+    if (
+      EF.stageIndex === null ||
+      EF.sectionIndex === null ||
+      EF.materialIndex === null
+    ) {
 
-  if (!fieldsContainer) {
-    return;
-  }
+      return;
 
-  fieldsContainer.innerHTML = "";
-
-  materialFields(
-    material
-  ).forEach(
-    (field, index) => {
-
-      fieldsContainer.appendChild(
-        createEditorField(
-          field,
-          index
-        )
-      );
     }
-  );
 
-  appendCommonFields(
-    fieldsContainer
-  );
 
-  restoreDraftValues();
-
-  updateEditorButtons();
-
-  scrollTop();
-}
-
-
-/* =========================================================
-   EDITOR FIELD
-   ========================================================= */
-
-function createEditorField(
-  field,
-  index
-) {
-
-  const name =
-    fieldName(field);
-
-  const options =
-    fieldOptions(field);
-
-  const wrapper =
-    document.createElement(
-      "div"
-    );
-
-  wrapper.className =
-    "editor-field";
-
-  wrapper.dataset.fieldIndex =
-    String(index);
-
-  wrapper.dataset.fieldName =
-    name;
-
-  const id =
-    `ef-field-${index}-${slug(name)}`;
-
-  let controlHTML = "";
-
-  if (options.length) {
-
-    controlHTML = `
-
-      <select
-        id="${esc(id)}"
-        class="ef-input ef-select"
-        data-editor-field
-        data-field-index="${index}"
-        data-field-name="${esc(name)}"
-      >
-
-        <option value="">
-          ${esc(
-            t("selectValue")
-          )}
-        </option>
-
-        ${options
-          .map(
-            (option) =>
-              `
-              <option value="${esc(option)}">
-                ${esc(
-                  t(option)
-                )}
-              </option>
-              `
-          )
-          .join("")}
-
-      </select>
-    `;
-
-  } else {
-
-    controlHTML = `
-
-      <input
-        id="${esc(id)}"
-        class="ef-input"
-        type="text"
-        data-editor-field
-        data-field-index="${index}"
-        data-field-name="${esc(name)}"
-      >
-    `;
-  }
-
-  wrapper.innerHTML = `
-
-    <label
-      for="${esc(id)}"
-      class="ef-label"
-    >
-      ${esc(
-        t(name)
-      )}
-      <small>
-        ${esc(
-          t("optional")
-        )}
-      </small>
-    </label>
-
-    ${controlHTML}
-  `;
-
-  return wrapper;
-}
-
-
-/* =========================================================
-   COMMON FIELDS
-   ========================================================= */
-
-function appendCommonFields(
-  container
-) {
-
-  const quantity =
-    document.createElement(
-      "div"
-    );
-
-  quantity.className =
-    "editor-field required-field";
-
-  quantity.innerHTML = `
-
-    <label
-      for="ef-quantity"
-      class="ef-label"
-    >
-      ${esc(
-        t("quantity")
-      )}
-      <b>*</b>
-    </label>
-
-    <input
-      id="ef-quantity"
-      class="ef-input"
-      type="number"
-      min="0"
-      step="any"
-      inputmode="decimal"
-      data-common-field="quantity"
-    >
-  `;
-
-  container.appendChild(
-    quantity
-  );
-
-
-  const unit =
-    document.createElement(
-      "div"
-    );
-
-  unit.className =
-    "editor-field";
-
-  unit.innerHTML = `
-
-    <label
-      for="ef-unit"
-      class="ef-label"
-    >
-      ${esc(
-        t("unit")
-      )}
-    </label>
-
-    <input
-      id="ef-unit"
-      class="ef-input"
-      type="text"
-      list="ef-unit-list"
-      value=""
-      data-common-field="unit"
-    >
-
-    <datalist id="ef-unit-list">
-
-      <option value="Nos"></option>
-      <option value="Piece"></option>
-      <option value="Meter"></option>
-      <option value="Feet"></option>
-      <option value="Point"></option>
-      <option value="Box"></option>
-      <option value="Set"></option>
-      <option value="Roll"></option>
-      <option value="Packet"></option>
-
-    </datalist>
-  `;
-
-  container.appendChild(
-    unit
-  );
-
-
-  const brand =
-    document.createElement(
-      "div"
-    );
-
-  brand.className =
-    "editor-field";
-
-  brand.innerHTML = `
-
-    <label
-      for="ef-brand"
-      class="ef-label"
-    >
-      ${esc(
-        t("brand")
-      )}
-      <small>
-        ${esc(
-          t("optional")
-        )}
-      </small>
-    </label>
-
-    <input
-      id="ef-brand"
-      class="ef-input"
-      type="text"
-      data-common-field="brand"
-    >
-  `;
-
-  container.appendChild(
-    brand
-  );
-
-
-  const price =
-    document.createElement(
-      "div"
-    );
-
-  price.className =
-    "editor-field optional-price";
-
-  price.innerHTML = `
-
-    <label
-      for="ef-price"
-      class="ef-label"
-    >
-      ${esc(
-        t("price")
-      )}
-      <small>
-        ${esc(
-          t("optional")
-        )}
-      </small>
-    </label>
-
-    <input
-      id="ef-price"
-      class="ef-input"
-      type="number"
-      min="0"
-      step="any"
-      inputmode="decimal"
-      data-common-field="price"
-    >
-  `;
-
-  container.appendChild(
-    price
-  );
-}
-
-
-/* =========================================================
-   RESTORE EDITOR VALUES
-   ========================================================= */
-
-function restoreDraftValues() {
-
-  const draft =
-    EF.currentDraft || {};
-
-  const fieldValues =
-    draft.fields || {};
-
-  document
-    .querySelectorAll(
-      "[data-editor-field]"
-    )
-    .forEach(
-      (input) => {
-
-        const name =
-          input.dataset.fieldName;
-
-        let value =
-          Object.prototype.hasOwnProperty.call(
-            fieldValues,
-            name
-          )
-            ? fieldValues[name]
-            : "";
-
-        input.value =
-          value ?? "";
-      }
-    );
-
-  const quantity =
-    document.querySelector(
-      '[data-common-field="quantity"]'
-    );
-
-  const unit =
-    document.querySelector(
-      '[data-common-field="unit"]'
-    );
-
-  const brand =
-    document.querySelector(
-      '[data-common-field="brand"]'
-    );
-
-  const price =
-    document.querySelector(
-      '[data-common-field="price"]'
-    );
-
-  if (quantity) {
-
-    quantity.value =
-      draft.quantity ?? "";
-  }
-
-  if (unit) {
-
-    unit.value =
-      draft.unit ||
-      EF.unitCarry ||
-      "";
-  }
-
-  if (brand) {
-
-    brand.value =
-      draft.brand ?? "";
-  }
-
-  if (price) {
-
-    price.value =
-      draft.price ?? "";
-  }
-}
-
-
-/* =========================================================
-   READ EDITOR
-   ========================================================= */
-
-function readEditor() {
-
-  const fields = {};
-
-  document
-    .querySelectorAll(
-      "[data-editor-field]"
-    )
-    .forEach(
-      (input) => {
-
-        fields[
-          input.dataset.fieldName
-        ] =
-          input.value.trim();
-      }
-    );
-
-  const quantity =
-    document
-      .querySelector(
-        '[data-common-field="quantity"]'
-      )
-      ?.value
-      ?.trim() || "";
-
-  const unit =
-    document
-      .querySelector(
-        '[data-common-field="unit"]'
-      )
-      ?.value
-      ?.trim() || "";
-
-  const brand =
-    document
-      .querySelector(
-        '[data-common-field="brand"]'
-      )
-      ?.value
-      ?.trim() || "";
-
-  const price =
-    document
-      .querySelector(
-        '[data-common-field="price"]'
-      )
-      ?.value
-      ?.trim() || "";
-
-  return {
-
-    fields,
-
-    quantity,
-
-    unit,
-
-    brand,
-
-    price
-  };
-}
-
-
-/* =========================================================
-   SAVE CURRENT DRAFT
-   ========================================================= */
-
-function captureCurrentDraft() {
-
-  if (
-    EF.route !== "editor" ||
-    !EF.currentMaterial
-  ) {
-    return;
-  }
-
-  const data =
-    readEditor();
-
-  EF.currentDraft = data;
-
-  if (data.unit) {
-
-    EF.unitCarry =
-      data.unit;
-
-    storageSet(
-      STORAGE.lastUnit,
-      data.unit
-    );
-  }
-
-  saveDraft();
-}
-
-
-/* =========================================================
-   VALIDATE
-   ========================================================= */
-
-function validateQuantity(
-  quantity
-) {
-
-  if (
-    quantity === "" ||
-    quantity === null ||
-    quantity === undefined
-  ) {
-
-    showToast(
-      t("requiredQuantity")
-    );
-
-    const input =
-      document.querySelector(
-        '[data-common-field="quantity"]'
+    const materials =
+      getMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
       );
 
-    input?.focus();
 
-    return false;
-  }
+    const nextIndex =
+      EF.materialIndex + 1;
 
-  const number =
-    Number(quantity);
 
-  if (
-    !Number.isFinite(number) ||
-    number <= 0
-  ) {
+    if (
+      nextIndex < materials.length
+    ) {
 
-    showToast(
-      t("requiredQuantity")
-    );
+      EF.materialIndex =
+        nextIndex;
 
-    const input =
-      document.querySelector(
-        '[data-common-field="quantity"]'
+      saveRoute();
+
+      renderEditor(
+        normalizeMaterial(
+          materials[nextIndex]
+        ),
+        EF.stageIndex,
+        EF.sectionIndex
       );
 
-    input?.focus();
+      showPage("editorPage");
 
-    return false;
-  }
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
 
-  return true;
-}
+      return;
 
-
-/* =========================================================
-   BUILD ESTIMATE ITEM
-   ========================================================= */
-
-function buildEstimateItem(
-  data
-) {
-
-  return {
-
-    id:
-      `${Date.now()}_${Math.random()
-        .toString(36)
-        .slice(2, 9)}`,
-
-    stage:
-      EF.currentStage
-        ? getStageName(
-            EF.currentStage
-          )
-        : "",
-
-    stageTitle:
-      EF.currentStage
-        ? getStageTitle(
-            EF.currentStage
-          )
-        : "",
-
-    section:
-      EF.currentSection || "",
-
-    material:
-      materialName(
-        EF.currentMaterial
-      ),
-
-    fields:
-      {
-        ...data.fields
-      },
-
-    quantity:
-      data.quantity,
-
-    unit:
-      data.unit,
-
-    brand:
-      data.brand,
-
-    price:
-      data.price,
-
-    createdAt:
-      Date.now()
-  };
-}
+    }
 
 
-/* =========================================================
-   ADD CURRENT ITEM
-   ========================================================= */
+    const sections =
+      getSections(
+        EF.stageIndex
+      );
 
-function saveCurrentItem() {
 
-  if (
-    !EF.currentMaterial
-  ) {
-    return;
-  }
+    const nextSection =
+      EF.sectionIndex + 1;
 
-  const data =
-    readEditor();
 
-  if (
-    !validateQuantity(
-      data.quantity
-    )
-  ) {
-    return;
-  }
+    if (
+      nextSection < sections.length
+    ) {
 
-  EF.currentDraft =
-    data;
+      EF.sectionIndex =
+        nextSection;
 
-  if (data.unit) {
+      EF.materialIndex =
+        0;
 
-    EF.unitCarry =
-      data.unit;
+      saveRoute();
 
-    storageSet(
-      STORAGE.lastUnit,
-      data.unit
-    );
-  }
+      renderEditor(
+        normalizeMaterial(
+          sections[nextSection].materials[0]
+        ),
+        EF.stageIndex,
+        nextSection
+      );
 
-  const item =
-    buildEstimateItem(
-      data
+      showPage("editorPage");
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      return;
+
+    }
+
+
+    const nextStage =
+      EF.stageIndex + 1;
+
+
+    if (
+      nextStage < getStages().length
+    ) {
+
+      EF.stageIndex =
+        nextStage;
+
+      EF.sectionIndex =
+        0;
+
+      EF.materialIndex =
+        0;
+
+      saveRoute();
+
+      renderEditor(
+        normalizeMaterial(
+          getSections(nextStage)[0]
+            .materials[0]
+        ),
+        nextStage,
+        0
+      );
+
+      showPage("editorPage");
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+
+      return;
+
+    }
+
+
+    showToast(
+      EF.lang === "hi"
+        ? "यह आखिरी आइटम है"
+        : "This is the last item"
     );
 
-  EF.estimate.push(
-    item
-  );
-
-  saveEstimate();
-
-  clearDraft();
-
-  showToast(
-    t("itemAdded")
-  );
-
-  /*
-    IMPORTANT:
-    Add = SAVE + NEXT
-
-    Next = NEVER SAVE
-  */
-
-  setTimeout(
-    () => {
-
-      goNextMaterial();
-
-    },
-    220
-  );
-}
-
-
-/* =========================================================
-   NEXT MATERIAL
-   ========================================================= */
-
-function goNextMaterial() {
-
-  const list =
-    getCurrentMaterialList();
-
-  if (!list.length) {
-    return;
   }
 
-  let nextIndex =
-    EF.currentMaterialIndex + 1;
 
-  if (
-    nextIndex >= list.length
-  ) {
+  /* =======================================================
+     PREVIOUS
+     ======================================================= */
 
-    EF.route =
-      "materials";
+  function goPrevious() {
 
-    EF.currentMaterial =
-      null;
+    if (
+      EF.stageIndex === null ||
+      EF.sectionIndex === null ||
+      EF.materialIndex === null
+    ) {
 
-    EF.currentMaterialIndex =
-      0;
+      return;
 
-    EF.currentDraft =
-      {};
+    }
 
-    clearDraft();
+
+    if (EF.materialIndex > 0) {
+
+      EF.materialIndex--;
+
+    } else if (EF.sectionIndex > 0) {
+
+      EF.sectionIndex--;
+
+      const materials =
+        getMaterials(
+          EF.stageIndex,
+          EF.sectionIndex
+        );
+
+      EF.materialIndex =
+        Math.max(
+          0,
+          materials.length - 1
+        );
+
+    } else if (EF.stageIndex > 0) {
+
+      EF.stageIndex--;
+
+      const sections =
+        getSections(
+          EF.stageIndex
+        );
+
+      EF.sectionIndex =
+        Math.max(
+          0,
+          sections.length - 1
+        );
+
+      const materials =
+        getMaterials(
+          EF.stageIndex,
+          EF.sectionIndex
+        );
+
+      EF.materialIndex =
+        Math.max(
+          0,
+          materials.length - 1
+        );
+
+    } else {
+
+      openStage(
+        EF.stageIndex,
+        false
+      );
+
+      return;
+
+    }
+
 
     saveRoute();
 
-    renderMaterials();
 
-    scrollTop();
-
-    return;
-  }
-
-  EF.currentMaterial =
-    list[nextIndex];
-
-  EF.currentMaterialIndex =
-    nextIndex;
-
-  EF.currentDraft =
-    {};
-
-  clearDraft();
-
-  EF.route =
-    "editor";
-
-  saveRoute();
-
-  /*
-    Carry Unit only.
-    Quantity / Brand / Price / fields
-    are NOT carried forward.
-  */
-
-  renderEditor();
-
-  scrollTop();
-}
-
-
-/* =========================================================
-   PREVIOUS MATERIAL
-   ========================================================= */
-
-function goPreviousMaterial() {
-
-  const list =
-    getCurrentMaterialList();
-
-  if (!list.length) {
-    return;
-  }
-
-  captureCurrentDraft();
-
-  let previousIndex =
-    EF.currentMaterialIndex - 1;
-
-  if (previousIndex < 0) {
-
-    navigate(
-      EF.currentSection
-        ? "section"
-        : "stage"
+    renderEditor(
+      normalizeMaterial(
+        getMaterial(
+          EF.stageIndex,
+          EF.sectionIndex,
+          EF.materialIndex
+        )
+      ),
+      EF.stageIndex,
+      EF.sectionIndex
     );
 
-    return;
+
+    showPage("editorPage");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
   }
 
-  EF.currentMaterial =
-    list[previousIndex];
 
-  EF.currentMaterialIndex =
-    previousIndex;
+  /* =======================================================
+     CLEAR EDITOR
+     ======================================================= */
 
-  EF.currentDraft =
-    {};
+  function clearEditor(
+    save = true
+  ) {
 
-  clearDraft();
-
-  EF.route =
-    "editor";
-
-  saveRoute();
-
-  renderEditor();
-
-  scrollTop();
-}
+    qsa(
+      "#materialFields select"
+    )
+      .forEach(
+        select => {
+          select.value = "";
+        }
+      );
 
 
-/* =========================================================
-   EDITOR BUTTONS
-   ========================================================= */
+    const quantity =
+      $("quantityInput");
 
-function updateEditorButtons() {
+    if (quantity) {
 
-  const add =
-    EF.ids.addBtn;
+      quantity.value = "";
 
-  const next =
-    EF.ids.nextBtn;
+    }
 
-  const back =
-    EF.ids.backBtn;
 
-  if (add) {
-    add.textContent =
-      t("add");
+    const unit =
+      $("unitInput");
+
+    if (unit) {
+
+      unit.value = "";
+
+    }
+
+
+    const brand =
+      $("brandInput");
+
+    if (brand) {
+
+      brand.value = "";
+
+    }
+
+
+    const price =
+      $("priceInput");
+
+    if (price) {
+
+      price.value = "";
+
+    }
+
+
+    if (save) {
+
+      EF.draft = {};
+
+      saveDraft();
+
+    }
+
   }
 
-  if (next) {
-    next.textContent =
-      t("next");
+
+  /* =======================================================
+     DRAFT
+     ======================================================= */
+
+  function saveEditorDraft() {
+
+    if (
+      EF.stageIndex === null ||
+      EF.sectionIndex === null ||
+      EF.materialIndex === null
+    ) {
+
+      return;
+
+    }
+
+
+    const fields = {};
+
+
+    qsa(
+      "#materialFields select"
+    )
+      .forEach(
+        select => {
+
+          fields[
+            select.dataset.fieldName
+          ] =
+            select.value || "";
+
+        }
+      );
+
+
+    EF.draft = {
+
+      stageIndex:
+        EF.stageIndex,
+
+      sectionIndex:
+        EF.sectionIndex,
+
+      materialIndex:
+        EF.materialIndex,
+
+      fields,
+
+      quantity:
+        $("quantityInput")?.value || "",
+
+      unit:
+        $("unitInput")?.value || "",
+
+      brand:
+        $("brandInput")?.value || "",
+
+      price:
+        $("priceInput")?.value || ""
+
+    };
+
+
+    saveDraft();
+
   }
 
-  if (back) {
-    back.textContent =
-      t("back");
+
+  function restoreEditorDraft() {
+
+    const draft =
+      EF.draft;
+
+
+    if (!draft) return;
+
+
+    qsa(
+      "#materialFields select"
+    )
+      .forEach(
+        select => {
+
+          const value =
+            draft.fields
+              ? draft.fields[
+                  select.dataset.fieldName
+                ]
+              : "";
+
+          if (
+            value !== undefined
+          ) {
+
+            select.value =
+              value;
+
+          }
+
+        }
+      );
+
+
+    if ($("quantityInput")) {
+
+      $("quantityInput").value =
+        draft.quantity || "";
+
+    }
+
+
+    if ($("unitInput")) {
+
+      $("unitInput").value =
+        draft.unit || "";
+
+    }
+
+
+    if ($("brandInput")) {
+
+      $("brandInput").value =
+        draft.brand || "";
+
+    }
+
+
+    if ($("priceInput")) {
+
+      $("priceInput").value =
+        draft.price || "";
+
+    }
+
   }
-}
 
 
-/* =========================================================
-   ESTIMATE PAGE
-   ========================================================= */
+  /* =======================================================
+     ESTIMATE
+     ======================================================= */
 
-function renderEstimate() {
+  function renderEstimate() {
 
-  hideAllPages();
+    const list =
+      $("estimateList");
 
-  showPage("estimate");
+    if (!list) return;
 
-  updateTopBar();
+    list.innerHTML = "";
 
-  updateEstimateCount();
 
-  const list =
-    EF.ids.estimateList;
+    const items =
+      EF.estimateItems;
 
-  if (!list) {
-    return;
-  }
 
-  list.innerHTML = "";
+    const count =
+      $("estimateCount");
 
-  if (!EF.estimate.length) {
+    if (count) {
 
-    list.innerHTML =
-      `<div class="empty-state">
-        ${esc(
-          t("noEstimate")
-        )}
-      </div>`;
+      count.textContent =
+        items.length;
 
-    return;
-  }
+    }
 
-  EF.estimate.forEach(
-    (item, index) => {
 
-      const card =
-        document.createElement(
-          "article"
+    const totalQuantity =
+      items.reduce(
+        (sum, item) =>
+          sum +
+          (Number(item.quantity) || 0),
+        0
+      );
+
+
+    const quantity =
+      $("estimateQuantity");
+
+    if (quantity) {
+
+      quantity.textContent =
+        totalQuantity;
+
+    }
+
+
+    const total =
+      items.reduce(
+        (sum, item) =>
+          sum +
+          (
+            Number(item.price) || 0
+          ) *
+          (
+            Number(item.quantity) || 0
+          ),
+        0
+      );
+
+
+    const totalEl =
+      $("estimateTotal");
+
+    if (totalEl) {
+
+      totalEl.textContent =
+        "₹" +
+        total.toLocaleString(
+          "en-IN"
         );
 
-      card.className =
-        "estimate-item";
+    }
 
-      const fieldText =
-        Object.entries(
-          item.fields || {}
-        )
-        .filter(
-          ([, value]) =>
-            value !== "" &&
-            value !== null &&
-            value !== undefined
-        )
-        .map(
-          ([key, value]) =>
-            `${t(key)}: ${t(value)}`
-        )
-        .join(" • ");
 
-      card.innerHTML = `
+    const empty =
+      $("emptyEstimate");
 
-        <div class="estimate-item-main">
+    if (empty) {
 
-          <span class="estimate-item-number">
-            ${index + 1}
-          </span>
+      empty.hidden =
+        items.length !== 0;
 
-          <div>
+    }
+
+
+    items.forEach(
+      (item, index) => {
+
+        const card =
+          document.createElement("div");
+
+        card.className =
+          "estimate-card";
+
+
+        const fieldText =
+          Object.entries(
+            item.fields || {}
+          )
+            .filter(
+              ([, value]) =>
+                value !== ""
+            )
+            .map(
+              ([key, value]) =>
+                `${escapeHTML(
+                  textFor(key)
+                )}: ${escapeHTML(
+                  textFor(value)
+                )}`
+            )
+            .join(" • ");
+
+
+        card.innerHTML = `
+
+          <div class="estimate-card-head">
 
             <strong>
-              ${esc(
-                t(item.material)
+              ${escapeHTML(
+                textFor(item.material)
               )}
             </strong>
 
-            <small>
+            <span>
+              #${index + 1}
+            </span>
+
+          </div>
+
+          <div class="estimate-card-route">
+
+            ${escapeHTML(
+              textFor(item.stage)
+            )}
+
+            →
+
+            ${escapeHTML(
+              textFor(item.section)
+            )}
+
+          </div>
+
+          ${
+            fieldText
+              ? `
+                <div class="estimate-card-fields">
+                  ${fieldText}
+                </div>
+              `
+              : ""
+          }
+
+          <div class="estimate-card-meta">
+
+            <span>
               ${
-                item.section
-                  ? esc(
-                      t(item.section)
-                    )
-                  : ""
-              }
-            </small>
-
-            ${
-              fieldText
-                ? `<p>${esc(
-                    fieldText
-                  )}</p>`
-                : ""
-            }
-
-            <p>
-              ${esc(
-                t("quantity")
-              )}: ${esc(
-                item.quantity
+                EF.lang === "hi"
+                  ? "मात्रा"
+                  : "Qty"
+              }:
+              ${escapeHTML(
+                String(item.quantity)
               )}
-              ${
-                item.unit
-                  ? ` ${esc(
-                      t(item.unit)
-                    )}`
-                  : ""
-              }
-            </p>
+            </span>
+
+            <span>
+              ${escapeHTML(
+                item.unit || "—"
+              )}
+            </span>
 
             ${
               item.brand
-                ? `<p>${esc(
-                    t("brand")
-                  )}: ${esc(
-                    item.brand
-                  )}</p>`
+                ? `
+                  <span>
+                    ${escapeHTML(
+                      item.brand
+                    )}
+                  </span>
+                `
                 : ""
             }
 
           </div>
 
-        </div>
+          <div class="estimate-card-actions">
 
-        <div class="estimate-item-actions">
+            <button
+              type="button"
+              class="secondary-btn"
+              data-edit-estimate="${index}"
+            >
+              ${
+                EF.lang === "hi"
+                  ? "एडिट"
+                  : "Edit"
+              }
+            </button>
 
-          <button
-            type="button"
-            class="edit-estimate"
-            data-index="${index}"
-          >
-            ${esc(
-              t("edit")
-            )}
-          </button>
+            <button
+              type="button"
+              class="danger-btn"
+              data-delete-estimate="${index}"
+            >
+              ${
+                EF.lang === "hi"
+                  ? "हटाएं"
+                  : "Delete"
+              }
+            </button>
 
-          <button
-            type="button"
-            class="delete-estimate"
-            data-index="${index}"
-          >
-            ${esc(
-              t("delete")
-            )}
-          </button>
+          </div>
 
-        </div>
-      `;
+        `;
 
-      list.appendChild(
-        card
-      );
-    }
-  );
 
-  list
-    .querySelectorAll(
-      ".edit-estimate"
+        list.appendChild(card);
+
+      }
+    );
+
+
+    qsa(
+      "[data-edit-estimate]"
     )
-    .forEach(
-      (button) => {
+      .forEach(
+        btn => {
 
-        button.addEventListener(
-          "click",
-          () =>
-            editEstimateItem(
-              Number(
-                button.dataset.index
+          btn.addEventListener(
+            "click",
+            () =>
+              editEstimate(
+                Number(
+                  btn.dataset.editEstimate
+                )
               )
-            )
-        );
-      }
-    );
-
-  list
-    .querySelectorAll(
-      ".delete-estimate"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () =>
-            deleteEstimateItem(
-              Number(
-                button.dataset.index
-              )
-            )
-        );
-      }
-    );
-}
-
-
-/* =========================================================
-   EDIT ESTIMATE ITEM
-   ========================================================= */
-
-function editEstimateItem(
-  index
-) {
-
-  const item =
-    EF.estimate[index];
-
-  if (!item) {
-    return;
-  }
-
-  const entry =
-    findMaterialEntry(
-      item.stage,
-      item.section,
-      item.material
-    );
-
-  if (!entry) {
-    return;
-  }
-
-  EF.currentStage =
-    entry.stage;
-
-  EF.currentSection =
-    entry.section;
-
-  EF.currentSectionItems =
-    entry.section
-      ? getSectionMaterials(
-          entry.sectionData
-        )
-      : getDirectMaterials(
-          entry.stage
-        );
-
-  EF.currentMaterial =
-    entry.material;
-
-  EF.currentMaterialIndex =
-    entry.materialIndex;
-
-  /*
-    IMPORTANT:
-    Do NOT use Object.values(item.fields)
-    because field order can change.
-
-    Match values by FIELD NAME.
-  */
-
-  EF.currentDraft = {
-
-    fields:
-      {
-        ...(item.fields || {})
-      },
-
-    quantity:
-      item.quantity || "",
-
-    unit:
-      item.unit || "",
-
-    brand:
-      item.brand || "",
-
-    price:
-      item.price || "",
-
-    editingIndex:
-      index
-  };
-
-  EF.route =
-    "editor";
-
-  saveRoute();
-
-  history.pushState(
-    {
-      route: "editor",
-
-      stage:
-        item.stage,
-
-      section:
-        item.section,
-
-      materialIndex:
-        entry.materialIndex,
-
-      editingIndex:
-        index
-    },
-    "",
-    location.href
-  );
-
-  renderEditor();
-
-  scrollTop();
-}
-
-
-/* =========================================================
-   UPDATE ESTIMATE ITEM
-   ========================================================= */
-
-function updateCurrentEstimateItem() {
-
-  const editingIndex =
-    EF.currentDraft
-      ?.editingIndex;
-
-  if (
-    editingIndex === undefined ||
-    editingIndex === null
-  ) {
-    return false;
-  }
-
-  const data =
-    readEditor();
-
-  if (
-    !validateQuantity(
-      data.quantity
-    )
-  ) {
-    return false;
-  }
-
-  const old =
-    EF.estimate[
-      Number(editingIndex)
-    ];
-
-  if (!old) {
-    return false;
-  }
-
-  EF.estimate[
-    Number(editingIndex)
-  ] = {
-
-    ...old,
-
-    fields:
-      {
-        ...data.fields
-      },
-
-    quantity:
-      data.quantity,
-
-    unit:
-      data.unit,
-
-    brand:
-      data.brand,
-
-    price:
-      data.price,
-
-    updatedAt:
-      Date.now()
-  };
-
-  saveEstimate();
-
-  clearDraft();
-
-  showToast(
-    t("updated")
-  );
-
-  navigate(
-    "estimate"
-  );
-
-  return true;
-}
-
-
-/* =========================================================
-   DELETE ESTIMATE
-   ========================================================= */
-
-function deleteEstimateItem(
-  index
-) {
-
-  if (
-    !EF.estimate[index]
-  ) {
-    return;
-  }
-
-  EF.estimate.splice(
-    index,
-    1
-  );
-
-  saveEstimate();
-
-  showToast(
-    t("deleted")
-  );
-
-  renderEstimate();
-}
-
-
-/* =========================================================
-   SEARCH
-   ========================================================= */
-
-function applySearch(
-  value
-) {
-
-  EF.searchText =
-    String(value || "")
-      .trim();
-
-  if (
-    EF.route === "materials" ||
-    EF.route === "section"
-  ) {
-
-    const grid =
-      EF.ids.materialGrid;
-
-    if (grid) {
-
-      const filtered =
-        getFilteredMaterials(
-          getCurrentMaterialList()
-        );
-
-      renderMaterialCards(
-        filtered,
-        grid
-      );
-    }
-  }
-}
-
-
-function clearSearch() {
-
-  EF.searchText =
-    "";
-
-  if (
-    EF.ids.searchInput
-  ) {
-
-    EF.ids.searchInput.value =
-      "";
-  }
-
-  applySearch("");
-}
-
-
-/* =========================================================
-   FILTER PANEL
-   ========================================================= */
-
-function openFilter() {
-
-  EF.filterOpen =
-    true;
-
-  const panel =
-    EF.ids.filterPanel;
-
-  if (!panel) {
-    return;
-  }
-
-  panel.classList.add(
-    "open",
-    "active"
-  );
-
-  panel.hidden =
-    false;
-}
-
-
-function closeFilter() {
-
-  EF.filterOpen =
-    false;
-
-  const panel =
-    EF.ids.filterPanel;
-
-  if (!panel) {
-    return;
-  }
-
-  panel.classList.remove(
-    "open",
-    "active"
-  );
-
-  panel.hidden =
-    true;
-}
-
-
-function clearFilters() {
-
-  EF.selectedFilters = {
-
-    stage: "",
-
-    section: "",
-
-    type: "",
-
-    size: "",
-
-    brand: ""
-  };
-
-  document
-    .querySelectorAll(
-      "[data-filter], #stageFilter, #sectionFilter, #typeFilter, #sizeFilter, #brandFilter"
-    )
-    .forEach(
-      (control) => {
-
-        control.value =
-          "";
-      }
-    );
-
-  closeFilter();
-
-  applySearch(
-    EF.searchText
-  );
-
-  showToast(
-    t("clear")
-  );
-}
-
-
-function applyFilterControl(
-  control
-) {
-
-  if (!control) {
-    return;
-  }
-
-  let key =
-    control.dataset.filter ||
-    control.id ||
-    "";
-
-  key =
-    normalizeFilterKey(
-      key
-    );
-
-  if (
-    !Object.prototype.hasOwnProperty.call(
-      EF.selectedFilters,
-      key
-    )
-  ) {
-    return;
-  }
-
-  EF.selectedFilters[key] =
-    control.value || "";
-
-  applySearch(
-    EF.searchText
-  );
-
-  showToast(
-    t("filterApplied")
-  );
-}
-
-
-function normalizeFilterKey(
-  key
-) {
-
-  const value =
-    normalize(key)
-      .replace(/filter$/, "");
-
-  const map = {
-
-    stage: "stage",
-
-    section: "section",
-
-    type: "type",
-
-    size: "size",
-
-    brand: "brand"
-  };
-
-  return (
-    map[value] ||
-    value
-  );
-}
-
-
-/* =========================================================
-   FILTER OPTION POPULATION
-   ========================================================= */
-
-function populateFilterOptions() {
-
-  const all =
-    getAllMaterialEntries();
-
-  const stages =
-    unique(
-      all.map(
-        (entry) =>
-          entry.stageName
-      )
-    );
-
-  const sections =
-    unique(
-      all
-        .map(
-          (entry) =>
-            entry.section
-        )
-        .filter(Boolean)
-    );
-
-  const types =
-    unique(
-      all.flatMap(
-        (entry) =>
-          getFieldValueSet(
-            entry.material,
-            ["Type"]
-          )
-      )
-    );
-
-  const sizes =
-    unique(
-      all.flatMap(
-        (entry) =>
-          getFieldValueSet(
-            entry.material,
-            ["Size"]
-          )
-      )
-    );
-
-  const brands =
-    unique(
-      all.flatMap(
-        (entry) =>
-          getFieldValueSet(
-            entry.material,
-            ["Brand"]
-          )
-      )
-    );
-
-  setFilterOptions(
-    ["#stageFilter"],
-    stages
-  );
-
-  setFilterOptions(
-    ["#sectionFilter"],
-    sections
-  );
-
-  setFilterOptions(
-    ["#typeFilter"],
-    types
-  );
-
-  setFilterOptions(
-    ["#sizeFilter"],
-    sizes
-  );
-
-  setFilterOptions(
-    ["#brandFilter"],
-    brands
-  );
-}
-
-
-function setFilterOptions(
-  selectors,
-  values
-) {
-
-  selectors.forEach(
-    (selector) => {
-
-      const select =
-        document.querySelector(
-          selector
-        );
-
-      if (!select) {
-        return;
-      }
-
-      const current =
-        select.value;
-
-      const first =
-        select.querySelector(
-          "option:first-child"
-        );
-
-      select.innerHTML = "";
-
-      if (first) {
-
-        select.appendChild(
-          first
-        );
-
-      } else {
-
-        const option =
-          document.createElement(
-            "option"
           );
 
-        option.value =
-          "";
+        }
+      );
 
-        option.textContent =
-          t("all");
 
-        select.appendChild(
-          option
-        );
-      }
+    qsa(
+      "[data-delete-estimate]"
+    )
+      .forEach(
+        btn => {
 
-      values.forEach(
-        (value) => {
+          btn.addEventListener(
+            "click",
+            () =>
+              deleteEstimate(
+                Number(
+                  btn.dataset.deleteEstimate
+                )
+              )
+          );
+
+        }
+      );
+
+  }
+
+
+  function editEstimate(index) {
+
+    const item =
+      EF.estimateItems[index];
+
+    if (!item) return;
+
+
+    EF.stageIndex =
+      item.stageIndex;
+
+    EF.sectionIndex =
+      item.sectionIndex;
+
+    EF.materialIndex =
+      item.materialIndex;
+
+    EF.editIndex =
+      index;
+
+
+    EF.draft = {
+
+      stageIndex:
+        EF.stageIndex,
+
+      sectionIndex:
+        EF.sectionIndex,
+
+      materialIndex:
+        EF.materialIndex,
+
+      fields:
+        item.fields || {},
+
+      quantity:
+        item.quantity || "",
+
+      unit:
+        item.unit || "",
+
+      brand:
+        item.brand || "",
+
+      price:
+        item.price || ""
+
+    };
+
+
+    saveDraft();
+
+    setRoute("editor");
+
+    showPage("editorPage");
+
+
+    renderEditor(
+      normalizeMaterial(
+        getMaterial(
+          EF.stageIndex,
+          EF.sectionIndex,
+          EF.materialIndex
+        )
+      ),
+      EF.stageIndex,
+      EF.sectionIndex
+    );
+
+
+    restoreEditorDraft();
+
+  }
+
+
+  function deleteEstimate(index) {
+
+    if (
+      !EF.estimateItems[index]
+    ) return;
+
+
+    const message =
+      EF.lang === "hi"
+        ? "क्या यह आइटम हटाना है?"
+        : "Delete this item?";
+
+
+    if (
+      !window.confirm(message)
+    ) return;
+
+
+    EF.estimateItems.splice(
+      index,
+      1
+    );
+
+
+    saveItems();
+
+    renderEstimate();
+
+
+    showToast(
+      EF.lang === "hi"
+        ? "आइटम हटा दिया गया"
+        : "Item deleted"
+    );
+
+  }
+
+
+  /* =======================================================
+     SEARCH
+     ======================================================= */
+
+  function applySearch(value) {
+
+    EF.searchText =
+      String(value || "");
+
+    if (
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null
+    ) {
+
+      renderMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     FILTER
+     ======================================================= */
+
+  function populateFilters() {
+
+    const stageSelect =
+      $("stageFilter");
+
+    const typeSelect =
+      $("typeFilter");
+
+    const sizeSelect =
+      $("sizeFilter");
+
+    const brandSelect =
+      $("brandFilter");
+
+
+    if (stageSelect) {
+
+      stageSelect.innerHTML = `
+        <option value="">
+          ${
+            EF.lang === "hi"
+              ? "सभी"
+              : "All"
+          }
+        </option>
+      `;
+
+
+      getStages().forEach(
+        (stage, index) => {
 
           const option =
-            document.createElement(
-              "option"
-            );
+            document.createElement("option");
+
+          option.value =
+            String(index);
+
+          option.textContent =
+            textFor(stage[0]);
+
+          stageSelect.appendChild(
+            option
+          );
+
+        }
+      );
+
+    }
+
+
+    const all =
+      flattenMaterials();
+
+
+    const types =
+      new Set();
+
+    const sizes =
+      new Set();
+
+    const brands =
+      new Set();
+
+
+    all.forEach(
+      material => {
+
+        material.fields
+          .forEach(
+            field => {
+
+              if (
+                !Array.isArray(field)
+              ) return;
+
+              const name =
+                String(
+                  field[0] || ""
+                )
+                  .toLowerCase();
+
+              const options =
+                Array.isArray(field[1])
+                  ? field[1]
+                  : [];
+
+
+              if (
+                name.includes("type")
+              ) {
+
+                options.forEach(
+                  value =>
+                    types.add(value)
+                );
+
+              }
+
+
+              if (
+                name.includes("size") ||
+                name.includes("diameter") ||
+                name.includes("module") ||
+                name.includes("amp") ||
+                name.includes("watt")
+              ) {
+
+                options.forEach(
+                  value =>
+                    sizes.add(value)
+                );
+
+              }
+
+            }
+          );
+
+
+        material.brands.forEach(
+          brand =>
+            brands.add(brand)
+        );
+
+      }
+    );
+
+
+    fillSelect(
+      typeSelect,
+      Array.from(types)
+    );
+
+    fillSelect(
+      sizeSelect,
+      Array.from(sizes)
+    );
+
+    fillSelect(
+      brandSelect,
+      Array.from(brands)
+    );
+
+  }
+
+
+  function fillSelect(
+    select,
+    values
+  ) {
+
+    if (!select) return;
+
+
+    const oldValue =
+      select.value;
+
+
+    select.innerHTML = `
+      <option value="">
+        ${
+          EF.lang === "hi"
+            ? "सभी"
+            : "All"
+        }
+      </option>
+    `;
+
+
+    values
+      .sort(
+        (a, b) =>
+          String(a)
+            .localeCompare(
+              String(b),
+              undefined,
+              {
+                numeric: true
+              }
+            )
+      )
+      .forEach(
+        value => {
+
+          const option =
+            document.createElement("option");
 
           option.value =
             value;
 
           option.textContent =
-            t(value);
+            textFor(value);
 
           select.appendChild(
             option
           );
+
         }
       );
 
-      select.value =
-        current || "";
-    }
-  );
-}
-
-
-function unique(
-  array
-) {
-
-  return Array.from(
-    new Set(
-      array
-        .filter(
-          (value) =>
-            value !== null &&
-            value !== undefined &&
-            String(value).trim() !== ""
-        )
-        .map(
-          (value) =>
-            String(value)
-        )
-    )
-  );
-}
-
-
-/* =========================================================
-   CALCULATOR
-   ========================================================= */
-
-function renderCalculator() {
-
-  hideAllPages();
-
-  showPage("calculator");
-
-  updateTopBar();
-}
-
-
-/* =========================================================
-   SETTINGS
-   ========================================================= */
-
-function renderSettings() {
-
-  hideAllPages();
-
-  showPage("settings");
-
-  updateTopBar();
-
-  renderLanguageButtons();
-
-  updateThemeControls();
-}
-
-
-/* =========================================================
-   CURRENT PAGE
-   ========================================================= */
-
-function renderCurrentPage() {
-
-  switch (
-    EF.route
-  ) {
-
-    case "home":
-
-      renderHome();
-
-      break;
-
-
-    case "stage":
-
-      if (
-        EF.currentStage
-      ) {
-
-        renderStage();
-
-      } else {
-
-        EF.route =
-          "home";
-
-        renderHome();
-      }
-
-      break;
-
-
-    case "section":
-
-      if (
-        EF.currentStage &&
-        EF.currentSection
-      ) {
-
-        renderSection();
-
-      } else {
-
-        EF.route =
-          "home";
-
-        renderHome();
-      }
-
-      break;
-
-
-    case "materials":
-
-      if (
-        EF.currentStage
-      ) {
-
-        renderMaterials();
-
-      } else {
-
-        EF.route =
-          "home";
-
-        renderHome();
-      }
-
-      break;
-
-
-    case "editor":
-
-      if (
-        EF.currentMaterial
-      ) {
-
-        renderEditor();
-
-      } else {
-
-        EF.route =
-          "home";
-
-        renderHome();
-      }
-
-      break;
-
-
-    case "estimate":
-
-      renderEstimate();
-
-      break;
-
-
-    case "calculator":
-
-      renderCalculator();
-
-      break;
-
-
-    case "settings":
-
-      renderSettings();
-
-      break;
-
-
-    default:
-
-      EF.route =
-        "home";
-
-      renderHome();
-  }
-
-  updateEstimateCount();
-
-  updateTopBar();
-}
-
-
-/* =========================================================
-   RESTORE ROUTE
-   ========================================================= */
-
-function restoreRoute() {
-
-  const data =
-    loadRouteData();
-
-  if (!data) {
-
-    EF.route =
-      "home";
-
-    renderHome();
-
-    return;
-  }
-
-  if (
-    data.stage
-  ) {
-
-    const stage =
-      EF.materials.find(
-        (item) =>
-          getStageName(item) ===
-          data.stage
-      );
-
-    if (stage) {
-
-      EF.currentStage =
-        stage;
-    }
-  }
-
-  EF.currentSection =
-    data.section || "";
-
-  if (
-    EF.currentStage &&
-    EF.currentSection
-  ) {
-
-    const section =
-      getSections(
-        EF.currentStage
-      ).find(
-        (item) =>
-          getSectionName(item) ===
-          EF.currentSection
-      );
-
-    if (section) {
-
-      EF.currentSectionItems =
-        getSectionMaterials(
-          section
-        );
-    }
-  }
-
-  EF.currentMaterialIndex =
-    Number(
-      data.materialIndex || 0
-    );
-
-  if (
-    data.material &&
-    EF.currentStage
-  ) {
-
-    const entry =
-      findMaterialEntry(
-        data.stage,
-        data.section || "",
-        data.material
-      );
-
-    if (entry) {
-
-      EF.currentMaterial =
-        entry.material;
-
-      EF.currentMaterialIndex =
-        entry.materialIndex;
-
-      EF.currentStage =
-        entry.stage;
-
-      EF.currentSection =
-        entry.section;
-
-      EF.currentSectionItems =
-        entry.section
-          ? getSectionMaterials(
-              entry.sectionData
-            )
-          : getDirectMaterials(
-              entry.stage
-            );
-    }
-  }
-
-  EF.route =
-    data.route || "home";
-
-  /*
-    Restore draft only for editor.
-  */
-
-  if (
-    EF.route === "editor"
-  ) {
-
-    const draft =
-      loadDraft();
-
-    if (draft) {
-
-      EF.currentDraft =
-        draft.draft || {};
-
-      if (
-        draft.unitCarry
-      ) {
-
-        EF.unitCarry =
-          draft.unitCarry;
-      }
-    }
-  }
-
-  renderCurrentPage();
-}
-
-
-/* =========================================================
-   HISTORY / BACK
-   ========================================================= */
-
-function initializeHistory() {
-
-  history.replaceState(
-    {
-      route:
-        EF.route || "home",
-
-      app:
-        "sandeep-electrofix"
-    },
-    "",
-    location.href
-  );
-}
-
-
-function handleBrowserBack(
-  event
-) {
-
-  /*
-    Drawer has highest priority.
-  */
-
-  if (
-    EF.drawerOpen
-  ) {
-
-    closeDrawer(
-      true
-    );
-
-    return;
-  }
-
-  /*
-    Filter closes before route navigation.
-  */
-
-  if (
-    EF.filterOpen
-  ) {
-
-    closeFilter();
-
-    history.pushState(
-      history.state,
-      "",
-      location.href
-    );
-
-    return;
-  }
-
-  /*
-    View menu closes before route navigation.
-  */
-
-  const viewOpen =
-    document.querySelector(
-      "[data-view-options]:not([hidden])"
-    );
-
-  if (viewOpen) {
-
-    closeAllViewOptions();
-
-    history.pushState(
-      history.state,
-      "",
-      location.href
-    );
-
-    return;
-  }
-
-  /*
-    Editor -> Materials
-  */
-
-  if (
-    EF.route === "editor"
-  ) {
-
-    captureCurrentDraft();
-
-    EF.route =
-      "materials";
-
-    EF.currentMaterial =
-      null;
-
-    EF.currentDraft =
-      {};
-
-    saveRoute();
-
-    renderMaterials();
-
-    scrollTop();
-
-    return;
-  }
-
-  /*
-    Materials -> Section / Stage
-  */
-
-  if (
-    EF.route === "materials"
-  ) {
-
-    EF.route =
-      EF.currentSection
-        ? "section"
-        : "stage";
-
-    EF.currentMaterial =
-      null;
-
-    saveRoute();
 
     if (
-      EF.route === "section"
+      values.includes(oldValue)
     ) {
 
-      renderSection();
+      select.value =
+        oldValue;
+
+    }
+
+  }
+
+
+  function applyFilters() {
+
+    EF.filters.stage =
+      $("stageFilter")?.value || "";
+
+    EF.filters.type =
+      $("typeFilter")?.value || "";
+
+    EF.filters.size =
+      $("sizeFilter")?.value || "";
+
+    EF.filters.brand =
+      $("brandFilter")?.value || "";
+
+
+    /*
+     Stage filter changes the visible stage.
+    */
+
+    if (
+      EF.filters.stage !== ""
+    ) {
+
+      const stageIndex =
+        Number(
+          EF.filters.stage
+        );
+
+      if (
+        Number.isInteger(stageIndex)
+      ) {
+
+        openStage(
+          stageIndex,
+          false
+        );
+
+      }
+
+    } else if (
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null
+    ) {
+
+      renderMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
+      );
+
+    }
+
+  }
+
+
+  function clearFilters() {
+
+    EF.filters = {
+
+      stage: "",
+
+      type: "",
+
+      size: "",
+
+      brand: ""
+
+    };
+
+
+    [
+      "stageFilter",
+      "typeFilter",
+      "sizeFilter",
+      "brandFilter"
+    ]
+      .forEach(
+        id => {
+
+          const el = $(id);
+
+          if (el) {
+
+            el.value = "";
+
+          }
+
+        }
+      );
+
+
+    EF.searchText = "";
+
+
+    if ($("searchInput")) {
+
+      $("searchInput").value = "";
+
+    }
+
+
+    if (
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null
+    ) {
+
+      renderMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
+      );
 
     } else {
 
-      renderStage();
+      renderStages();
+
     }
 
-    scrollTop();
-
-    return;
   }
 
-  /*
-    Section -> Stage
-  */
 
-  if (
-    EF.route === "section"
-  ) {
+  /* =======================================================
+     VIEW SELECTOR
+     ======================================================= */
 
-    EF.currentSection =
-      null;
+  function updateViewButton() {
 
-    EF.currentSectionItems =
-      [];
+    const trigger =
+      $("viewTrigger");
 
-    EF.route =
-      "stage";
+    if (!trigger) return;
 
-    saveRoute();
 
-    renderStage();
+    const icons = {
 
-    scrollTop();
+      grid: "▦",
 
-    return;
+      list: "☷",
+
+      compact: "▤",
+
+      large: "▦",
+
+      mini: "▪",
+
+      "2column": "▥",
+
+      horizontal: "▬",
+
+      icon: "◉",
+
+      timeline: "⋮",
+
+      dense: "≡"
+
+    };
+
+
+    trigger.textContent =
+      icons[EF.view] ||
+      "▦";
+
+
+    qsa(
+      "#viewOptions [data-view]"
+    )
+      .forEach(
+        btn => {
+
+          btn.classList.toggle(
+            "active",
+            btn.dataset.view === EF.view
+          );
+
+        }
+      );
+
   }
 
-  /*
-    Stage -> Home
-  */
 
-  if (
-    EF.route === "stage"
-  ) {
+  function toggleViewOptions() {
 
-    EF.currentStage =
-      null;
+    const options =
+      $("viewOptions");
 
-    EF.currentSection =
-      null;
-
-    EF.currentSectionItems =
-      [];
-
-    EF.currentMaterial =
-      null;
-
-    EF.currentMaterialIndex =
-      0;
-
-    EF.route =
-      "home";
-
-    saveRoute();
-
-    renderHome();
-
-    scrollTop();
-
-    return;
-  }
-
-  /*
-    Estimate / Calculator / Settings -> Home
-  */
-
-  if (
-    EF.route === "estimate" ||
-    EF.route === "calculator" ||
-    EF.route === "settings"
-  ) {
-
-    EF.route =
-      "home";
-
-    saveRoute();
-
-    renderHome();
-
-    scrollTop();
-  }
-}
+    if (!options) return;
 
 
-/* =========================================================
-   NAVIGATION TO HOME / ESTIMATE ETC.
-   ========================================================= */
-
-function goHome() {
-
-  EF.currentStage =
-    null;
-
-  EF.currentSection =
-    null;
-
-  EF.currentSectionItems =
-    [];
-
-  EF.currentMaterial =
-    null;
-
-  EF.currentMaterialIndex =
-    0;
-
-  EF.currentDraft =
-    {};
-
-  clearDraft();
-
-  navigate(
-    "home"
-  );
-
-  scrollTop();
-}
+    EF.viewOpen =
+      !EF.viewOpen;
 
 
-function goEstimate() {
-
-  captureCurrentDraft();
-
-  navigate(
-    "estimate"
-  );
-
-  scrollTop();
-}
+    options.hidden =
+      !EF.viewOpen;
 
 
-function goCalculator() {
-
-  captureCurrentDraft();
-
-  navigate(
-    "calculator"
-  );
-
-  scrollTop();
-}
-
-
-function goSettings() {
-
-  captureCurrentDraft();
-
-  navigate(
-    "settings"
-  );
-
-  scrollTop();
-}
-
-
-/* =========================================================
-   RESET APP
-   ========================================================= */
-
-function resetApp() {
-
-  const confirmed =
-    window.confirm(
-      t("resetConfirm")
+    $("viewTrigger")?.setAttribute(
+      "aria-expanded",
+      String(EF.viewOpen)
     );
 
-  if (!confirmed) {
-    return;
   }
 
-  EF.estimate =
-    [];
 
-  EF.currentStage =
-    null;
+  function setView(view) {
 
-  EF.currentSection =
-    null;
+    if (!view) return;
 
-  EF.currentSectionItems =
-    [];
 
-  EF.currentMaterial =
-    null;
+    EF.view =
+      view;
 
-  EF.currentMaterialIndex =
-    0;
 
-  EF.currentDraft =
-    {};
+    localStorage.setItem(
+      STORAGE.view,
+      view
+    );
 
-  EF.searchText =
-    "";
 
-  EF.selectedFilters = {
+    EF.viewOpen =
+      false;
 
-    stage: "",
 
-    section: "",
+    if ($("viewOptions")) {
 
-    type: "",
+      $("viewOptions").hidden =
+        true;
 
-    size: "",
+    }
 
-    brand: ""
-  };
 
-  EF.unitCarry =
-    "";
+    updateViewButton();
 
-  storageRemove(
-    STORAGE.estimate
-  );
 
-  storageRemove(
-    STORAGE.route
-  );
+    if (
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null
+    ) {
 
-  storageRemove(
-    STORAGE.draft
-  );
+      renderMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
+      );
 
-  storageRemove(
-    STORAGE.lastUnit
-  );
+    }
 
-  if (
-    EF.ids.searchInput
-  ) {
 
-    EF.ids.searchInput.value =
-      "";
+    const currentView =
+      $("currentViewText");
+
+    if (currentView) {
+
+      currentView.textContent =
+        view;
+
+    }
+
   }
 
-  clearFilters();
 
-  EF.route =
-    "home";
+  /* =======================================================
+     DRAWER
+     ======================================================= */
 
-  history.replaceState(
-    {
-      route: "home",
+  function openDrawer() {
 
-      app:
-        "sandeep-electrofix"
-    },
-    "",
-    location.href
-  );
+    const drawer =
+      $("drawer");
 
-  saveRoute();
+    const overlay =
+      $("drawerOverlay");
 
-  updateEstimateCount();
-
-  renderHome();
-
-  showToast(
-    t("reset")
-  );
-
-  scrollTop();
-}
+    if (!drawer) return;
 
 
-/* =========================================================
-   DRAWER NAV ITEM
-   ========================================================= */
+    EF.drawerOpen =
+      true;
 
-function handleNavigationAction(
-  action
-) {
 
-  switch (
-    action
-  ) {
+    drawer.classList.add(
+      "open"
+    );
 
-    case "home":
+
+    overlay?.classList.add(
+      "open"
+    );
+
+
+    drawer.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+
+    $("menuBtn")?.setAttribute(
+      "aria-expanded",
+      "true"
+    );
+
+  }
+
+
+  function closeDrawer() {
+
+    const drawer =
+      $("drawer");
+
+    const overlay =
+      $("drawerOverlay");
+
+
+    EF.drawerOpen =
+      false;
+
+
+    drawer?.classList.remove(
+      "open"
+    );
+
+
+    overlay?.classList.remove(
+      "open"
+    );
+
+
+    drawer?.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+
+    $("menuBtn")?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
+
+  }
+
+
+  function toggleDrawer() {
+
+    if (EF.drawerOpen) {
 
       closeDrawer();
+
+    } else {
+
+      openDrawer();
+
+    }
+
+  }
+
+
+  /* =======================================================
+     RESET
+     ======================================================= */
+
+  function openResetModal() {
+
+    const modal =
+      $("resetModal");
+
+    if (!modal) return;
+
+
+    modal.hidden =
+      false;
+
+    modal.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+  }
+
+
+  function closeResetModal() {
+
+    const modal =
+      $("resetModal");
+
+    if (!modal) return;
+
+
+    modal.hidden =
+      true;
+
+    modal.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+  }
+
+
+  function resetApp() {
+
+    localStorage.removeItem(
+      STORAGE.lang
+    );
+
+    localStorage.removeItem(
+      STORAGE.theme
+    );
+
+    localStorage.removeItem(
+      STORAGE.items
+    );
+
+    localStorage.removeItem(
+      STORAGE.view
+    );
+
+    localStorage.removeItem(
+      STORAGE.route
+    );
+
+    localStorage.removeItem(
+      STORAGE.draft
+    );
+
+    localStorage.removeItem(
+      STORAGE.lastUnit
+    );
+
+
+    EF.lang = "hi";
+
+    EF.theme = "dark";
+
+    EF.view = "grid";
+
+    EF.route = "home";
+
+    EF.stageIndex = null;
+
+    EF.sectionIndex = null;
+
+    EF.materialIndex = null;
+
+    EF.editIndex = null;
+
+    EF.searchText = "";
+
+    EF.filters = {
+      stage: "",
+      type: "",
+      size: "",
+      brand: ""
+    };
+
+    EF.estimateItems = [];
+
+    EF.draft = {};
+
+
+    closeResetModal();
+
+    closeDrawer();
+
+    applyTheme();
+
+    applyLanguage();
+
+    populateFilters();
+
+    goHome(false);
+
+
+    showToast(
+      EF.lang === "hi"
+        ? "ऐप रीसेट हो गया"
+        : "App reset complete"
+    );
+
+  }
+
+
+  /* =======================================================
+     TOAST
+     ======================================================= */
+
+  let toastTimer = null;
+
+
+  function showToast(message) {
+
+    const toast =
+      $("toast");
+
+    if (!toast) return;
+
+
+    toast.textContent =
+      message;
+
+
+    toast.classList.add(
+      "show"
+    );
+
+
+    clearTimeout(
+      toastTimer
+    );
+
+
+    toastTimer =
+      setTimeout(
+        () => {
+
+          toast.classList.remove(
+            "show"
+          );
+
+        },
+        2200
+      );
+
+  }
+
+
+  /* =======================================================
+     CALCULATOR
+     ======================================================= */
+
+  function renderCalculator() {
+
+    const container =
+      $("calculatorContent");
+
+    if (!container) return;
+
+
+    if (EF.calculator === "ohm") {
+
+      container.innerHTML = `
+
+        <div class="calculator-card">
+
+          <h3>
+            ${
+              EF.lang === "hi"
+                ? "पावर कैलकुलेटर"
+                : "Power Calculator"
+            }
+          </h3>
+
+          <div class="form-group">
+
+            <label>
+              ${
+                EF.lang === "hi"
+                  ? "वोल्टेज (V)"
+                  : "Voltage (V)"
+              }
+            </label>
+
+            <input
+              id="calcVoltage"
+              type="number"
+              step="any"
+              inputmode="decimal"
+            >
+
+          </div>
+
+          <div class="form-group">
+
+            <label>
+              ${
+                EF.lang === "hi"
+                  ? "करंट (A)"
+                  : "Current (A)"
+              }
+            </label>
+
+            <input
+              id="calcCurrent"
+              type="number"
+              step="any"
+              inputmode="decimal"
+            >
+
+          </div>
+
+          <button
+            type="button"
+            class="primary-btn"
+            id="calculatePower"
+          >
+            ${
+              EF.lang === "hi"
+                ? "गणना करें"
+                : "Calculate"
+            }
+          </button>
+
+          <div
+            id="powerResult"
+            class="calculator-result"
+          ></div>
+
+        </div>
+
+      `;
+
+
+      $("calculatePower")
+        ?.addEventListener(
+          "click",
+          () => {
+
+            const v =
+              Number(
+                $("calcVoltage")?.value
+              );
+
+            const i =
+              Number(
+                $("calcCurrent")?.value
+              );
+
+
+            if (
+              !Number.isFinite(v) ||
+              !Number.isFinite(i)
+            ) {
+
+              return;
+
+            }
+
+
+            const p =
+              v * i;
+
+
+            $("powerResult").textContent =
+              `P = V × I = ${p.toFixed(2)} W`;
+
+          }
+        );
+
+
+      return;
+
+    }
+
+
+    if (EF.calculator === "inverter") {
+
+      container.innerHTML = `
+
+        <div class="calculator-card">
+
+          <h3>
+            ${
+              EF.lang === "hi"
+                ? "इन्वर्टर कैलकुलेटर"
+                : "Inverter Calculator"
+            }
+          </h3>
+
+          <p>
+            ${
+              EF.lang === "hi"
+                ? "12V / 24V DC से 230V AC"
+                : "12V / 24V DC to 230V AC"
+            }
+          </p>
+
+          <div class="form-group">
+
+            <label>
+              ${
+                EF.lang === "hi"
+                  ? "बैटरी वोल्टेज"
+                  : "Battery Voltage"
+              }
+            </label>
+
+            <select id="batteryVoltage">
+
+              <option value="12">
+                12V
+              </option>
+
+              <option value="24">
+                24V
+              </option>
+
+            </select>
+
+          </div>
+
+          <div class="form-group">
+
+            <label>
+              ${
+                EF.lang === "hi"
+                  ? "लोड (W)"
+                  : "Load (W)"
+              }
+            </label>
+
+            <input
+              id="inverterLoad"
+              type="number"
+              step="any"
+            >
+
+          </div>
+
+          <button
+            type="button"
+            class="primary-btn"
+            id="calculateInverter"
+          >
+            ${
+              EF.lang === "hi"
+                ? "गणना करें"
+                : "Calculate"
+            }
+          </button>
+
+          <div
+            id="inverterResult"
+            class="calculator-result"
+          ></div>
+
+        </div>
+
+      `;
+
+
+      $("calculateInverter")
+        ?.addEventListener(
+          "click",
+          () => {
+
+            const voltage =
+              Number(
+                $("batteryVoltage")?.value
+              );
+
+            const load =
+              Number(
+                $("inverterLoad")?.value
+              );
+
+
+            if (
+              !voltage ||
+              !load
+            ) return;
+
+
+            const current =
+              load / voltage;
+
+
+            $("inverterResult")
+              .textContent =
+              `${
+                EF.lang === "hi"
+                  ? "लगभग DC करंट"
+                  : "Approx. DC Current"
+              }: ${current.toFixed(2)} A`;
+
+          }
+        );
+
+
+      return;
+
+    }
+
+
+    container.innerHTML = `
+
+      <div class="calculator-card">
+
+        <h3>
+          ${
+            EF.lang === "hi"
+              ? "केबल कैलकुलेटर"
+              : "Cable Calculator"
+          }
+        </h3>
+
+        <p>
+          ${
+            EF.lang === "hi"
+              ? "केबल साइज़ चुनने के लिए लोड, दूरी और वायरिंग तरीका देखें।"
+              : "Consider load, distance and wiring method when selecting cable size."
+          }
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* =======================================================
+     SETTINGS
+     ======================================================= */
+
+  function renderSettings() {
+
+    updateThemeText();
+
+    const currentView =
+      $("currentViewText");
+
+    if (currentView) {
+
+      currentView.textContent =
+        EF.view;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     CURRENT PAGE
+     ======================================================= */
+
+  function renderCurrentPage() {
+
+    switch (EF.route) {
+
+      case "home":
+
+        showPage("home");
+
+        renderStages();
+
+        break;
+
+
+      case "material":
+
+        showPage("materialPage");
+
+
+        if (
+          EF.stageIndex !== null &&
+          EF.sectionIndex !== null
+        ) {
+
+          renderMaterials(
+            EF.stageIndex,
+            EF.sectionIndex
+          );
+
+        } else if (
+          EF.stageIndex !== null
+        ) {
+
+          renderSections(
+            EF.stageIndex
+          );
+
+        } else {
+
+          goHome(false);
+
+        }
+
+        break;
+
+
+      case "editor":
+
+        showPage("editorPage");
+
+
+        if (
+          EF.stageIndex !== null &&
+          EF.sectionIndex !== null &&
+          EF.materialIndex !== null
+        ) {
+
+          const material =
+            getMaterial(
+              EF.stageIndex,
+              EF.sectionIndex,
+              EF.materialIndex
+            );
+
+
+          if (material) {
+
+            renderEditor(
+              normalizeMaterial(material),
+              EF.stageIndex,
+              EF.sectionIndex
+            );
+
+          }
+
+        }
+
+        break;
+
+
+      case "estimate":
+
+        showPage("estimate");
+
+        renderEstimate();
+
+        break;
+
+
+      case "calculator":
+
+        showPage("calculator");
+
+        renderCalculator();
+
+        break;
+
+
+      case "settings":
+
+        showPage("settings");
+
+        renderSettings();
+
+        break;
+
+
+      default:
+
+        goHome(false);
+
+    }
+
+  }
+
+
+  /* =======================================================
+     MATERIAL BACK
+     ======================================================= */
+
+  function materialBack() {
+
+    if (
+      EF.sectionIndex !== null
+    ) {
+
+      EF.sectionIndex = null;
+
+      EF.materialIndex = null;
+
+      saveRoute();
+
+      renderSections(
+        EF.stageIndex
+      );
+
+      showPage("materialPage");
+
+      return;
+
+    }
+
+
+    if (
+      EF.stageIndex !== null
+    ) {
 
       goHome();
 
-      break;
+      return;
+
+    }
 
 
-    case "estimate":
+    goHome();
 
-      closeDrawer();
-
-      goEstimate();
-
-      break;
-
-
-    case "calculator":
-
-      closeDrawer();
-
-      goCalculator();
-
-      break;
-
-
-    case "settings":
-
-      closeDrawer();
-
-      goSettings();
-
-      break;
-
-
-    case "reset":
-
-      closeDrawer();
-
-      resetApp();
-
-      break;
   }
-}
 
 
-/* =========================================================
-   BIND EVENTS
-   ========================================================= */
+  /* =======================================================
+     EDITOR BACK
+     ======================================================= */
 
-function bindEvents() {
+  function editorBack() {
 
-  /*
-    Hamburger
-  */
+    if (
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null
+    ) {
 
-  EF.ids.menuBtn
-    ?.addEventListener(
-      "click",
-      (event) => {
+      setRoute(
+        "material"
+      );
 
-        event.preventDefault();
-
-        if (
-          EF.drawerOpen
-        ) {
-
-          closeDrawer();
-
-        } else {
-
-          openDrawer();
-        }
-      }
-    );
+      showPage(
+        "materialPage"
+      );
 
 
-  /*
-    Drawer close
-  */
+      renderMaterials(
+        EF.stageIndex,
+        EF.sectionIndex
+      );
 
-  EF.ids.closeMenu
-    ?.addEventListener(
-      "click",
-      () =>
-        closeDrawer()
-    );
+      return;
+
+    }
 
 
-  EF.ids.drawerOverlay
-    ?.addEventListener(
-      "click",
-      () =>
-        closeDrawer()
-    );
+    goHome();
+
+  }
 
 
-  /*
-    Theme
-  */
+  /* =======================================================
+     SEARCH / FILTER EVENTS
+     ======================================================= */
 
-  EF.ids.themeBtn
-    ?.addEventListener(
-      "click",
-      () =>
-        toggleTheme()
-    );
+  function bindSearch() {
+
+    const input =
+      $("searchInput");
 
 
-  /*
-    Language buttons
-  */
-
-  EF.ids.languageButtons
-    ?.forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            setLanguage(
-              button.dataset.language
-            );
-          }
-        );
-      }
-    );
-
-
-  /*
-    Reset
-  */
-
-  EF.ids.resetBtn
-    ?.addEventListener(
-      "click",
-      () =>
-        resetApp()
-    );
-
-
-  /*
-    Drawer navigation
-  */
-
-  document
-    .querySelectorAll(
-      "[data-nav], [data-route]"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const action =
-              button.dataset.nav ||
-              button.dataset.route;
-
-            handleNavigationAction(
-              action
-            );
-          }
-        );
-      }
-    );
-
-
-  /*
-    Bottom navigation
-  */
-
-  EF.ids.bottomNav
-    ?.querySelectorAll(
-      "[data-nav], [data-route]"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const action =
-              button.dataset.nav ||
-              button.dataset.route;
-
-            handleNavigationAction(
-              action
-            );
-          }
-        );
-      }
-    );
-
-
-  /*
-    Search
-  */
-
-  EF.ids.searchInput
-    ?.addEventListener(
+    input?.addEventListener(
       "input",
-      (event) => {
+      e => {
 
         applySearch(
-          event.target.value
+          e.target.value
         );
+
       }
     );
 
 
-  EF.ids.searchClear
-    ?.addEventListener(
-      "click",
-      () =>
-        clearSearch()
-    );
+    $("searchClear")
+      ?.addEventListener(
+        "click",
+        () => {
 
+          if (input) {
 
-  /*
-    Filter button
-  */
+            input.value = "";
 
-  EF.ids.filterBtn
-    ?.addEventListener(
-      "click",
-      (event) => {
-
-        event.stopPropagation();
-
-        if (
-          EF.filterOpen
-        ) {
-
-          closeFilter();
-
-        } else {
-
-          openFilter();
-        }
-      }
-    );
-
-
-  /*
-    Filter clear
-  */
-
-  EF.ids.filterClear
-    ?.addEventListener(
-      "click",
-      () =>
-        clearFilters()
-    );
-
-
-  /*
-    Filters
-  */
-
-  document
-    .querySelectorAll(
-      "[data-filter], #stageFilter, #sectionFilter, #typeFilter, #sizeFilter, #brandFilter"
-    )
-    .forEach(
-      (control) => {
-
-        control.addEventListener(
-          "change",
-          () =>
-            applyFilterControl(
-              control
-            )
-        );
-      }
-    );
-
-
-  /*
-    Add
-  */
-
-  EF.ids.addBtn
-    ?.addEventListener(
-      "click",
-      () => {
-
-        /*
-          If editing existing estimate item:
-          update instead of adding duplicate.
-        */
-
-        if (
-          EF.currentDraft &&
-          EF.currentDraft.editingIndex !==
-            undefined
-        ) {
-
-          updateCurrentEstimateItem();
-
-        } else {
-
-          saveCurrentItem();
-        }
-      }
-    );
-
-
-  /*
-    Next
-  */
-
-  EF.ids.nextBtn
-    ?.addEventListener(
-      "click",
-      () => {
-
-        /*
-          IMPORTANT:
-          NEXT NEVER SAVES.
-
-          It only changes material.
-        */
-
-        captureCurrentDraft();
-
-        goNextMaterial();
-      }
-    );
-
-
-  /*
-    Previous / Back
-  */
-
-  EF.ids.backBtn
-    ?.addEventListener(
-      "click",
-      () => {
-
-        captureCurrentDraft();
-
-        goPreviousMaterial();
-      }
-    );
-
-
-  /*
-    Global view selector
-  */
-
-  EF.ids.globalViewTrigger
-    ?.addEventListener(
-      "click",
-      (event) => {
-
-        event.stopPropagation();
-
-        const options =
-          EF.ids.globalViewOptions;
-
-        if (!options) {
-          return;
-        }
-
-        const open =
-          !options.hidden;
-
-        closeAllViewOptions();
-
-        if (!open) {
-
-          options.hidden =
-            false;
-
-          EF.ids.globalViewTrigger
-            .setAttribute(
-              "aria-expanded",
-              "true"
-            );
-        }
-      }
-    );
-
-
-  EF.ids.globalViewOptions
-    ?.querySelectorAll(
-      "[data-view], [data-view-option]"
-    )
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const view =
-              button.dataset.view ||
-              button.dataset.viewOption;
-
-            setView(
-              view
-            );
-
-            closeAllViewOptions();
           }
-        );
+
+          applySearch("");
+
+        }
+      );
+
+
+    $("filter-icon")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          const panel =
+            $("filterPanel");
+
+          if (!panel) return;
+
+
+          EF.filterOpen =
+            !EF.filterOpen;
+
+
+          panel.hidden =
+            !EF.filterOpen;
+
+
+          $("filter-icon")
+            ?.setAttribute(
+              "aria-expanded",
+              String(
+                EF.filterOpen
+              )
+            );
+
+        }
+      );
+
+
+    $("clearFilter")
+      ?.addEventListener(
+        "click",
+        clearFilters
+      );
+
+
+    [
+      "stageFilter",
+      "typeFilter",
+      "sizeFilter",
+      "brandFilter"
+    ]
+      .forEach(
+        id => {
+
+          $(id)?.addEventListener(
+            "change",
+            applyFilters
+          );
+
+        }
+      );
+
+  }
+
+
+  /* =======================================================
+     EVENT BINDING
+     ======================================================= */
+
+  function bindEvents() {
+
+    /* HAMBURGER */
+
+    $("menuBtn")
+      ?.addEventListener(
+        "click",
+        toggleDrawer
+      );
+
+
+    $("closeMenu")
+      ?.addEventListener(
+        "click",
+        closeDrawer
+      );
+
+
+    $("drawerOverlay")
+      ?.addEventListener(
+        "click",
+        closeDrawer
+      );
+
+
+    /* LANGUAGE */
+
+    qsa(
+      ".language-option"
+    )
+      .forEach(
+        btn => {
+
+          btn.addEventListener(
+            "click",
+            () => {
+
+              EF.lang =
+                btn.dataset.lang === "en"
+                  ? "en"
+                  : "hi";
+
+
+              localStorage.setItem(
+                STORAGE.lang,
+                EF.lang
+              );
+
+
+              applyLanguage();
+
+              populateFilters();
+
+            }
+          );
+
+        }
+      );
+
+
+    /* THEME */
+
+    $("themeButton")
+      ?.addEventListener(
+        "click",
+        toggleTheme
+      );
+
+
+    $("settingsThemeButton")
+      ?.addEventListener(
+        "click",
+        toggleTheme
+      );
+
+
+    /* DRAWER ROUTES */
+
+    qsa(
+      ".drawer-item[data-route]"
+    )
+      .forEach(
+        btn => {
+
+          btn.addEventListener(
+            "click",
+            () => {
+
+              const route =
+                btn.dataset.route;
+
+              closeDrawer();
+
+
+              if (
+                route === "home"
+              ) {
+
+                goHome();
+
+              } else if (
+                route === "estimate"
+              ) {
+
+                setRoute(
+                  "estimate"
+                );
+
+                showPage(
+                  "estimate"
+                );
+
+                renderEstimate();
+
+              } else if (
+                route === "calculator"
+              ) {
+
+                setRoute(
+                  "calculator"
+                );
+
+                showPage(
+                  "calculator"
+                );
+
+                renderCalculator();
+
+              } else if (
+                route === "settings"
+              ) {
+
+                setRoute(
+                  "settings"
+                );
+
+                showPage(
+                  "settings"
+                );
+
+                renderSettings();
+
+              }
+
+            }
+          );
+
+        }
+      );
+
+
+    /* BOTTOM NAV */
+
+    qsa(
+      ".bottom-item[data-route]"
+    )
+      .forEach(
+        btn => {
+
+          btn.addEventListener(
+            "click",
+            () => {
+
+              const route =
+                btn.dataset.route;
+
+
+              if (
+                route === "home"
+              ) {
+
+                goHome();
+
+              } else {
+
+                setRoute(
+                  route
+                );
+
+                showPage(
+                  route
+                );
+
+
+                if (
+                  route === "estimate"
+                ) {
+
+                  renderEstimate();
+
+                }
+
+
+                if (
+                  route === "calculator"
+                ) {
+
+                  renderCalculator();
+
+                }
+
+
+                if (
+                  route === "settings"
+                ) {
+
+                  renderSettings();
+
+                }
+
+              }
+
+            }
+          );
+
+        }
+      );
+
+
+    /* MATERIAL BACK */
+
+    $("materialBack")
+      ?.addEventListener(
+        "click",
+        materialBack
+      );
+
+
+    /* EDITOR BACK */
+
+    $("editorBack")
+      ?.addEventListener(
+        "click",
+        editorBack
+      );
+
+
+    /* SAVE */
+
+    $("saveItem")
+      ?.addEventListener(
+        "click",
+        saveCurrentItem
+      );
+
+
+    /* NEXT */
+
+    $("nextItem")
+      ?.addEventListener(
+        "click",
+        goNextMaterial
+      );
+
+
+    /* CLEAR */
+
+    $("clearItem")
+      ?.addEventListener(
+        "click",
+        () => {
+
+          clearEditor(true);
+
+          showToast(
+            EF.lang === "hi"
+              ? "फॉर्म साफ हो गया"
+              : "Form cleared"
+          );
+
+        }
+      );
+
+
+    /* FORM DRAFT */
+
+    $("materialForm")
+      ?.addEventListener(
+        "input",
+        saveEditorDraft
+      );
+
+
+    $("materialForm")
+      ?.addEventListener(
+        "change",
+        saveEditorDraft
+      );
+
+
+    /* VIEW */
+
+    $("viewTrigger")
+      ?.addEventListener(
+        "click",
+        toggleViewOptions
+      );
+
+
+    qsa(
+      "#viewOptions [data-view]"
+    )
+      .forEach(
+        btn => {
+
+          btn.addEventListener(
+            "click",
+            () =>
+              setView(
+                btn.dataset.view
+              )
+          );
+
+        }
+      );
+
+
+    /* CALCULATOR */
+
+    qsa(
+      ".calculator-tab[data-calc]"
+    )
+      .forEach(
+        btn => {
+
+          btn.addEventListener(
+            "click",
+            () => {
+
+              EF.calculator =
+                btn.dataset.calc;
+
+
+              qsa(
+                ".calculator-tab"
+              )
+                .forEach(
+                  b =>
+                    b.classList.toggle(
+                      "active",
+                      b === btn
+                    )
+                );
+
+
+              renderCalculator();
+
+            }
+          );
+
+        }
+      );
+
+
+    /* RESET */
+
+    $("resetApp")
+      ?.addEventListener(
+        "click",
+        openResetModal
+      );
+
+
+    $("settingsReset")
+      ?.addEventListener(
+        "click",
+        openResetModal
+      );
+
+
+    $("resetCancel")
+      ?.addEventListener(
+        "click",
+        closeResetModal
+      );
+
+
+    $("resetConfirm")
+      ?.addEventListener(
+        "click",
+        resetApp
+      );
+
+
+    /* ESCAPE */
+
+    document.addEventListener(
+      "keydown",
+      e => {
+
+        if (
+          e.key === "Escape"
+        ) {
+
+          if (EF.drawerOpen) {
+
+            closeDrawer();
+
+            return;
+
+          }
+
+
+          if (EF.viewOpen) {
+
+            EF.viewOpen = false;
+
+            if ($("viewOptions")) {
+
+              $("viewOptions").hidden =
+                true;
+
+            }
+
+            return;
+
+          }
+
+
+          if (EF.filterOpen) {
+
+            EF.filterOpen = false;
+
+            if ($("filterPanel")) {
+
+              $("filterPanel").hidden =
+                true;
+
+            }
+
+            return;
+
+          }
+
+        }
+
       }
     );
 
 
-  /*
-    Escape
-  */
+    /* CLICK OUTSIDE VIEW */
 
-  document.addEventListener(
-    "keydown",
-    (event) => {
+    document.addEventListener(
+      "click",
+      e => {
 
-      if (
-        event.key !== "Escape"
-      ) {
-        return;
+        const selector =
+          qs(".view-selector");
+
+
+        if (
+          EF.viewOpen &&
+          selector &&
+          !selector.contains(e.target)
+        ) {
+
+          EF.viewOpen = false;
+
+          if ($("viewOptions")) {
+
+            $("viewOptions").hidden =
+              true;
+
+          }
+
+        }
+
       }
+    );
 
-      if (
-        EF.drawerOpen
-      ) {
+  }
 
-        closeDrawer();
 
-        return;
-      }
+  /* =======================================================
+     ANDROID / BROWSER BACK
+     ======================================================= */
 
-      if (
-        EF.filterOpen
-      ) {
+  function handleBack() {
 
-        closeFilter();
+    if (EF.drawerOpen) {
 
-        return;
-      }
+      closeDrawer();
 
-      closeAllViewOptions();
+      return;
+
     }
-  );
 
 
-  /*
-    Browser / Android Back
-  */
+    if (EF.viewOpen) {
+
+      EF.viewOpen = false;
+
+      if ($("viewOptions")) {
+
+        $("viewOptions").hidden =
+          true;
+
+      }
+
+      return;
+
+    }
+
+
+    if (EF.filterOpen) {
+
+      EF.filterOpen = false;
+
+      if ($("filterPanel")) {
+
+        $("filterPanel").hidden =
+          true;
+
+      }
+
+      return;
+
+    }
+
+
+    if (EF.route === "editor") {
+
+      editorBack();
+
+      return;
+
+    }
+
+
+    if (
+      EF.route === "material" &&
+      EF.sectionIndex !== null
+    ) {
+
+      EF.sectionIndex = null;
+
+      EF.materialIndex = null;
+
+      saveRoute();
+
+      renderSections(
+        EF.stageIndex
+      );
+
+      showPage(
+        "materialPage"
+      );
+
+      return;
+
+    }
+
+
+    if (
+      EF.route === "material" &&
+      EF.stageIndex !== null
+    ) {
+
+      goHome();
+
+      return;
+
+    }
+
+
+    if (
+      EF.route !== "home"
+    ) {
+
+      goHome();
+
+      return;
+
+    }
+
+  }
+
 
   window.addEventListener(
     "popstate",
-    (event) => {
+    () => {
 
-      if (
-        EF.drawerHistoryActive
-      ) {
+      handleBack();
 
-        EF.drawerHistoryActive =
-          false;
+    }
+  );
 
-        closeDrawer(
-          true
-        );
 
-        return;
-      }
+  /* =======================================================
+     ESCAPE HTML
+     ======================================================= */
 
-      handleBrowserBack(
-        event
+  function escapeHTML(value) {
+
+    return String(value ?? "")
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
       );
-    }
-  );
+
+  }
 
 
-  /*
-    Before leaving / refresh:
-    preserve current editor draft.
-  */
+  /* =======================================================
+     INITIALIZE
+     ======================================================= */
 
-  window.addEventListener(
-    "beforeunload",
-    () => {
+  function init() {
 
-      captureCurrentDraft();
-
-      saveRoute();
-    }
-  );
+    loadStorage();
 
 
-  /*
-    Outside click closes menus.
-  */
+    restoreRoute();
 
-  document.addEventListener(
-    "click",
-    (event) => {
 
-      if (
-        !event.target.closest(
-          ".material-view-selector"
-        ) &&
-        !event.target.closest(
-          "#viewModeBtn"
-        ) &&
-        !event.target.closest(
-          "#viewSelector"
-        ) &&
-        !event.target.closest(
-          "#materialViewSelector"
-        )
-      ) {
+    applyTheme();
 
-        closeAllViewOptions();
-      }
+
+    bindEvents();
+
+
+    populateFilters();
+
+
+    updateViewButton();
+
+
+    applyLanguage();
+
+
+    /*
+     If saved route points to a valid stage,
+     restore it.
+    */
+
+    if (
+      EF.route === "material" &&
+      EF.stageIndex !== null
+    ) {
 
       if (
-        EF.filterOpen &&
-        EF.ids.filterPanel &&
-        !EF.ids.filterPanel.contains(
-          event.target
-        ) &&
-        !event.target.closest(
-          "#filterBtn"
-        ) &&
-        !event.target.closest(
-          "#filterButton"
-        )
+        EF.sectionIndex !== null
       ) {
 
-        closeFilter();
-      }
-    }
-  );
-
-
-  /*
-    Generic action buttons.
-  */
-
-  document
-    .querySelectorAll(
-      "[data-action]"
-    )
-    .forEach(
-      (button) => {
-
-        if (
-          button.dataset.actionBound ===
-          "1"
-        ) {
-          return;
-        }
-
-        button.dataset.actionBound =
-          "1";
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const action =
-              button.dataset.action;
-
-            switch (
-              action
-            ) {
-
-              case "home":
-                goHome();
-                break;
-
-              case "estimate":
-                goEstimate();
-                break;
-
-              case "calculator":
-                goCalculator();
-                break;
-
-              case "settings":
-                goSettings();
-                break;
-
-              case "reset":
-                resetApp();
-                break;
-
-              case "drawer":
-                openDrawer();
-                break;
-
-              case "close-drawer":
-                closeDrawer();
-                break;
-            }
-          }
+        renderMaterials(
+          EF.stageIndex,
+          EF.sectionIndex
         );
+
+      } else {
+
+        renderSections(
+          EF.stageIndex
+        );
+
       }
-    );
-}
+
+      showPage(
+        "materialPage"
+      );
+
+    } else if (
+      EF.route === "editor" &&
+      EF.stageIndex !== null &&
+      EF.sectionIndex !== null &&
+      EF.materialIndex !== null
+    ) {
+
+      const raw =
+        getMaterial(
+          EF.stageIndex,
+          EF.sectionIndex,
+          EF.materialIndex
+        );
 
 
-/* =========================================================
-   LANGUAGE RERENDER SAFETY
-   ========================================================= */
+      if (raw) {
 
-function refreshStaticLanguage() {
+        showPage(
+          "editorPage"
+        );
 
-  document
-    .querySelectorAll(
-      "[data-i18n]"
-    )
-    .forEach(
-      (element) => {
 
-        const key =
-          element.dataset.i18n;
+        renderEditor(
+          normalizeMaterial(raw),
+          EF.stageIndex,
+          EF.sectionIndex
+        );
 
-        if (
-          Object.prototype.hasOwnProperty.call(
-            HI,
-            key
-          )
-        ) {
+      } else {
 
-          element.textContent =
-            t(key);
-        }
+        goHome(false);
+
       }
-    );
 
+    } else {
 
-  document
-    .querySelectorAll(
-      "[data-i18n-placeholder]"
-    )
-    .forEach(
-      (element) => {
+      EF.route = "home";
 
-        const key =
-          element.dataset.i18nPlaceholder;
+      showPage("home");
 
-        element.placeholder =
-          t(key);
-      }
-    );
+      renderStages();
 
-
-  document
-    .querySelectorAll(
-      "[data-i18n-title]"
-    )
-    .forEach(
-      (element) => {
-
-        const key =
-          element.dataset.i18nTitle;
-
-        element.title =
-          t(key);
-      }
-    );
-}
-
-
-/* =========================================================
-   INIT
-   ========================================================= */
-
-function initEstimateApp() {
-
-  if (
-    EF.initialized
-  ) {
-    return;
-  }
-
-  EF.initialized =
-    true;
-
-  cacheDOM();
-
-  loadEstimate();
-
-  /*
-    Validate language.
-  */
-
-  EF.language =
-    EF.language === "en"
-      ? "en"
-      : "hi";
-
-  /*
-    Validate view.
-  */
-
-  const validViews = [
-
-    "grid",
-    "list",
-    "compact",
-    "large",
-    "mini",
-    "2column",
-    "horizontal",
-    "icon",
-    "timeline",
-    "dense"
-  ];
-
-  if (
-    !validViews.includes(
-      EF.view
-    )
-  ) {
-
-    EF.view =
-      "grid";
-  }
-
-  /*
-    Theme.
-  */
-
-  applyTheme();
-
-  /*
-    Language.
-  */
-
-  renderLanguageButtons();
-
-  refreshStaticLanguage();
-
-  /*
-    Filters.
-  */
-
-  populateFilterOptions();
-
-  /*
-    Events.
-  */
-
-  bindEvents();
-
-  /*
-    Browser history.
-  */
-
-  initializeHistory();
-
-  /*
-    Count.
-  */
-
-  updateEstimateCount();
-
-  /*
-    Remove loader.
-  */
-
-  hideLoader();
-
-  /*
-    Restore page.
-  */
-
-  setTimeout(
-    () => {
-
-      restoreRoute();
-
-      refreshStaticLanguage();
-
-      bindViewOptionListeners();
-
-      syncViewSelector();
-
-      updateViewClasses();
-
-    },
-    30
-  );
-}
-
-
-/* =========================================================
-   AUTO INIT
-   ========================================================= */
-
-if (
-  document.readyState ===
-  "loading"
-) {
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    initEstimateApp,
-    {
-      once: true
     }
-  );
-
-} else {
-
-  initEstimateApp();
-}
 
 
-/* =========================================================
-   PUBLIC API
-   ========================================================= */
+    /*
+     Browser history base state
+    */
 
-window.ElectroFixApp = {
+    try {
 
-  state:
-    EF,
+      history.replaceState(
+        routeObject(),
+        "",
+        window.location.pathname +
+        window.location.search +
+        "#home"
+      );
 
-  init:
-    initEstimateApp,
+    } catch (e) {}
 
-  home:
-    goHome,
 
-  estimate:
-    goEstimate,
+    /*
+     Save draft whenever quantity/unit/brand/price
+     changes.
+    */
 
-  calculator:
-    goCalculator,
+    [
+      "quantityInput",
+      "unitInput",
+      "brandInput",
+      "priceInput"
+    ]
+      .forEach(
+        id => {
 
-  settings:
-    goSettings,
+          $(id)?.addEventListener(
+            "input",
+            saveEditorDraft
+          );
 
-  reset:
-    resetApp,
+          $(id)?.addEventListener(
+            "change",
+            saveEditorDraft
+          );
 
-  setLanguage:
-    setLanguage,
+        }
+      );
 
-  toggleTheme:
-    toggleTheme,
+  }
 
-  setView:
-    setView,
 
-  search:
-    applySearch,
+  /* =======================================================
+     PUBLIC API
+     ======================================================= */
 
-  clearSearch:
-    clearSearch,
+  window.ElectroFixApp = {
 
-  openDrawer:
-    openDrawer,
+    state: EF,
 
-  closeDrawer:
-    closeDrawer,
+    init,
 
-  openStage:
+    home: goHome,
+
     openStage,
 
-  openSection:
     openSection,
 
-  openMaterials:
-    openMaterials,
-
-  openEditor:
     openEditor,
 
-  add:
-    saveCurrentItem,
+    save: saveCurrentItem,
 
-  next:
-    goNextMaterial,
+    next: goNextMaterial,
 
-  previous:
-    goPreviousMaterial
-};
+    previous: goPrevious,
+
+    clear: clearEditor,
+
+    estimate: renderEstimate,
+
+    reset: resetApp
+
+  };
+
+
+  /* =======================================================
+     START
+     ======================================================= */
+
+  if (
+    document.readyState === "loading"
+  ) {
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      init,
+      {
+        once: true
+      }
+    );
+
+  } else {
+
+    init();
+
+  }
+
+})();

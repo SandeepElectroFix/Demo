@@ -1,191 +1,170 @@
 <!DOCTYPE html>
 <html lang="hi">
-
 <head>
-
   <meta charset="UTF-8">
 
   <meta
     name="viewport"
-    content="width=device-width,
-             initial-scale=1.0,
-             maximum-scale=1.0,
-             user-scalable=no"
+    content="width=device-width, initial-scale=1.0,
+             maximum-scale=1.0, user-scalable=no"
   >
 
-  <meta name="theme-color" content="#050816">
+  <meta
+    name="theme-color"
+    content="#050816"
+  >
 
   <meta
     name="description"
-    content="Sandeep ElectroFix Material Estimate List"
+    content="Sandeep ElectroFix - Electrical Material Estimate List"
   >
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <title>Sandeep ElectroFix - Estimate List</title>
 
-  <link rel="stylesheet" href="style.css">
+  <!-- =====================================================
+       APP ICON
+       ===================================================== -->
 
+  <link
+    rel="icon"
+    type="image/png"
+    href="logo.png"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="logo.png"
+  >
+
+  <!-- =====================================================
+       STYLES
+       ===================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
+
 
 <body>
 
-<!-- =====================================================
-     APP
-     ===================================================== -->
+  <!-- =====================================================
+       APP ROOT
+       ===================================================== -->
 
-<div id="app">
+  <div id="app" class="app">
 
-  <!-- ===================================================
-       TOP BAR
-       =================================================== -->
+    <!-- ===================================================
+         HEADER
+         =================================================== -->
 
-  <header class="topbar">
-
-    <button
-      id="menuBtn"
-      class="menu-btn"
-      type="button"
-      aria-label="Menu"
+    <header
+      id="appHeader"
+      class="app-header"
     >
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
 
-    <div class="brand">
-
-      <img
-        id="brandLogo"
-        src="logo.png"
-        alt="Sandeep ElectroFix"
-      >
-
-      <div class="brand-text">
-        <strong>Sandeep ElectroFix</strong>
-        <small id="brandTagline">
-          Powering Your Trust
-        </small>
-      </div>
-
-    </div>
-
-    <button
-      id="themeBtn"
-      class="icon-btn"
-      type="button"
-      aria-label="Theme"
-    >
-      ☾
-    </button>
-
-  </header>
-
-
-  <!-- ===================================================
-       DRAWER
-       =================================================== -->
-
-  <div id="drawerOverlay" class="drawer-overlay"></div>
-
-  <aside id="drawer" class="drawer">
-
-    <div class="drawer-head">
-
-      <div>
-        <strong id="drawerTitle">
-          Sandeep ElectroFix
-        </strong>
-
-        <small id="drawerSubtitle">
-          Estimate List
-        </small>
-      </div>
-
+      <!-- Hamburger -->
       <button
-        id="drawerClose"
-        class="icon-btn"
+        id="menuBtn"
+        class="menu-btn"
         type="button"
+        aria-label="Open Menu"
+        aria-controls="sideDrawer"
+        aria-expanded="false"
       >
-        ×
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
 
-    </div>
 
-
-    <div class="drawer-section">
-
-      <button
-        id="languageBtn"
-        class="drawer-action"
-        type="button"
+      <!-- Branding -->
+      <div
+        id="brandArea"
+        class="brand-area"
       >
-        <span>🌐</span>
-        <span id="languageText">हिन्दी</span>
-      </button>
 
-      <button
-        id="drawerThemeBtn"
-        class="drawer-action"
-        type="button"
-      >
-        <span>🌙</span>
-        <span id="drawerThemeText">Dark Mode</span>
-      </button>
-
-      <button
-        id="resetBtn"
-        class="drawer-action danger"
-        type="button"
-      >
-        <span>↻</span>
-        <span id="resetText">Reset Estimate</span>
-      </button>
-
-    </div>
-
-  </aside>
-
-
-  <!-- ===================================================
-       MAIN
-       =================================================== -->
-
-  <main id="main">
-
-    <!-- HOME -->
-    <section id="homePage" class="page active">
-
-      <div class="hero">
-
-        <div class="hero-logo">
-          <img src="logo.png" alt="">
+        <div
+          id="brandLogo"
+          class="brand-logo"
+        >
+          <img
+            src="logo.png"
+            alt="Sandeep ElectroFix"
+          >
         </div>
 
-        <h1 id="pageTitle">
-          Estimate List
-        </h1>
+        <div class="brand-text">
 
-        <p id="pageSubtitle">
-          Material Estimate
-        </p>
+          <div
+            id="brandName"
+            class="brand-name"
+          >
+            Sandeep ElectroFix
+          </div>
+
+          <div
+            id="brandTagline"
+            class="brand-tagline"
+          >
+            Powering Your Trust
+          </div>
+
+        </div>
 
       </div>
 
 
-      <!-- SEARCH -->
+      <!-- Header Action -->
+      <button
+        id="headerActionBtn"
+        class="header-action-btn"
+        type="button"
+        aria-label="Estimate"
+      >
+        <span class="header-action-icon">▣</span>
+      </button>
 
-      <div class="search-wrap">
+    </header>
 
-        <input
-          id="materialSearch"
-          type="search"
-          autocomplete="off"
-          placeholder="Search Material..."
-        >
+
+    <!-- ===================================================
+         SIDE DRAWER
+         =================================================== -->
+
+    <aside
+      id="sideDrawer"
+      class="side-drawer"
+      aria-hidden="true"
+    >
+
+      <div class="drawer-header">
+
+        <div class="drawer-brand">
+
+          <img
+            src="logo.png"
+            alt="Sandeep ElectroFix"
+          >
+
+          <div>
+            <strong>Sandeep ElectroFix</strong>
+            <small>Estimate List</small>
+          </div>
+
+        </div>
+
 
         <button
-          id="searchClear"
+          id="drawerCloseBtn"
+          class="drawer-close-btn"
           type="button"
-          aria-label="Clear"
+          aria-label="Close Menu"
         >
           ×
         </button>
@@ -193,166 +172,587 @@
       </div>
 
 
-      <!-- HOME ACTION -->
-
-      <button
-        id="newEstimateBtn"
-        class="primary-btn big-btn"
-        type="button"
+      <div
+        id="drawerContent"
+        class="drawer-content"
       >
-        <span>＋</span>
-        <span id="newEstimateText">
-          New Estimate
-        </span>
-      </button>
+
+        <!-- Language -->
+        <section
+          id="languageSetting"
+          class="drawer-section"
+        >
+
+          <div class="drawer-section-title">
+            Language / भाषा
+          </div>
+
+          <div class="drawer-option-row">
+
+            <button
+              id="langHindiBtn"
+              class="drawer-option active"
+              type="button"
+              data-language="hi"
+            >
+              हिन्दी
+            </button>
+
+            <button
+              id="langEnglishBtn"
+              class="drawer-option"
+              type="button"
+              data-language="en"
+            >
+              English
+            </button>
+
+          </div>
+
+        </section>
 
 
-      <!-- SEARCH RESULTS -->
+        <!-- Theme -->
+        <section
+          id="themeSetting"
+          class="drawer-section"
+        >
 
-      <div id="searchResults" class="search-results"></div>
+          <div class="drawer-section-title">
+            Theme / थीम
+          </div>
+
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            type="button"
+            aria-label="Toggle Theme"
+          >
+
+            <span class="theme-icon">☾</span>
+
+            <span class="theme-label">
+              Dark / Light
+            </span>
+
+            <span class="theme-switch">
+              <span></span>
+            </span>
+
+          </button>
+
+        </section>
 
 
-      <!-- STAGES -->
+        <!-- View -->
+        <section
+          id="viewSetting"
+          class="drawer-section"
+        >
 
-      <div id="stageArea">
+          <div class="drawer-section-title">
+            Material View
+          </div>
+
+          <div
+            id="viewModeOptions"
+            class="view-mode-options"
+          >
+
+            <button
+              type="button"
+              class="view-mode-btn active"
+              data-view="grid"
+            >
+              Grid
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="list"
+            >
+              List
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="compact"
+            >
+              Compact
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="large"
+            >
+              Large
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="mini"
+            >
+              Mini
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="two-column"
+            >
+              2 Column
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="horizontal"
+            >
+              Horizontal
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="icon-list"
+            >
+              Icon List
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="timeline"
+            >
+              Timeline
+            </button>
+
+            <button
+              type="button"
+              class="view-mode-btn"
+              data-view="dense"
+            >
+              Dense
+            </button>
+
+          </div>
+
+        </section>
+
+
+        <!-- Reset -->
+        <section
+          id="resetSetting"
+          class="drawer-section"
+        >
+
+          <button
+            id="resetAppBtn"
+            class="reset-app-btn"
+            type="button"
+          >
+            <span>↻</span>
+            <span>Reset App</span>
+          </button>
+
+        </section>
+
+      </div>
+
+    </aside>
+
+
+    <!-- Drawer Overlay -->
+    <div
+      id="drawerOverlay"
+      class="drawer-overlay"
+      aria-hidden="true"
+    ></div>
+
+
+    <!-- ===================================================
+         MAIN CONTENT
+         =================================================== -->
+
+    <main
+      id="mainContent"
+      class="main-content"
+    >
+
+      <!-- =================================================
+           PAGE TITLE
+           ================================================= -->
+
+      <section
+        id="pageTitleArea"
+        class="page-title-area"
+      >
+
+        <div class="page-title-icon">
+          ⚡
+        </div>
+
+        <div>
+
+          <h1 id="pageTitle">
+            Estimate List
+          </h1>
+
+          <p id="pageSubtitle">
+            एस्टिमेट लिस्ट
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           SEARCH AREA
+           ================================================= -->
+
+      <section
+        id="searchArea"
+        class="search-area"
+      >
+
+        <div
+          id="searchBox"
+          class="search-box"
+        >
+
+          <span class="search-icon">
+            ⌕
+          </span>
+
+          <input
+            id="materialSearch"
+            type="search"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Search material..."
+            aria-label="Search material"
+          >
+
+          <button
+            id="clearSearchBtn"
+            class="clear-search-btn"
+            type="button"
+            aria-label="Clear Search"
+            hidden
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <button
+          id="filterBtn"
+          class="filter-btn"
+          type="button"
+          aria-label="Filter"
+        >
+          <span>☷</span>
+        </button>
+
+      </section>
+
+
+      <!-- =================================================
+           FILTER PANEL
+           ================================================= -->
+
+      <section
+        id="filterPanel"
+        class="filter-panel"
+        hidden
+      >
+
+        <div class="filter-panel-header">
+
+          <strong id="filterTitle">
+            Filter
+          </strong>
+
+          <button
+            id="closeFilterBtn"
+            type="button"
+            aria-label="Close Filter"
+          >
+            ×
+          </button>
+
+        </div>
+
+
+        <div
+          id="filterContent"
+          class="filter-content"
+        >
+
+          <!-- Stage Filter -->
+          <div
+            id="stageFilter"
+            class="filter-group"
+          >
+
+            <label for="stageFilterSelect">
+              Stage
+            </label>
+
+            <select id="stageFilterSelect">
+              <option value="all">All Stages</option>
+            </select>
+
+          </div>
+
+
+          <!-- Section Filter -->
+          <div
+            id="sectionFilter"
+            class="filter-group"
+          >
+
+            <label for="sectionFilterSelect">
+              Section
+            </label>
+
+            <select id="sectionFilterSelect">
+              <option value="all">All Sections</option>
+            </select>
+
+          </div>
+
+
+          <button
+            id="clearFilterBtn"
+            class="clear-filter-btn"
+            type="button"
+          >
+            Clear Filter
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           STAGE SELECTOR
+           ================================================= -->
+
+      <section
+        id="stageSelectorArea"
+        class="stage-selector-area"
+      >
 
         <div class="section-heading">
 
-          <h2 id="stageHeading">
-            Material Categories
-          </h2>
+          <div>
+            <span class="section-kicker">
+              MATERIAL
+            </span>
+
+            <h2 id="stageHeading">
+              Select Stage
+            </h2>
+          </div>
+
+          <button
+            id="stageViewBtn"
+            class="icon-action-btn"
+            type="button"
+            aria-label="Stage View"
+          >
+            ▦
+          </button>
 
         </div>
 
-        <div id="stageList" class="stage-list"></div>
 
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         SECTION PAGE
-         ================================================= -->
-
-    <section
-      id="sectionPage"
-      class="page"
-      hidden
-    >
-
-      <div class="page-head">
-
-        <button
-          id="sectionBack"
-          class="back-btn"
-          type="button"
+        <div
+          id="stageCards"
+          class="stage-cards"
         >
-          ←
-        </button>
-
-        <div>
-          <h2 id="sectionPageTitle">
-            Section
-          </h2>
-
-          <small id="sectionPageSubtitle"></small>
+          <!-- Stage cards generated by app.js -->
         </div>
 
-      </div>
-
-      <div
-        id="sectionList"
-        class="material-list"
-      ></div>
-
-    </section>
+      </section>
 
 
-    <!-- =================================================
-         MATERIAL PAGE
-         ================================================= -->
+      <!-- =================================================
+           SECTION SELECTOR
+           ================================================= -->
 
-    <section
-      id="materialPage"
-      class="page"
-      hidden
-    >
-
-      <div class="page-head">
-
-        <button
-          id="materialBack"
-          class="back-btn"
-          type="button"
-        >
-          ←
-        </button>
-
-        <div>
-          <h2 id="materialPageTitle">
-            Material
-          </h2>
-
-          <small id="materialPageSubtitle"></small>
-        </div>
-
-      </div>
-
-      <div
-        id="materialList"
-        class="material-grid"
-      ></div>
-
-    </section>
-
-
-    <!-- =================================================
-         EDITOR PAGE
-         ================================================= -->
-
-    <section
-      id="editorPage"
-      class="page"
-      hidden
-    >
-
-      <div class="page-head">
-
-        <button
-          id="editorBack"
-          class="back-btn"
-          type="button"
-        >
-          ←
-        </button>
-
-        <div>
-          <h2 id="editorTitle">
-            Add Material
-          </h2>
-
-          <small id="editorSubtitle"></small>
-        </div>
-
-      </div>
-
-
-      <form
-        id="materialForm"
-        class="editor-form"
-        autocomplete="off"
+      <section
+        id="sectionSelectorArea"
+        class="section-selector-area"
+        hidden
       >
 
-        <div id="dynamicFields"></div>
+        <div class="section-heading">
+
+          <div>
+
+            <span
+              id="selectedStageLabel"
+              class="section-kicker"
+            >
+              STAGE
+            </span>
+
+            <h2 id="sectionHeading">
+              Select Section
+            </h2>
+
+          </div>
+
+          <button
+            id="sectionBackBtn"
+            class="icon-action-btn"
+            type="button"
+            aria-label="Back"
+          >
+            ←
+          </button>
+
+        </div>
 
 
-        <!-- QUANTITY -->
+        <div
+          id="sectionCards"
+          class="section-cards"
+        >
+          <!-- Section cards generated by app.js -->
+        </div>
 
-        <div class="field">
+      </section>
 
-          <label id="quantityLabel">
-            Quantity
+
+      <!-- =================================================
+           MATERIAL SELECTOR
+           ================================================= -->
+
+      <section
+        id="materialSelectorArea"
+        class="material-selector-area"
+        hidden
+      >
+
+        <div class="section-heading">
+
+          <div>
+
+            <span
+              id="selectedSectionLabel"
+              class="section-kicker"
+            >
+              SECTION
+            </span>
+
+            <h2 id="materialHeading">
+              Select Material
+            </h2>
+
+          </div>
+
+          <button
+            id="materialBackBtn"
+            class="icon-action-btn"
+            type="button"
+            aria-label="Back"
+          >
+            ←
+          </button>
+
+        </div>
+
+
+        <div
+          id="materialList"
+          class="material-list"
+          data-view="grid"
+        >
+          <!-- Material cards generated by app.js -->
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           MATERIAL EDITOR
+           ================================================= -->
+
+      <section
+        id="materialEditorArea"
+        class="material-editor-area"
+        hidden
+      >
+
+        <div class="editor-header">
+
+          <button
+            id="editorBackBtn"
+            class="icon-action-btn"
+            type="button"
+            aria-label="Back"
+          >
+            ←
+          </button>
+
+
+          <div class="editor-title">
+
+            <span
+              id="editorStageLabel"
+              class="editor-kicker"
+            >
+              STAGE
+            </span>
+
+            <h2 id="editorMaterialName">
+              Material
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <!-- Dynamic Fields -->
+        <div
+          id="materialFields"
+          class="material-fields"
+        >
+          <!--
+            Dynamic material fields generated here.
+
+            Example:
+            Size
+            Type
+            Sub Type
+            Colour
+            etc.
+          -->
+        </div>
+
+
+        <!-- Quantity -->
+        <div
+          id="quantityField"
+          class="form-group"
+        >
+
+          <label
+            id="quantityLabel"
+            for="quantityInput"
+          >
+            Quantity *
           </label>
 
           <input
@@ -361,37 +761,51 @@
             min="0"
             step="any"
             inputmode="decimal"
-            required
+            placeholder="Enter quantity"
           >
 
         </div>
 
 
-        <!-- UNIT -->
+        <!-- Unit -->
+        <div
+          id="unitField"
+          class="form-group"
+        >
 
-        <div class="field">
-
-          <label id="unitLabel">
+          <label
+            id="unitLabel"
+            for="unitSelect"
+          >
             Unit
           </label>
 
-          <select id="unitInput"></select>
+          <select id="unitSelect">
+            <option value="">
+              Select Unit
+            </option>
+          </select>
 
         </div>
 
 
-        <!-- BRAND -->
+        <!-- Brand -->
+        <div
+          id="brandField"
+          class="form-group"
+        >
 
-        <div class="field">
-
-          <label id="brandLabel">
+          <label
+            id="brandLabel"
+            for="brandSelect"
+          >
             Brand
           </label>
 
-          <select id="brandInput">
+          <select id="brandSelect">
 
             <option value="">
-              Optional
+              Select Brand
             </option>
 
           </select>
@@ -399,11 +813,17 @@
         </div>
 
 
-        <!-- PRICE -->
+        <!-- Price -->
+        <div
+          id="priceField"
+          class="form-group"
+          hidden
+        >
 
-        <div class="field">
-
-          <label id="priceLabel">
+          <label
+            id="priceLabel"
+            for="priceInput"
+          >
             Price
           </label>
 
@@ -413,21 +833,40 @@
             min="0"
             step="any"
             inputmode="decimal"
-            placeholder="Optional"
+            placeholder="Enter price"
           >
 
         </div>
 
 
-        <div class="editor-buttons">
+        <!-- Notes -->
+        <div
+          id="notesField"
+          class="form-group"
+          hidden
+        >
 
-          <button
-            id="saveMaterialBtn"
-            class="primary-btn"
-            type="submit"
+          <label
+            id="notesLabel"
+            for="notesInput"
           >
-            ✓ Add Material
-          </button>
+            Notes
+          </label>
+
+          <textarea
+            id="notesInput"
+            rows="3"
+            placeholder="Optional notes"
+          ></textarea>
+
+        </div>
+
+
+        <!-- Editor Actions -->
+        <div
+          id="editorActions"
+          class="editor-actions"
+        >
 
           <button
             id="clearItemBtn"
@@ -437,278 +876,346 @@
             Clear
           </button>
 
-        </div>
+          <button
+            id="addItemBtn"
+            class="primary-btn"
+            type="button"
+          >
+            Add
+          </button>
 
-      </form>
-
-    </section>
-
-
-    <!-- =================================================
-         ESTIMATE PAGE
-         ================================================= -->
-
-    <section
-      id="estimatePage"
-      class="page"
-      hidden
-    >
-
-      <div class="estimate-head">
-
-        <div>
-
-          <h2 id="estimateTitle">
-            Estimate List
-          </h2>
-
-          <small id="estimateCount">
-            0 Items
-          </small>
+          <button
+            id="nextItemBtn"
+            class="next-btn"
+            type="button"
+          >
+            Next →
+          </button>
 
         </div>
 
-        <button
-          id="estimateAddBtn"
-          class="add-small-btn"
-          type="button"
-        >
-          ＋ Add
-        </button>
-
-      </div>
+      </section>
 
 
       <!-- =================================================
-           ONE CONTINUOUS LIST
+           ESTIMATE LIST
            ================================================= -->
 
-      <div class="estimate-table-wrap">
+      <section
+        id="estimateArea"
+        class="estimate-area"
+      >
 
-        <div class="estimate-table-head">
+        <div class="section-heading">
 
-          <span class="col-no">No.</span>
+          <div>
 
-          <span class="col-material">
-            Material
-          </span>
+            <span class="section-kicker">
+              ESTIMATE
+            </span>
 
-          <span class="col-qty">
-            Qty
-          </span>
+            <h2 id="estimateHeading">
+              Estimate Items
+            </h2>
 
-          <span class="col-unit">
-            Unit
-          </span>
+          </div>
 
-          <span class="col-edit">
-            Edit
+          <span
+            id="estimateCount"
+            class="estimate-count"
+          >
+            0
           </span>
 
         </div>
+
 
         <div
           id="estimateList"
           class="estimate-list"
-        ></div>
+        >
 
-      </div>
+          <!-- Empty state -->
+          <div
+            id="estimateEmptyState"
+            class="empty-state"
+          >
+
+            <div class="empty-icon">
+              ⚡
+            </div>
+
+            <h3 id="emptyTitle">
+              No items added
+            </h3>
+
+            <p id="emptyText">
+              Select a material and add it to your estimate.
+            </p>
+
+          </div>
+
+          <!-- Estimate items generated by app.js -->
+
+        </div>
+
+      </section>
 
 
-      <!-- EMPTY -->
+      <!-- =================================================
+           CALCULATOR AREA
+           ================================================= -->
 
-      <div
-        id="estimateEmpty"
-        class="empty-state"
+      <section
+        id="calculatorArea"
+        class="calculator-area"
+        hidden
       >
 
-        <div class="empty-icon">📋</div>
+        <div class="section-heading">
 
-        <h3 id="emptyTitle">
-          No Materials Added
-        </h3>
+          <div>
 
-        <p id="emptyText">
-          Add material to create your estimate.
-        </p>
+            <span class="section-kicker">
+              TOOLS
+            </span>
 
-        <button
-          id="emptyAddBtn"
-          class="primary-btn"
-          type="button"
+            <h2 id="calculatorHeading">
+              Calculator
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="calculatorContent"
+          class="calculator-content"
         >
-          ＋ Add Material
-        </button>
+          <!-- Calculator generated/managed by app.js -->
+        </div>
 
-      </div>
-
-
-      <!-- TOTAL -->
-
-      <div class="estimate-summary">
-
-        <span id="totalItemsLabel">
-          Total Items
-        </span>
-
-        <strong id="totalItems">
-          0
-        </strong>
-
-      </div>
+      </section>
 
 
-      <div class="estimate-actions">
+      <!-- =================================================
+           SETTINGS AREA
+           ================================================= -->
 
-        <button
-          id="generateBtn"
-          class="primary-btn"
-          type="button"
+      <section
+        id="settingsArea"
+        class="settings-area"
+        hidden
+      >
+
+        <div class="section-heading">
+
+          <div>
+
+            <span class="section-kicker">
+              SETTINGS
+            </span>
+
+            <h2 id="settingsHeading">
+              Settings
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="settingsContent"
+          class="settings-content"
         >
-          📄 Generate Estimate
-        </button>
+          <!-- Settings generated/managed by app.js -->
+        </div>
 
-        <button
-          id="whatsappBtn"
-          class="whatsapp-btn"
-          type="button"
-        >
-          📲 WhatsApp / Share
-        </button>
+      </section>
 
-      </div>
-
-    </section>
+    </main>
 
 
-    <!-- =================================================
-         CALCULATOR PAGE
-         ================================================= -->
+    <!-- ===================================================
+         TOAST
+         =================================================== -->
 
-    <section
-      id="calculatorPage"
-      class="page"
+    <div
+      id="toast"
+      class="toast"
+      role="status"
+      aria-live="polite"
+      hidden
+    >
+      <span
+        id="toastIcon"
+        class="toast-icon"
+      >
+        ✓
+      </span>
+
+      <span
+        id="toastMessage"
+        class="toast-message"
+      >
+        Done
+      </span>
+
+    </div>
+
+
+    <!-- ===================================================
+         BACK WARNING / CONFIRMATION
+         =================================================== -->
+
+    <div
+      id="confirmDialog"
+      class="dialog-overlay"
       hidden
     >
 
-      <div class="page-head">
-
-        <div>
-          <h2 id="calculatorTitle">
-            Calculator
-          </h2>
-
-          <small id="calculatorSubtitle">
-            Electrical Calculator
-          </small>
-        </div>
-
-      </div>
-
-      <div class="calculator-box">
-
-        <div class="calc-row">
-
-          <label>Voltage (V)</label>
-
-          <input
-            id="calcVoltage"
-            type="number"
-            inputmode="decimal"
-          >
-
-        </div>
-
-        <div class="calc-row">
-
-          <label>Current (A)</label>
-
-          <input
-            id="calcCurrent"
-            type="number"
-            inputmode="decimal"
-          >
-
-        </div>
-
-        <button
-          id="calcPowerBtn"
-          class="primary-btn"
-          type="button"
-        >
-          Calculate Power
-        </button>
+      <div
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmTitle"
+      >
 
         <div
-          id="calcResult"
-          class="calc-result"
+          id="confirmTitle"
+          class="dialog-title"
         >
-          P = V × I
+          Leave Page?
+        </div>
+
+        <div
+          id="confirmMessage"
+          class="dialog-message"
+        >
+          Unsaved changes may be lost.
+        </div>
+
+        <div class="dialog-actions">
+
+          <button
+            id="confirmCancelBtn"
+            class="secondary-btn"
+            type="button"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="confirmOkBtn"
+            class="danger-btn"
+            type="button"
+          >
+            Leave
+          </button>
+
         </div>
 
       </div>
 
-    </section>
-
-  </main>
+    </div>
 
 
-  <!-- ===================================================
-       BOTTOM NAV
-       =================================================== -->
+    <!-- ===================================================
+         BOTTOM NAVIGATION
+         =================================================== -->
 
-  <nav class="bottom-nav">
-
-    <button
-      class="nav-btn active"
-      data-page="home"
-      type="button"
+    <nav
+      id="bottomNav"
+      class="bottom-nav"
+      aria-label="Bottom Navigation"
     >
-      <span>⌂</span>
-      <small id="navHome">Home</small>
-    </button>
 
-    <button
-      class="nav-btn"
-      data-page="estimate"
-      type="button"
-    >
-      <span>▤</span>
-      <small id="navEstimate">Estimate</small>
-    </button>
-
-    <button
-      class="nav-btn"
-      data-page="calculator"
-      type="button"
-    >
-      <span>⚡</span>
-      <small id="navCalculator">Calculator</small>
-    </button>
-
-  </nav>
+      <button
+        id="navHome"
+        class="bottom-nav-item active"
+        type="button"
+        data-page="home"
+      >
+        <span class="nav-icon">⌂</span>
+        <span
+          class="nav-label"
+          data-hi="होम"
+          data-en="Home"
+        >
+          होम
+        </span>
+      </button>
 
 
-  <!-- ===================================================
-       TOAST
-       =================================================== -->
+      <button
+        id="navEstimate"
+        class="bottom-nav-item"
+        type="button"
+        data-page="estimate"
+      >
+        <span class="nav-icon">▤</span>
+        <span
+          class="nav-label"
+          data-hi="एस्टिमेट"
+          data-en="Estimate"
+        >
+          एस्टिमेट
+        </span>
+      </button>
 
-  <div
-    id="toast"
-    class="toast"
-    role="status"
-  ></div>
 
-</div>
+      <button
+        id="navCalculator"
+        class="bottom-nav-item"
+        type="button"
+        data-page="calculator"
+      >
+        <span class="nav-icon">∑</span>
+        <span
+          class="nav-label"
+          data-hi="कैलकुलेटर"
+          data-en="Calculator"
+        >
+          कैलकुलेटर
+        </span>
+      </button>
 
 
-<!-- =====================================================
-     SCRIPTS
-     ===================================================== -->
+      <button
+        id="navSettings"
+        class="bottom-nav-item"
+        type="button"
+        data-page="settings"
+      >
+        <span class="nav-icon">⚙</span>
+        <span
+          class="nav-label"
+          data-hi="सेटिंग्स"
+          data-en="Settings"
+        >
+          सेटिंग्स
+        </span>
+      </button>
 
-<script src="config.js"></script>
-<script src="material.js"></script>
-<script src="app.js"></script>
+    </nav>
+
+  </div>
+
+
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
+
+  <!-- Configuration -->
+  <script src="config.js"></script>
+
+  <!-- Master Material Data -->
+  <script src="material.js"></script>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
 
 </body>
 </html>

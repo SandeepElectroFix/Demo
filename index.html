@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050816">
+  <meta name="description" content="Sandeep ElectroFix Estimate List">
+  <title>Sandeep ElectroFix — Estimate List</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="config.js" defer></script>
+  <script src="material.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-btn hamburger" id="menuBtn" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <div class="brand-lockup"><div class="brand-mark">S<span>⚡</span>E</div><div><strong>Sandeep <b>ElectroFix</b></strong><small data-i18n="tagline">आपके विश्वास को रोशन करते हुए</small></div></div>
+      <button class="theme-mini" id="themeQuick" aria-label="Toggle theme">☾</button>
+    </header>
+
+    <main id="mainContent">
+      <section class="view active" id="homeView">
+        <div class="welcome-card"><div><p class="eyebrow" data-i18n="welcome">WELCOME TO</p><h1>Sandeep <em>ElectroFix</em></h1><p data-i18n="subtitle">आपका स्मार्ट इलेक्ट्रिकल एस्टिमेट टूल</p></div><div class="bolt-orb">⚡</div></div>
+        <div class="search-row"><label class="search-box"><span>⌕</span><input id="homeSearch" type="search" data-placeholder-hi="सामग्री खोजें…" data-placeholder-en="Search materials…" placeholder="सामग्री खोजें…"></label><button class="filter-trigger" id="openFilter" aria-label="Filter">☷</button></div>
+        <div class="quick-grid">
+          <button class="quick-tile" data-go="stages"><span>▱</span><b data-i18n="stages">स्टेज</b></button>
+          <button class="quick-tile" data-go="estimate"><span>☷</span><b data-i18n="estimate">एस्टिमेट</b></button>
+          <button class="quick-tile" data-go="calculator"><span>▦</span><b data-i18n="calculator">कैलकुलेटर</b></button>
+          <button class="quick-tile" data-go="settings"><span>⚙</span><b data-i18n="settings">सेटिंग्स</b></button>
+        </div>
+        <div class="section-heading"><div><p class="eyebrow" data-i18n="projectStages">PROJECT FLOW</p><h2 data-i18n="fiveStages">पाँच चरण – एस्टिमेट लिस्ट</h2></div><span class="count-pill" id="stageCount">05</span></div>
+        <div id="stageCards" class="stage-list"></div>
+      </section>
+
+      <section class="view" id="stageView">
+        <div class="page-heading"><button class="back-btn" data-back>←</button><div><p class="eyebrow" data-i18n="stageSection">STAGE / SECTION</p><h2 id="stageTitle">Stage</h2></div></div>
+        <div id="sectionCards" class="section-list"></div>
+      </section>
+
+      <section class="view" id="materialsView">
+        <div class="page-heading"><button class="back-btn" data-back>←</button><div><p class="eyebrow" id="materialKicker">MATERIALS</p><h2 id="materialsTitle">Materials</h2></div></div>
+        <div class="search-row compact-search"><label class="search-box"><span>⌕</span><input id="materialSearch" type="search" placeholder="Search…"></label><button class="filter-trigger" id="openFilter2" aria-label="Filter">☷</button></div>
+        <div id="materialCards" class="material-list"></div>
+      </section>
+
+      <section class="view" id="editorView">
+        <div class="page-heading"><button class="back-btn" data-back>←</button><div><p class="eyebrow" data-i18n="materialDetails">MATERIAL DETAILS</p><h2 id="editorTitle">Material</h2></div></div>
+        <div class="editor-product"><div class="product-icon">⚡</div><div><h3 id="editorMaterialName">Material</h3><p id="editorContext">Stage / Section</p></div></div>
+        <form id="materialForm" class="editor-form"></form>
+        <div class="editor-actions"><button class="btn btn-quiet" id="clearForm" type="button" data-i18n="clear">साफ़ करें</button><button class="btn btn-gold" id="addMaterial" type="button"><span>＋</span> <span data-i18n="addToEstimate">एस्टिमेट में जोड़ें</span></button></div>
+      </section>
+
+      <section class="view" id="estimateView">
+        <div class="page-heading"><div><p class="eyebrow" data-i18n="yourMaterials">YOUR MATERIALS</p><h2 data-i18n="estimateList">Estimate List</h2></div><span class="count-pill" id="estimateCount">0</span></div>
+        <div class="search-row"><label class="search-box"><span>⌕</span><input id="estimateSearch" type="search" data-placeholder-hi="एस्टिमेट में खोजें…" data-placeholder-en="Search estimate…" placeholder="एस्टिमेट में खोजें…"></label><button class="filter-trigger" id="exportEstimate" aria-label="Export">⇩</button></div>
+        <div id="estimateItems" class="estimate-list"></div>
+        <div class="estimate-total"><div><small data-i18n="estimatedTotal">अनुमानित कुल राशि</small><strong id="grandTotal">₹ 0.00</strong></div><button class="btn btn-gold" id="clearEstimate" data-i18n="clearAll">सब हटाएँ</button></div>
+      </section>
+
+      <section class="view" id="calculatorView">
+        <div class="page-heading"><button class="back-btn" data-back>←</button><div><p class="eyebrow" data-i18n="electricalTools">ELECTRICAL TOOLS</p><h2 data-i18n="calculator">कैलकुलेटर</h2></div></div>
+        <div class="calc-tabs"><button class="active" data-calc="power" data-i18n="powerCalc">पावर</button><button data-calc="ohm" data-i18n="ohmsLaw">वोल्टेज / करंट</button><button data-calc="inverter" data-i18n="inverter">इन्वर्टर</button></div>
+        <div class="calc-card" id="powerCalc"><label><span data-i18n="voltage">वोल्टेज (V)</span><input id="voltage" type="number" inputmode="decimal" value="230"></label><label><span data-i18n="current">करंट (A)</span><input id="current" type="number" inputmode="decimal" value="10"></label><div class="calc-result"><small>P = V × I</small><strong id="powerResult">2,300 W</strong></div></div>
+        <div class="calc-card hidden" id="ohmCalc"><label><span data-i18n="powerWatts">पावर (W)</span><input id="ohmPower" type="number" value="1000"></label><label><span data-i18n="voltage">वोल्टेज (V)</span><input id="ohmVoltage" type="number" value="230"></label><div class="calc-result"><small>I = P ÷ V</small><strong id="ohmResult">4.35 A</strong></div></div>
+        <div class="calc-card hidden" id="inverterCalc"><label><span data-i18n="batteryVoltage">बैटरी वोल्टेज</span><select id="batteryVoltage"><option value="12">12V</option><option value="24">24V</option><option value="48">48V</option></select></label><label><span data-i18n="loadWatts">लोड (W)</span><input id="loadWatts" type="number" value="500"></label><div class="calc-result"><small>DC current (ideal)</small><strong id="inverterResult">41.67 A</strong></div><p class="hint" data-i18n="calcHint">यह आदर्श गणना है; इन्वर्टर लॉस और सुरक्षा मार्जिन अलग से जोड़ें।</p></div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="page-heading"><div><p class="eyebrow" data-i18n="personalize">PERSONALIZE</p><h2 data-i18n="settings">सेटिंग्स</h2></div></div>
+        <div class="settings-card"><div class="setting-row"><div><b data-i18n="language">भाषा / Language</b><small data-i18n="languageHint">एक समय में एक भाषा</small></div><div class="segmented"><button data-lang="hi" class="active">हिंदी</button><button data-lang="en">English</button></div></div><div class="setting-row"><div><b data-i18n="appearance">थीम</b><small data-i18n="appearanceHint">अपनी पसंद चुनें</small></div><div class="segmented"><button data-theme="dark" class="active">☾ <span data-i18n="dark">डार्क</span></button><button data-theme="light">☀ <span data-i18n="light">लाइट</span></button></div></div><button class="setting-link" id="resetApp"><span>↻</span><span data-i18n="resetApp">ऐप रीसेट करें</span><span>›</span></button><button class="setting-link" id="aboutApp"><span>ⓘ</span><span data-i18n="about">ऐप के बारे में</span><span>›</span></button></div>
+        <div class="brand-footer"><div class="brand-mark">S<span>⚡</span>E</div><h3>Sandeep <b>ElectroFix</b></h3><p data-i18n="tagline">आपके विश्वास को रोशन करते हुए</p><small>Electrical Services · Lucknow</small></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation"><button class="active" data-go="home"><span>⌂</span><small data-i18n="home">होम</small></button><button data-go="estimate"><span>▤</span><small data-i18n="estimate">एस्टिमेट</small><i id="navEstimateCount">0</i></button><button data-go="calculator"><span>▦</span><small data-i18n="calculator">कैलकुलेटर</small></button><button data-go="settings"><span>⚙</span><small data-i18n="settings">सेटिंग्स</small></button></nav>
+  </div>
+
+  <div class="drawer-scrim" id="drawerScrim"></div><aside class="drawer" id="drawer"><div class="drawer-head"><div class="brand-mark">S<span>⚡</span>E</div><div><b>Sandeep <em>ElectroFix</em></b><small data-i18n="tagline">आपके विश्वास को रोशन करते हुए</small></div><button id="closeDrawer" class="icon-btn">×</button></div><button class="drawer-link" data-go="home">⌂ <span data-i18n="home">होम</span></button><button class="drawer-link" data-go="estimate">▤ <span data-i18n="estimateList">Estimate List</span></button><button class="drawer-link" data-go="calculator">▦ <span data-i18n="calculator">कैलकुलेटर</span></button><button class="drawer-link" data-go="settings">⚙ <span data-i18n="settings">सेटिंग्स</span></button><div class="drawer-divider"></div><p class="drawer-label" data-i18n="language">भाषा / Language</p><div class="segmented full"><button data-lang="hi">हिंदी</button><button data-lang="en">English</button></div><p class="drawer-label" data-i18n="appearance">थीम</p><div class="segmented full"><button data-theme="dark">☾ <span data-i18n="dark">डार्क</span></button><button data-theme="light">☀ <span data-i18n="light">लाइट</span></button></div><button class="drawer-link reset-link" id="drawerReset">↻ <span data-i18n="resetApp">ऐप रीसेट करें</span></button></aside>
+
+  <div class="modal-scrim" id="filterModal"><div class="modal-card"><div class="modal-head"><h3 data-i18n="filter">फ़िल्टर</h3><button class="icon-btn" id="closeFilter">×</button></div><label class="field"><span data-i18n="chooseStage">स्टेज चुनें</span><select id="filterStage"><option value="all">All stages</option></select></label><label class="field"><span data-i18n="chooseSection">सेक्शन चुनें</span><select id="filterSection"><option value="all">All sections</option></select></label><div class="modal-actions"><button class="btn btn-quiet" id="resetFilter" data-i18n="reset">रीसेट</button><button class="btn btn-blue" id="applyFilter" data-i18n="apply">लागू करें</button></div></div></div>
+  <div class="toast" id="toast" role="status"></div>
+</body>
+</html>

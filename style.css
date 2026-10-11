@@ -2308,3 +2308,83 @@ height: 58px;
 min-width: 58px;
 }
 }
+
+
+
+
+
+
+
+/* =========================================
+SANDEEP ELECTROFIX — LOGO SIZE FIX
+========================================= */
+
+/* Header, Drawer and Footer Logos */
+img.brand-logo {
+display: block;
+width: 58px;
+height: 58px;
+min-width: 58px;
+min-height: 58px;
+max-width: none;
+object-fit: contain;
+flex-shrink: 0;
+}
+
+/* Header Branding */
+.topbar .brand-lockup img.brand-logo {
+width: 58px;
+height: 58px;
+}
+
+/* Welcome Card Logo */
+.welcome-card .welcome-logo-orb {
+width: 100px;
+height: 100px;
+min-width: 100px;
+min-height: 100px;
+flex-shrink: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.welcome-card .welcome-logo-orb img {
+display: block;
+width: 90px;
+height: 90px;
+max-width: none;
+max-height: none;
+object-fit: contain;
+}
+
+/* Mobile Header */
+@media (max-width: 600px) {
+.topbar .brand-lockup img.brand-logo {
+width: 52px;
+height: 52px;
+min-width: 52px;
+min-height: 52px;
+}
+
+.drawer-head img.brand-logo,
+.brand-footer img.brand-logo {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+}
+
+.welcome-card .welcome-logo-orb {
+    width: 84px;
+    height: 84px;
+    min-width: 84px;
+    min-height: 84px;
+}
+
+.welcome-card .welcome-logo-orb img {
+    width: 76px;
+    height: 76px;
+}
+
+}

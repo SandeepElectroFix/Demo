@@ -2388,3 +2388,529 @@ min-height: 52px;
 }
 
 }
+
+
+
+
+
+
+/* =========================================================
+SANDEEP ELECTROFIX
+FINAL RESPONSIVE LOGO + DESKTOP LAYOUT
+Mobile • Tablet • Desktop
+========================================================= */
+
+/* ---------------------------------------------------------
+
+1. LOGO — COMMON
+   --------------------------------------------------------- */
+
+img.brand-logo {
+display: block;
+width: 58px;
+height: 58px;
+max-width: none;
+max-height: none;
+object-fit: contain;
+flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------
+2. HEADER LOGO
+--------------------------------------------------------- */
+
+.topbar .brand-lockup {
+min-width: 0;
+flex: 1;
+gap: 12px;
+}
+
+.topbar .brand-lockup img.brand-logo {
+width: 58px;
+height: 58px;
+}
+
+.topbar .brand-lockup > div {
+min-width: 0;
+}
+
+.topbar .brand-lockup strong {
+font-size: 14px;
+line-height: 1.35;
+}
+
+.topbar .brand-lockup small {
+font-size: 10px;
+line-height: 1.4;
+}
+
+/* ---------------------------------------------------------
+3. WELCOME CARD LOGO
+--------------------------------------------------------- */
+
+.welcome-card {
+gap: 16px;
+}
+
+.welcome-card .welcome-content {
+flex: 1;
+min-width: 0;
+position: relative;
+z-index: 1;
+}
+
+.welcome-card .welcome-logo-orb {
+width: 108px;
+height: 108px;
+min-width: 108px;
+min-height: 108px;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+padding: 4px;
+flex-shrink: 0;
+
+overflow: hidden;
+position: relative;
+z-index: 1;
+
+}
+
+.welcome-card .welcome-logo-orb img {
+display: block;
+
+width: 100%;
+height: 100%;
+
+max-width: none;
+max-height: none;
+
+object-fit: contain;
+
+}
+
+/* ---------------------------------------------------------
+4. DRAWER LOGO
+--------------------------------------------------------- */
+
+.drawer-head img.brand-logo {
+width: 58px;
+height: 58px;
+}
+
+/* ---------------------------------------------------------
+5. FOOTER LOGO
+--------------------------------------------------------- */
+
+.brand-footer img.brand-logo {
+width: 84px;
+height: 84px;
+
+margin: 0 auto 12px;
+
+}
+
+/* ---------------------------------------------------------
+6. DESKTOP LAYOUT
+--------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+
+.app-shell {
+    width: 100%;
+    max-width: 1440px;
+
+    min-height: 100vh;
+
+    margin: 0 auto;
+    padding: 0 32px 100px;
+}
+
+.topbar {
+    height: 88px;
+
+    padding: 12px 24px;
+    gap: 18px;
+}
+
+.topbar .brand-lockup img.brand-logo {
+    width: 68px;
+    height: 68px;
+}
+
+.topbar .brand-lockup strong {
+    font-size: 18px;
+}
+
+.topbar .brand-lockup small {
+    font-size: 12px;
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+}
+
+.theme-mini {
+    width: 46px;
+    height: 38px;
+}
+
+.view {
+    padding: 28px 24px 32px;
+}
+
+.welcome-card {
+    min-height: 190px;
+    padding: 30px 36px;
+    gap: 30px;
+}
+
+.welcome-card h1 {
+    font-size: 32px;
+}
+
+.welcome-card p:not(.eyebrow) {
+    font-size: 14px;
+}
+
+.welcome-card .welcome-logo-orb {
+    width: 145px;
+    height: 145px;
+    min-width: 145px;
+    min-height: 145px;
+}
+
+.search-row {
+    max-width: 900px;
+}
+
+.search-box {
+    height: 52px;
+}
+
+.search-box input {
+    font-size: 14px;
+}
+
+.quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.quick-tile {
+    min-height: 110px;
+}
+
+.quick-tile span {
+    font-size: 30px;
+}
+
+.quick-tile b {
+    font-size: 13px;
+}
+
+.section-heading h2,
+.page-heading h2 {
+    font-size: 25px;
+}
+
+.stage-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.section-list,
+.material-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.stage-card {
+    min-height: 86px;
+    padding: 16px;
+}
+
+.card-copy strong {
+    font-size: 14px;
+}
+
+.card-copy small {
+    font-size: 12px;
+}
+
+.section-card,
+.material-card {
+    min-height: 82px;
+    padding: 15px;
+}
+
+.editor-product {
+    padding: 20px;
+}
+
+.editor-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.editor-form input,
+.editor-form select,
+.field input,
+.field select {
+    height: 48px;
+    font-size: 14px;
+}
+
+.estimate-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.estimate-item {
+    padding: 16px;
+}
+
+.estimate-details strong {
+    font-size: 14px;
+}
+
+.estimate-details small {
+    font-size: 12px;
+}
+
+.estimate-total {
+    bottom: 20px;
+    padding: 20px;
+}
+
+.estimate-total strong {
+    font-size: 25px;
+}
+
+.calc-card,
+.settings-card {
+    padding: 24px;
+    gap: 18px;
+}
+
+.calc-card {
+    max-width: 850px;
+}
+
+.settings-card {
+    max-width: 900px;
+}
+
+.setting-row {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 20px;
+}
+
+.brand-footer {
+    padding: 40px 20px 20px;
+}
+
+.brand-footer img.brand-logo {
+    width: 100px;
+    height: 100px;
+}
+
+.brand-footer h3 {
+    font-size: 22px;
+}
+
+.bottom-nav {
+    width: min(100%, 760px);
+    bottom: 12px;
+
+    border: 1px solid #10436a;
+    border-radius: 18px;
+
+    padding: 12px 20px;
+}
+
+.drawer {
+    left: max(0px, calc((100vw - 1440px) / 2));
+    width: 360px;
+}
+
+}
+
+/* ---------------------------------------------------------
+7. TABLET LAYOUT
+--------------------------------------------------------- */
+
+@media (min-width: 601px) and (max-width: 1023px) {
+
+.app-shell {
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 100px;
+}
+
+.topbar {
+    height: 78px;
+}
+
+.topbar .brand-lockup img.brand-logo {
+    width: 60px;
+    height: 60px;
+}
+
+.view {
+    padding: 24px;
+}
+
+.welcome-card {
+    min-height: 160px;
+    padding: 24px;
+}
+
+.welcome-card .welcome-logo-orb {
+    width: 112px;
+    height: 112px;
+    min-width: 112px;
+    min-height: 112px;
+}
+
+.stage-list,
+.section-list,
+.material-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.estimate-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bottom-nav {
+    width: min(100%, 760px);
+}
+
+}
+
+/* ---------------------------------------------------------
+8. MOBILE LAYOUT
+--------------------------------------------------------- */
+
+@media (max-width: 600px) {
+
+.app-shell {
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+    height: 72px;
+    padding: 8px 12px;
+    gap: 9px;
+}
+
+.topbar .brand-lockup {
+    gap: 9px;
+}
+
+.topbar .brand-lockup img.brand-logo {
+    width: 52px;
+    height: 52px;
+}
+
+.topbar .brand-lockup strong {
+    font-size: 12px;
+}
+
+.topbar .brand-lockup small {
+    font-size: 9px;
+}
+
+.welcome-card {
+    padding: 16px;
+    gap: 10px;
+    min-height: 125px;
+}
+
+.welcome-card h1 {
+    font-size: clamp(17px, 4.5vw, 22px);
+}
+
+.welcome-card .welcome-logo-orb {
+    width: 82px;
+    height: 82px;
+    min-width: 82px;
+    min-height: 82px;
+}
+
+.stage-list,
+.section-list,
+.material-list {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.estimate-list {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.drawer-head img.brand-logo {
+    width: 54px;
+    height: 54px;
+}
+
+.brand-footer img.brand-logo {
+    width: 80px;
+    height: 80px;
+}
+
+}
+
+/* ---------------------------------------------------------
+9. EXTRA SMALL MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 360px) {
+
+.topbar {
+    gap: 7px;
+    padding: 8px;
+}
+
+.topbar .brand-lockup img.brand-logo {
+    width: 46px;
+    height: 46px;
+}
+
+.topbar .brand-lockup strong {
+    font-size: 11px;
+}
+
+.topbar .brand-lockup small {
+    font-size: 8px;
+}
+
+.theme-mini {
+    width: 34px;
+    flex-shrink: 0;
+}
+
+.welcome-card {
+    padding: 12px;
+    gap: 8px;
+}
+
+.welcome-card .welcome-logo-orb {
+    width: 68px;
+    height: 68px;
+    min-width: 68px;
+    min-height: 68px;
+}
+
+}
+
+/* =========================================================
+END — RESPONSIVE LOGO AND LAYOUT
+========================================================= */

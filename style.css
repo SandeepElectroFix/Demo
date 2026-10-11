@@ -2233,3 +2233,32 @@ img.brand-logo {
 img {
     max-width: 100%;
 }
+
+
+
+
+/* Welcome Card Logo */
+.welcome-logo-orb {
+    width: 76px;
+    height: 76px;
+    min-width: 76px;
+    min-height: 76px;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+/* Logo Image */
+.welcome-logo-orb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: contain;
+}

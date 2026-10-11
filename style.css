@@ -2262,3 +2262,49 @@ img {
 
     object-fit: contain;
 }
+
+
+
+
+
+
+
+
+
+/* ===== SANDEEP ELECTROFIX LOGO SIZE FIX ===== */
+
+.logo,
+.brand-logo,
+.header-logo,
+.app-logo,
+.menu-logo,
+.footer-logo {
+width: 64px;
+height: 64px;
+min-width: 64px;
+object-fit: contain;
+flex-shrink: 0;
+}
+
+/* Header Branding */
+.brand img,
+.logo img,
+.header-brand img {
+width: 64px;
+height: 64px;
+object-fit: contain;
+}
+
+/* Mobile Logo */
+@media (max-width: 600px) {
+.logo,
+.brand-logo,
+.header-logo,
+.app-logo,
+.menu-logo,
+.footer-logo {
+width: 58px;
+height: 58px;
+min-width: 58px;
+}
+}
